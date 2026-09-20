@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>서블릿 API 테스트 콘솔</title>
+</head>
+<body>
+    <h2>회원가입 테스트</h2>
+    <input type="text" id="regEmail" placeholder="이메일">
+    <input type="password" id="regPassword" placeholder="비밀번호">
+    <input type="number" id="regAge" placeholder="나이">
+    <input type="number" id="regWeight" placeholder="체중">
+    <button onclick="testSignup()">가입 API 호출</button>
+    <p id="result"></p>
+
+    <script>
+        const CONTEXT_PATH = '/FoodAdvisor'; 
+
+        async function testSignup() {
+            const data = {
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                name: "테스터",
+                age: parseInt(document.getElementById('regAge').value),
+                weightKg: parseFloat(document.getElementById('regWeight').value)
+            };
+
+            const response = await fetch(`${CONTEXT_PATH}/api/auth/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const resultText = await response.text();
+            document.getElementById('result').innerText = `응답 코드: ${response.status} \n결과: ${resultText}`;
+        }
+    </script>
+</body>
+</html>
