@@ -7,8 +7,8 @@ public record FoodDTO(
     double carbsG,
     double proteinG,
     double fatG
-) {
-    // 섭취량 비례 계산
+)
+{
     public FoodDTO calculateProportion(double quantity) {
         return new FoodDTO(
             this.foodId,

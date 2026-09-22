@@ -5,18 +5,20 @@ public record UserDTO(
     String email,
     String password,
     String name,
-    String gender,
+    String gender,       
     int age,
+    double heightCm,     
     double weightKg,
+    String actLevel,
+    String goal,         
     int targetDailyCalories
 ) {
-    // 데이터 유효성 검증
     public boolean isValid() {
         return email != null && email.contains("@") &&
                password != null && password.length() >= 4 &&
-               age >= 0 &&
-               weightKg > 0;
+               age >= 0 && weightKg > 0 && heightCm > 0;
     }
+
 
 	public Long userId() {
 		return userId;
@@ -42,10 +44,22 @@ public record UserDTO(
 		return age;
 	}
 
+	public double heightCm() {
+		return heightCm;
+	}
+	
 	public double weightKg() {
 		return weightKg;
 	}
 
+	public String actLevel() {
+		return actLevel;
+	}
+	
+	public String goal() {
+		return goal;
+	}
+	
 	public int targetDailyCalories() {
 		return targetDailyCalories;
 	}

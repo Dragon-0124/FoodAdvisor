@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnection {
-    private static final String URL = "jdbc:mysql://localhost:3066/diet_db?serverTimezone=Asia/Seoul&useSSL=false";
+    private static final String URL = "jdbc:mysql://localhost:3066/diet_db?serverTimezone=Asia/Seoul&useSSL=false&allowPublicKeyRetrieval=true";
     private static final String USER = "root";
     private static final String PASS = "1234"; // 임시 비번
 
