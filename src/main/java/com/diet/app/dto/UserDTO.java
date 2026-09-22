@@ -10,7 +10,8 @@ public record UserDTO(
     double heightCm,     
     double weightKg,
     String actLevel,
-    String goal,         
+    String goal,
+    String preferance,
     int targetDailyCalories
 ) {
     public boolean isValid() {
@@ -58,6 +59,10 @@ public record UserDTO(
 	
 	public String goal() {
 		return goal;
+	}
+	
+	public String preferance() {
+		return preferance;
 	}
 	
 	public int targetDailyCalories() {

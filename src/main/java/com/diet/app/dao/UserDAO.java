@@ -8,8 +8,8 @@ public class UserDAO {
     @SuppressWarnings("unused")
 	public boolean insertUser(UserDTO user) {
         var sql = """
-            INSERT INTO USERS (email, password, name, gender, age, height_cm, weight_kg, activity_level, goal, target_daily_calories)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO USERS (email, password, name, gender, age, height_cm, weight_kg, activity_level, goal, preferance, target_daily_calories)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         try (var conn = DBConnection.getConnection();
@@ -28,7 +28,8 @@ public class UserDAO {
             pstmt.setDouble(7, user.weightKg());
             pstmt.setString(8, user.actLevel() != null ? user.actLevel() : "SEDENTARY");
             pstmt.setString(9, user.goal() != null ? user.goal() : "체중유지");
-            pstmt.setInt(10, user.targetDailyCalories());
+            pstmt.setString(10, user.preferance());
+            pstmt.setInt(11, user.targetDailyCalories());
 
             var result = pstmt.executeUpdate();
             if (result > 0) {
@@ -78,7 +79,8 @@ public class UserDAO {
     }
     
     // 데이터 입력 테스트를 위한 코드
-    public UserDTO getUserByEmail(String email) {
+    @SuppressWarnings("unused")
+	public UserDTO getUserByEmail(String email) {
         var sql = "SELECT * FROM USERS WHERE email = ?";
         try (var conn = DBConnection.getConnection();
              var pstmt = conn.prepareStatement(sql)) {
@@ -89,10 +91,17 @@ public class UserDAO {
             try (var rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return new UserDTO(
-                        rs.getLong("user_id"), rs.getString("email"), null,
-                        rs.getString("name"), rs.getString("gender"), rs.getInt("age"), 
-                        rs.getDouble("height_cm"), rs.getDouble("weight_kg"),
-                        rs.getString("activity_level"), rs.getString("goal"), rs.getInt("target_daily_calories")
+                        rs.getLong("user_id"),
+                        rs.getString("email"), null,
+                        rs.getString("name"),
+                        rs.getString("gender"),
+                        rs.getInt("age"),
+                        rs.getDouble("height_cm"),
+                        rs.getDouble("weight_kg"),
+                        rs.getString("activity_level"),
+                        rs.getString("goal"),
+                        rs.getString("preferance"),
+                        rs.getInt("target_daily_calories")
                     );
                 }
             }

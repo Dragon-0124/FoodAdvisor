@@ -107,6 +107,7 @@
             <div class="user-stat"><span>성별/나이:</span><strong id="cardDemographics"></strong></div>
             <div class="user-stat"><span>신체 정보:</span><strong id="cardBody"></strong></div>
             <div class="user-stat"><span>나의 목표:</span><strong id="cardGoal"></strong></div>
+            <div class="user-stat"><span>선호 음식:</span><strong id="cardPref"></strong></div>
             <div class="highlight" id="cardCalories"></div>
         </div>
     </div>
@@ -152,6 +153,13 @@
                     <option value="체중유지" selected>체중 유지</option>
                     <option value="근육량증가">근육량 증가</option>
                 </select>
+                <select id="regPref" style="flex:1;">
+                <option value="한식" selected>한식</option>
+                    <option value="중식">중식</option>
+                    <option value="양식">양식</option>
+                    <option value="일식">일식</option>
+                    <option value="기타">기타</option>
+                </select>
             </div>
             <button class="btn-submit" style="background-color: #2ecc71;" onclick="signup()">가입하기</button>
         </div>
@@ -159,7 +167,7 @@
 
 
 <script>
-    const CONTEXT_PATH = '/본인의_이클립스_프로젝트_이름'; // ★ 이클립스 프로젝트명 수정 필수 (루트면 빈 문자열 '')
+    const CONTEXT_PATH = '/FoodAdvisor';
 
     /* ========== 1. 실시간 시계 로직 ========== */
     function updateClock() {
@@ -233,6 +241,7 @@
                 document.getElementById('cardDemographics').innerText = `${u.gender}성 / ${u.age}세`;
                 document.getElementById('cardBody').innerText = `${u.heightCm}cm / ${u.weightKg}kg`;
                 document.getElementById('cardGoal').innerText = u.goal;
+                document.getElementById('cardPref').innerText = u.pref;
                 document.getElementById('cardCalories').innerText = `🎯 일일 ${u.targetDailyCalories} kcal`;
                 document.getElementById('userCard').style.display = 'block';
 
@@ -262,11 +271,16 @@
 
     async function signup() {
         const payload = {
-            email: document.getElementById('regEmail').value, password: document.getElementById('regPassword').value,
-            name: document.getElementById('regName').value, gender: document.getElementById('regGender').value,
-            age: parseInt(document.getElementById('regAge').value||0), heightCm: parseFloat(document.getElementById('regHeight').value||0),
-            weightKg: parseFloat(document.getElementById('regWeight').value||0), actLevel: document.getElementById('regActivity').value,
-            goal: document.getElementById('regGoal').value
+            email: document.getElementById('regEmail').value,
+            password: document.getElementById('regPassword').value,
+            name: document.getElementById('regName').value,
+            gender: document.getElementById('regGender').value,
+            age: parseInt(document.getElementById('regAge').value||0),
+            heightCm: parseFloat(document.getElementById('regHeight').value||0),
+            weightKg: parseFloat(document.getElementById('regWeight').value||0),
+            actLevel: document.getElementById('regActivity').value,
+            goal: document.getElementById('regGoal').value,
+            preferance: document.getElementById('regPref').value
         };
         const res = await fetch(`${CONTEXT_PATH}/api/auth/signup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         

@@ -97,7 +97,7 @@ public class AuthServlet extends HttpServlet {
                 var newUser = new UserDTO(
                     rawUser.userId(), rawUser.email(), rawUser.password(), rawUser.name(),
                     rawUser.gender(), rawUser.age(), rawUser.heightCm(), rawUser.weightKg(),
-                    rawUser.actLevel(), rawUser.goal(), calculatedCalories
+                    rawUser.actLevel(), rawUser.goal(), rawUser.preferance(), calculatedCalories
                 );
                 
                 if (userDAO.insertUser(newUser)) {
