@@ -1,5 +1,6 @@
 package com.diet.app.dto;
 
+// 사용자 개인정보 및 목표 데이터 객체 (DB 연관 컬럼: user_id, email, password, name, gender, age, height_cm, weight_kg, activity_level, goal, preferance, target_daily_calories)
 public record UserDTO(
     Long userId,
     String email,
@@ -14,6 +15,7 @@ public record UserDTO(
     String preferance,
     int targetDailyCalories
 ) {
+    // 회원가입 입력값 유효성 검증
     public boolean isValid() {
         return email != null && email.contains("@") &&
                password != null && password.length() >= 4 &&

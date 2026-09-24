@@ -111,7 +111,44 @@
             <div class="highlight" id="cardCalories"></div>
         </div>
     </div>
-
+	<!-- 4. 식단 기록 폼 (로그인 시 보임) -->
+        <div class="user-card" id="dietCard" style="margin-top: 20px; display: none; background: #e8f6f3; border: 2px solid #1abc9c;">
+            <h3 style="color: #16a085; border-bottom-color: #1abc9c;">🍽️ 오늘 먹은 식단 기록</h3>
+            
+            <div class="form-group">
+                <label>날짜</label>
+                <input type="date" id="dietDate">
+            </div>
+            
+            <div style="display: flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                    <label>구분</label>
+                    <select id="dietMealType">
+                        <option value="아침">아침</option>
+                        <option value="점심">점심</option>
+                        <option value="저녁">저녁</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:2;">
+                    <label>음식 선택</label>
+                    <select id="dietFoodId">
+                        <option value="1">닭가슴살</option>
+                        <option value="2">현미밥</option>
+                        <option value="3">연어 샐러드</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>먹은 양</label>
+                    <select id="dietPortion">
+                        <option value="0.5">0.5 인분</option>
+                        <option value="1.0" selected>1 인분</option>
+                        <option value="2.0">2 인분</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="btn-submit" style="background-color: #1abc9c;" onclick="recordDiet()">식단 저장하기</button>
+        </div>
 
     <!-- 팝업 모달 1: 로그인 -->
     <div class="modal-overlay" id="loginModal">
@@ -231,7 +268,7 @@
                 document.getElementById('btnOpenLogin').style.display = 'none';
                 document.getElementById('btnOpenSignup').style.display = 'none';
                 document.getElementById('btnLogout').style.display = 'inline-block';
-                
+                document.getElementById('dietCard').style.display = 'block';
                 document.getElementById('sessionInfo').style.display = 'block';
                 startSessionTimer(data.remainingTime);
 
@@ -251,6 +288,7 @@
                 document.getElementById('btnOpenLogin').style.display = 'inline-block';
                 document.getElementById('btnOpenSignup').style.display = 'inline-block';
                 document.getElementById('btnLogout').style.display = 'none';
+                document.getElementById('dietCard').style.display = 'none';
                 document.getElementById('sessionInfo').style.display = 'none';
                 document.getElementById('userCard').style.display = 'none';
             }
@@ -296,7 +334,33 @@
         checkSession();
     }
 
-    window.onload = checkSession; 
+    window.onload = checkSession;
+    
+ 	// 기본 날짜를 오늘로 설정하는 로직
+    document.getElementById('dietDate').valueAsDate = new Date();
+
+    // 식단 기록 API 호출 함수
+    async function recordDiet() {
+        const payload = {
+            recordDate: document.getElementById('dietDate').value,
+            mealType: document.getElementById('dietMealType').value,
+            foodId: parseInt(document.getElementById('dietFoodId').value),
+            portion: parseFloat(document.getElementById('dietPortion').value)
+        };
+
+        const res = await fetch(`${CONTEXT_PATH}/api/diets/record`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(payload) 
+        });
+        
+        if(res.ok) {
+            alert('✅ 성공적으로 내 DB에 식단이 저장되었습니다!');
+        } else {
+            const err = await res.json();
+            alert(`기록 실패: ${err.error}`);
+        }
+    }
 </script>
 
 </body>

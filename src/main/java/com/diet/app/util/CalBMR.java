@@ -2,8 +2,10 @@ package com.diet.app.util;
 
 import com.diet.app.dto.UserDTO;
 
+// 기초대사량(BMR) 및 활동량 기반 목표 칼로리 계산 유틸리티 (관련 데이터: weight_kg, height_cm, age, gender, activity_level, goal, target_daily_calories)
 public class CalBMR {
 
+    // 활동량 수준(activity_level)에 따른 승수 반환
     private static double getActivityMultiplier(String activityLevel) {
         return switch (activityLevel != null ? activityLevel.toUpperCase() : "SEDENTARY") {
             case "SEDENTARY" -> 1.2;
@@ -14,6 +16,7 @@ public class CalBMR {
         };
     }
 
+    // 사용자 목표(goal)에 따른 칼로리 가감치 반환
     private static int getGoalAdjustment(String goal) {
         return switch (goal != null ? goal : "체중유지") {
             case "체중감량" -> -500;
@@ -22,8 +25,9 @@ public class CalBMR {
         };
     }
 
+    // Mifflin-St Jeor 공식을 활용한 기초대사량(BMR), TDEE, 최종 목표 칼로리 계산
     public static int calculateTargetCalories(UserDTO user) {
-        // 1. 기초대사량(BMR) 계산
+        // 1. 기초대사량(BMR) 계산[cite: 25]
         double bmrBase = (10 * user.weightKg()) + (6.25 * user.heightCm()) - (5 * user.age());
         
         double bmr = switch (user.gender()) {

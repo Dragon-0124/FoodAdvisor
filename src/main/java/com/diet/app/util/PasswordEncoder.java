@@ -3,9 +3,10 @@ package com.diet.app.util;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+// 비밀번호 SHA-256 단방향 암호화 유틸리티 클래스
 public class PasswordEncoder {
     
-    // encoding Password SHA-256
+    // 평문 비밀번호를 SHA-256 해시값으로 변환 (DB 연관 컬럼: USERS.password)
     public static String encode(String rawPassword) {
         try {
             var md = MessageDigest.getInstance("SHA-256");
