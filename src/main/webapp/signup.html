@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>회원가입</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/auth.js" defer></script>
+</head>
+<body>
+<main class="card">
+    <h1>회원가입</h1>
+
+    <form id="signupForm">
+        <div class="form-group">
+            <label for="signupEmail">아이디(이메일)</label>
+            <input id="signupEmail" type="email" autocomplete="username" required>
+        </div>
+
+        <div class="form-group">
+            <label for="signupPassword">비밀번호</label>
+            <input id="signupPassword" type="password" minlength="8"
+                   autocomplete="new-password" required>
+        </div>
+
+        <div class="form-group">
+            <label for="signupPasswordConfirm">비밀번호 확인</label>
+            <input id="signupPasswordConfirm" type="password" minlength="8"
+                   autocomplete="new-password" required>
+        </div>
+
+        <div class="form-group">
+            <label for="signupName">이름</label>
+            <input id="signupName" type="text" required>
+        </div>
+
+        <div class="form-group">
+            <label for="signupGender">성별</label>
+            <select id="signupGender" required>
+                <option value="남">남성</option>
+                <option value="여">여성</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="signupAge">나이</label>
+            <input id="signupAge" type="number" min="1" max="120" required>
+        </div>
+
+        <div class="form-group">
+            <label for="signupHeight">키(cm)</label>
+            <input id="signupHeight" type="number" min="1" max="300"
+                   step="0.1" required>
+        </div>
+
+        <div class="form-group">
+            <label for="signupWeight">체중(kg)</label>
+            <input id="signupWeight" type="number" min="1" max="500"
+                   step="0.1" required>
+        </div>
+
+        <div class="form-group">
+            <label for="signupActivity">활동량</label>
+            <select id="signupActivity">
+                <option value="SEDENTARY">운동 거의 안 함</option>
+                <option value="LIGHTLY_ACTIVE">가벼운 활동</option>
+                <option value="MODERATELY_ACTIVE">보통 활동</option>
+                <option value="VERY_ACTIVE">많은 활동</option>
+                <option value="EXTRA_ACTIVE">매우 많은 활동</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="signupGoal">목표</label>
+            <select id="signupGoal">
+                <option value="체중감량">체중 감량</option>
+                <option value="체중유지">체중 유지</option>
+                <option value="근육량증가">근육량 증가</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="signupPreference">선호 음식</label>
+            <select id="signupPreference">
+                <option value="한식">한식</option>
+                <option value="중식">중식</option>
+                <option value="양식">양식</option>
+                <option value="일식">일식</option>
+                <option value="기타">기타</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="securityQuestion">본인 확인 질문</label>
+            <select id="securityQuestion" required>
+                <option value="">질문 선택</option>
+                <option value="childhood_nickname">어릴 때 별명은?</option>
+                <option value="first_school">처음 다닌 학교 이름은?</option>
+                <option value="favorite_food">좋아하는 음식은?</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="securityAnswer">본인 확인 답변</label>
+            <input id="securityAnswer" type="text" autocomplete="off" required>
+        </div>
+
+        <button type="submit">가입하기</button>
+        <p class="message" id="signupMessage" role="status"></p>
+    </form>
+
+    <div class="link-row">
+        <a href="login.html">로그인으로 돌아가기</a>
+    </div>
+</main>
+</body>
+</html>

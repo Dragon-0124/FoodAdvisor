@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>신체 변화 기록</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: "Malgun Gothic", sans-serif;
+            color: #263238;
+            background: #f3f6f8;
+        }
+
+        .container {
+            width: min(100%, 1000px);
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .back-link {
+            color: #2878c7;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .card {
+            margin-bottom: 20px;
+            padding: 24px;
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: 0 3px 12px rgba(30, 50, 70, 0.08);
+        }
+
+        .card h2 {
+            margin: 0 0 18px;
+            font-size: 20px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            align-items: end;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            min-height: 42px;
+            padding: 9px 11px;
+            border: 1px solid #ccd5dc;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        .save-button {
+            min-height: 42px;
+            border: 0;
+            border-radius: 7px;
+            color: #fff;
+            background: #2878c7;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .save-button:hover {
+            background: #1d65aa;
+        }
+
+        .hint {
+            margin: 14px 0 0;
+            color: #667781;
+            font-size: 13px;
+        }
+
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .chart-card {
+            min-width: 0;
+        }
+
+        .chart-card h2 {
+            margin-bottom: 4px;
+        }
+
+        .chart-description {
+            margin: 0 0 12px;
+            color: #71808a;
+            font-size: 13px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 250px;
+        }
+
+        .empty-message {
+            padding: 28px 10px;
+            color: #71808a;
+            text-align: center;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+        }
+
+        th,
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e7ecef;
+            text-align: center;
+        }
+
+        th {
+            color: #53636d;
+            background: #f7f9fa;
+            font-size: 14px;
+        }
+
+        .delete-button {
+            padding: 6px 10px;
+            border: 0;
+            border-radius: 5px;
+            color: #fff;
+            background: #e05a5a;
+            cursor: pointer;
+        }
+
+        .clear-button {
+            margin-top: 14px;
+            padding: 8px 12px;
+            border: 1px solid #d7dfe4;
+            border-radius: 6px;
+            color: #596970;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 16px;
+            }
+
+            .input-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .charts {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 23px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="container">
+    <header>
+        <h1>신체 변화 기록</h1>
+        <a class="back-link" href="index.html">메인으로</a>
+    </header>
+
+    <section class="card">
+        <h2>오늘의 측정값 입력</h2>
+
+        <form id="recordForm">
+            <div class="input-grid">
+                <div>
+                    <label for="recordDate">측정 날짜</label>
+                    <input type="date" id="recordDate" required>
+                </div>
+
+                <div>
+                    <label for="weight">체중 (kg)</label>
+                    <input type="number" id="weight" min="1" max="500" step="0.1" placeholder="예: 65.2">
+                </div>
+
+                <div>
+                    <label for="muscle">골격근량 (kg)</label>
+                    <input type="number" id="muscle" min="1" max="200" step="0.1" placeholder="예: 25.4">
+                </div>
+
+                <div>
+                    <label for="bodyFat">체지방률 (%)</label>
+                    <input type="number" id="bodyFat" min="1" max="75" step="0.1" placeholder="예: 22.5">
+                </div>
+
+                <button class="save-button" type="submit">기록 저장</button>
+            </div>
+        </form>
+
+        <p class="hint">
+            세 측정값 중 하나 이상 입력해 주세요. 입력하지 않은 항목은 기존 기록이 있으면 그대로 유지됩니다.
+        </p>
+    </section>
+
+    <section class="charts">
+        <article class="card chart-card">
+            <h2>체중 변화</h2>
+            <p class="chart-description">단위: kg</p>
+            <canvas id="weightChart" aria-label="날짜별 체중 그래프"></canvas>
+        </article>
+
+        <article class="card chart-card">
+            <h2>골격근량 변화</h2>
+            <p class="chart-description">단위: kg</p>
+            <canvas id="muscleChart" aria-label="날짜별 골격근량 그래프"></canvas>
+        </article>
+
+        <article class="card chart-card">
+            <h2>체지방률 변화</h2>
+            <p class="chart-description">단위: %</p>
+            <canvas id="bodyFatChart" aria-label="날짜별 체지방률 그래프"></canvas>
+        </article>
+    </section>
+
+    <section class="card">
+        <h2>측정 기록</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>날짜</th>
+                    <th>체중 (kg)</th>
+                    <th>골격근량 (kg)</th>
+                    <th>체지방률 (%)</th>
+                    <th>삭제</th>
+                </tr>
+                </thead>
+                <tbody id="recordTableBody"></tbody>
+            </table>
+        </div>
+        <div id="emptyMessage" class="empty-message" hidden>
+            아직 저장된 기록이 없습니다.
+        </div>
+        <button class="clear-button" id="clearAllButton" type="button">
+            모든 기록 삭제
+        </button>
+    </section>
+</main>
+
+<script>
+    const STORAGE_KEY = "foodAdvisor.bodyMetrics.v1";
+    const fields = ["weight", "muscle", "bodyFat"];
+
+    const form = document.getElementById("recordForm");
+    const dateInput = document.getElementById("recordDate");
+    const tableBody = document.getElementById("recordTableBody");
+    const emptyMessage = document.getElementById("emptyMessage");
+
+    function getLocalDateString() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    function loadRecords() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
+            if (!Array.isArray(saved)) {
+                return [];
+            }
+
+            return saved
+                .filter(record => record && /^\d{4}-\d{2}-\d{2}$/.test(record.date))
+                .map(record => ({
+                    date: record.date,
+                    weight: isValidStoredValue(record.weight) ? Number(record.weight) : null,
+                    muscle: isValidStoredValue(record.muscle) ? Number(record.muscle) : null,
+                    bodyFat: isValidStoredValue(record.bodyFat) ? Number(record.bodyFat) : null
+                }))
+                .filter(record => fields.some(field => record[field] !== null))
+                .sort((a, b) => a.date.localeCompare(b.date));
+        } catch (error) {
+            console.error("기록을 불러오지 못했습니다.", error);
+            return [];
+        }
+    }
+
+    function isValidStoredValue(value) {
+        return value !== null &&
+            value !== undefined &&
+            value !== "" &&
+            Number.isFinite(Number(value)) &&
+            Number(value) > 0;
+    }
+
+    function saveRecords(records) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+
+    function formatValue(value) {
+        return value === null ? "-" : Number(value).toFixed(1);
+    }
+
+    function drawChart(canvasId, records, field, color, unit) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext("2d");
+        const rect = canvas.getBoundingClientRect();
+        const pixelRatio = window.devicePixelRatio || 1;
+
+        canvas.width = Math.max(1, Math.floor(rect.width * pixelRatio));
+        canvas.height = Math.max(1, Math.floor(rect.height * pixelRatio));
+        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+        const width = rect.width;
+        const height = rect.height;
+        ctx.clearRect(0, 0, width, height);
+
+        const points = records
+            .filter(record => record[field] !== null)
+            .map(record => ({ date: record.date, value: record[field] }));
+
+        if (points.length === 0) {
+            ctx.fillStyle = "#71808a";
+            ctx.font = "14px Malgun Gothic, sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("기록을 입력하면 그래프가 표시됩니다.", width / 2, height / 2);
+            return;
+        }
+
+        const padding = { top: 20, right: 18, bottom: 42, left: 48 };
+        const plotWidth = width - padding.left - padding.right;
+        const plotHeight = height - padding.top - padding.bottom;
+
+        const values = points.map(point => point.value);
+        let minValue = Math.min(...values);
+        let maxValue = Math.max(...values);
+
+        if (minValue === maxValue) {
+            minValue -= 1;
+            maxValue += 1;
+        } else {
+            const margin = (maxValue - minValue) * 0.15;
+            minValue -= margin;
+            maxValue += margin;
+        }
+
+        const x = index => points.length === 1
+            ? padding.left + plotWidth / 2
+            : padding.left + (index / (points.length - 1)) * plotWidth;
+
+        const y = value =>
+            padding.top + ((maxValue - value) / (maxValue - minValue)) * plotHeight;
+
+        ctx.font = "11px Malgun Gothic, sans-serif";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+
+        for (let i = 0; i <= 4; i++) {
+            const value = maxValue - ((maxValue - minValue) * i / 4);
+            const lineY = padding.top + (plotHeight * i / 4);
+
+            ctx.beginPath();
+            ctx.strokeStyle = "#e8edf0";
+            ctx.lineWidth = 1;
+            ctx.moveTo(padding.left, lineY);
+            ctx.lineTo(width - padding.right, lineY);
+            ctx.stroke();
+
+            ctx.fillStyle = "#71808a";
+            ctx.fillText(`${value.toFixed(1)}${unit}`, padding.left - 7, lineY);
+        }
+
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+
+        points.forEach((point, index) => {
+            if (index === 0) {
+                ctx.moveTo(x(index), y(point.value));
+            } else {
+                ctx.lineTo(x(index), y(point.value));
+            }
+        });
+
+        ctx.stroke();
+
+        points.forEach((point, index) => {
+            ctx.beginPath();
+            ctx.fillStyle = "#fff";
+            ctx.arc(x(index), y(point.value), 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = color;
+            ctx.stroke();
+        });
+
+        const labelIndexes = points.length <= 6
+            ? points.map((_, index) => index)
+            : [0, Math.floor((points.length - 1) / 2), points.length - 1];
+
+        ctx.fillStyle = "#71808a";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+
+        labelIndexes.forEach(index => {
+            const label = points[index].date.slice(5);
+            ctx.fillText(label, x(index), height - padding.bottom + 12);
+        });
+    }
+
+    function render() {
+        const records = loadRecords();
+
+        tableBody.replaceChildren();
+        emptyMessage.hidden = records.length !== 0;
+
+        [...records].reverse().forEach(record => {
+            const row = document.createElement("tr");
+
+            const dateCell = document.createElement("td");
+            dateCell.textContent = record.date;
+            row.appendChild(dateCell);
+
+            [
+                formatValue(record.weight),
+                formatValue(record.muscle),
+                formatValue(record.bodyFat)
+            ].forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value;
+                row.appendChild(cell);
+            });
+
+            const actionCell = document.createElement("td");
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
+            deleteButton.className = "delete-button";
+            deleteButton.textContent = "삭제";
+            deleteButton.addEventListener("click", () => deleteRecord(record.date));
+            actionCell.appendChild(deleteButton);
+            row.appendChild(actionCell);
+
+            tableBody.appendChild(row);
+        });
+
+        drawChart("weightChart", records, "weight", "#2878c7", " kg");
+        drawChart("muscleChart", records, "muscle", "#19a783", " kg");
+        drawChart("bodyFatChart", records, "bodyFat", "#e27845", "%");
+    }
+
+    function deleteRecord(date) {
+        const records = loadRecords().filter(record => record.date !== date);
+        saveRecords(records);
+        render();
+    }
+
+    form.addEventListener("submit", event => {
+        event.preventDefault();
+
+        const date = dateInput.value;
+        const values = {};
+
+        fields.forEach(field => {
+            const inputValue = document.getElementById(field).value.trim();
+            values[field] = inputValue === "" ? null : Number(inputValue);
+        });
+
+        if (!date) {
+            alert("측정 날짜를 선택해 주세요.");
+            return;
+        }
+
+        if (fields.every(field => values[field] === null)) {
+            alert("체중, 골격근량, 체지방률 중 하나 이상 입력해 주세요.");
+            return;
+        }
+
+        const limits = {
+            weight: [1, 500, "체중"],
+            muscle: [1, 200, "골격근량"],
+            bodyFat: [1, 75, "체지방률"]
+        };
+
+        for (const field of fields) {
+            const value = values[field];
+            if (value !== null) {
+                const [min, max, label] = limits[field];
+                if (value < min || value > max) {
+                    alert(`${label}은(는) ${min} 이상 ${max} 이하로 입력해 주세요.`);
+                    return;
+                }
+            }
+        }
+
+        const records = loadRecords();
+        const existing = records.find(record => record.date === date);
+
+        if (existing) {
+            fields.forEach(field => {
+                if (values[field] !== null) {
+                    existing[field] = values[field];
+                }
+            });
+        } else {
+            records.push({ date, ...values });
+        }
+
+        records.sort((a, b) => a.date.localeCompare(b.date));
+        saveRecords(records);
+
+        fields.forEach(field => {
+            document.getElementById(field).value = "";
+        });
+
+        render();
+        alert("측정 기록을 저장했습니다.");
+    });
+
+    document.getElementById("clearAllButton").addEventListener("click", () => {
+        if (!confirm("저장된 모든 측정 기록을 삭제할까요?")) {
+            return;
+        }
+
+        localStorage.removeItem(STORAGE_KEY);
+        render();
+    });
+
+    window.addEventListener("resize", render);
+
+    dateInput.value = getLocalDateString();
+    render();
+</script>
+</body>
+</html>
