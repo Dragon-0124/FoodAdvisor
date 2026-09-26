@@ -3,192 +3,298 @@ package com.diet.app.controller;
 import com.diet.app.dao.UserDAO;
 import com.diet.app.dto.UserDTO;
 import com.diet.app.util.CalBMR;
+import com.diet.app.util.EmailUtil;
+import com.diet.app.util.VerificationManager;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import jakarta.servlet.http.HttpSession;
 
-// 회원 인증 및 계정 관리 API 컨트롤러
+import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Pattern;
+
 @SuppressWarnings("serial")
 @WebServlet("/api/auth/*")
 public class AuthServlet extends HttpServlet {
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+
     private final UserDAO userDAO = new UserDAO();
     private final Gson gson = new Gson();
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
-        resp.setContentType("application/json; charset=UTF-8");
-        
-        var out = resp.getWriter();
-        var pathInfo = req.getPathInfo();
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        prepareJsonResponse(req, resp);
 
-        // 로그인 세션 상태 및 남은 시간 조회 API (세션 검증용)
-        if ("/session".equals(pathInfo)) {
-            var session = req.getSession(false); 
-            
-            if (session != null && session.getAttribute("userEmail") != null) {
-                var email = (String) session.getAttribute("userEmail");
-                
-                long lastAccessedTime = session.getLastAccessedTime();
-                long currentTime = System.currentTimeMillis();
-                int maxInactiveInterval = session.getMaxInactiveInterval();
-                
-                long usedTimeSeconds = (currentTime - lastAccessedTime) / 1000;
-                long remainingTime = maxInactiveInterval - usedTimeSeconds;
-
-	                if (remainingTime > 0) {
-                        var userInfo = userDAO.getUserByEmail(email);
-                        
-                        var responseMap = new java.util.HashMap<String, Object>();
-                        responseMap.put("loggedIn", true);
-                        responseMap.put("email", email);
-                        responseMap.put("remainingTime", remainingTime);
-                        responseMap.put("user", userInfo);
-                        
-                        out.write(gson.toJson(responseMap));
-                    } else {
-                        session.invalidate(); 
-                        out.write("{\"loggedIn\": false}");
-                    }
-                } else {
-                    session.invalidate();
-                    out.write("{\"loggedIn\": false}");
-                }
-            } else {
-                out.write("{\"loggedIn\": false}");
-            }
-        }
-
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
-        resp.setContentType("application/json; charset=UTF-8");
-        
-        var out = resp.getWriter();
-        var pathInfo = req.getPathInfo();
-        
-        // 로그아웃 API (세션 만료 처리)
-        if ("/logout".equals(pathInfo)) {
-            var session = req.getSession(false);
-            if (session != null) {
-                session.invalidate();
-            }
-            out.write("""
-                {"message": "로그아웃 되었습니다."}
-                """);
+        if (!"/session".equals(req.getPathInfo())) {
+            writeError(resp, HttpServletResponse.SC_NOT_FOUND, "잘못된 요청입니다.");
             return;
         }
 
-        var reader = req.getReader();
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("userEmail") == null) {
+            if (session != null) {
+                session.invalidate();
+            }
+            resp.getWriter().write("{\"loggedIn\":false}");
+            return;
+        }
+
+        String email = (String) session.getAttribute("userEmail");
+        long elapsedSeconds =
+                (System.currentTimeMillis() - session.getLastAccessedTime()) / 1000;
+        long remainingSeconds = session.getMaxInactiveInterval() - elapsedSeconds;
+
+        UserDTO user = remainingSeconds > 0
+                ? userDAO.getUserByEmail(email)
+                : null;
+
+        if (user == null) {
+            session.invalidate();
+            resp.getWriter().write("{\"loggedIn\":false}");
+            return;
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("loggedIn", true);
+        response.put("email", email);
+        response.put("remainingTime", remainingSeconds);
+        response.put("user", user);
+
+        resp.getWriter().write(gson.toJson(response));
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        prepareJsonResponse(req, resp);
+        String pathInfo = req.getPathInfo();
+
+        if ("/logout".equals(pathInfo)) {
+            HttpSession session = req.getSession(false);
+            if (session != null) {
+                session.invalidate();
+            }
+            resp.getWriter().write("{\"message\":\"로그아웃 되었습니다.\"}");
+            return;
+        }
+
+        if (!isSupportedPath(pathInfo)) {
+            writeError(resp, HttpServletResponse.SC_NOT_FOUND, "잘못된 요청입니다.");
+            return;
+        }
+
+        final JsonObject body;
+        try {
+            JsonElement parsed = JsonParser.parseReader(req.getReader());
+            if (parsed == null || !parsed.isJsonObject()) {
+                writeError(resp, HttpServletResponse.SC_BAD_REQUEST,
+                        "JSON 객체 형식의 요청이 필요합니다.");
+                return;
+            }
+            body = parsed.getAsJsonObject();
+        } catch (JsonParseException | IllegalStateException e) {
+            writeError(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    "요청 JSON 형식이 올바르지 않습니다.");
+            return;
+        }
 
         switch (pathInfo) {
-            // 회원가입 API (DB INSERT: email, password, name, gender, age, height_cm, weight_kg, activity_level, goal, preferance, target_daily_calories)
-            case "/signup" -> {
-                var rawUser = gson.fromJson(reader, UserDTO.class);
-                if (!rawUser.isValid()) {
-                    resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    out.write("{\"error\": \"입력값이 올바르지 않습니다.\"}");
-                    return;
-                }
-                
-                int calculatedCalories = CalBMR.calculateTargetCalories(rawUser);
-                var newUser = new UserDTO(
-                    rawUser.userId(), rawUser.email(), rawUser.password(), rawUser.name(),
-                    rawUser.gender(), rawUser.age(), rawUser.heightCm(), rawUser.weightKg(),
-                    rawUser.actLevel(), rawUser.goal(), rawUser.preferance(), calculatedCalories
-                );
-                
-                if (userDAO.insertUser(newUser)) {
-                    out.write("{\"message\": \"회원가입 완료\"}");
-                } else {
-                    resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    out.write("{\"error\": \"데이터베이스 저장 실패\"}");
-                }
-            }
-            
-            // 로그인 API (DB SELECT: email 조건으로 password 대조 및 세션 생성)
-            case "/login" -> {
-                var loginInfo = gson.fromJson(reader, UserDTO.class);
-                var success = userDAO.login(loginInfo.email(), loginInfo.password());
-                
-                if (success) {
-                    var session = req.getSession(true);
-                    session.setAttribute("userEmail", loginInfo.email());
-                    session.setMaxInactiveInterval(1800);
-                    
-                    out.write("{\"message\": \"로그인 성공\"}");
-                } else {
-                    resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    out.write("{\"error\": \"아이디 또는 비밀번호 불일치\"}");
-                }
-            }
-            
-            // 인증코드 이메일 발송 API (DB SELECT: email 존재 여부 확인 후 메일 전송)
-            case "/password/code" -> {
-                var requestData = gson.fromJson(reader, java.util.Map.class);
-                String targetEmail = (String) requestData.get("email");
-                
-                if (userDAO.getUserByEmail(targetEmail) == null) {
-                    resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                    out.write("{\"error\": \"가입되지 않은 이메일입니다.\"}");
-                    return;
-                }
+            case "/signup" -> handleSignup(body, resp);
+            case "/login" -> handleLogin(body, req, resp);
+            case "/password/code" -> handlePasswordCode(body, resp);
+            case "/password/reset" -> handlePasswordReset(body, resp);
+            case "/withdraw" -> handleWithdraw(req, resp);
+            default -> writeError(resp, HttpServletResponse.SC_NOT_FOUND,
+                    "잘못된 요청입니다.");
+        }
+    }
 
-                String code = String.format("%06d", new java.util.Random().nextInt(1000000));
-                com.diet.app.util.VerificationManager.saveCode(targetEmail, code);
-                com.diet.app.util.EmailUtil.sendVerificationCode(targetEmail, code);
-                
-                out.write("{\"message\": \"인증 코드가 발송되었습니다.\"}");
-            }
-            
-            // 비밀번호 재설정 API (DB UPDATE: email 조건으로 password 갱신)
-            case "/password/reset" -> {
-                var requestData = gson.fromJson(reader, java.util.Map.class);
-                String targetEmail = (String) requestData.get("email");
-                String inputCode = (String) requestData.get("code");
-                String newPassword = (String) requestData.get("newPassword");
+    private void handleSignup(JsonObject body, HttpServletResponse resp)
+            throws IOException {
+        UserDTO user = gson.fromJson(body, UserDTO.class);
+        if (user == null || !user.isValid()) {
+            writeError(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    "입력값이 올바르지 않습니다.");
+            return;
+        }
 
-                if (com.diet.app.util.VerificationManager.verifyCode(targetEmail, inputCode)) {
-                    if (userDAO.updatePassword(targetEmail, newPassword)) {
-                        out.write("{\"message\": \"비밀번호가 성공적으로 변경되었습니다.\"}");
-                    } else {
-                        resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                        out.write("{\"error\": \"DB 업데이트 실패\"}");
-                    }
-                } else {
-                    resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    out.write("{\"error\": \"인증 코드가 올바르지 않거나 만료되었습니다.\"}");
-                }
-            }
-            
-            // 회원 탈퇴 API (DB DELETE: WHERE email 조건으로 계정 삭제)
-            case "/withdraw" -> {
-                var session = req.getSession(false);
-                if (session == null || session.getAttribute("userEmail") == null) {
-                    resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    out.write("{\"error\": \"로그인이 필요합니다.\"}");
-                    return;
-                }
+        int targetCalories = CalBMR.calculateTargetCalories(user);
+        UserDTO newUser = new UserDTO(
+                user.userId(),
+                user.email().trim().toLowerCase(Locale.ROOT),
+                user.password(),
+                user.name().trim(),
+                user.gender(),
+                user.age(),
+                user.heightCm(),
+                user.weightKg(),
+                user.actLevel(),
+                user.goal(),
+                user.preferance(),
+                targetCalories
+        );
 
-                String currentEmail = (String) session.getAttribute("userEmail");
-                
-                if (userDAO.deleteUser(currentEmail)) {
-                    session.invalidate();
-                    out.write("{\"message\": \"회원 탈퇴가 완료되었습니다.\"}");
-                } else {
-                    resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    out.write("{\"error\": \"회원 탈퇴 처리 중 오류가 발생했습니다.\"}");
-                }
-            }
-            default -> {
-                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                out.write("{\"error\": \"잘못된 요청\"}");
+        if (userDAO.insertUser(newUser)) {
+            resp.getWriter().write("{\"message\":\"회원가입 완료\"}");
+        } else {
+            writeError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "회원가입 처리에 실패했습니다.");
+        }
+    }
+
+    private void handleLogin(JsonObject body, HttpServletRequest req,
+                             HttpServletResponse resp) throws IOException {
+        String email = stringValue(body, "email");
+        String password = stringValue(body, "password");
+
+        if (!isValidEmail(email) || password == null || password.isBlank()) {
+            writeError(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    "이메일과 비밀번호를 확인해 주세요.");
+            return;
+        }
+
+        email = email.trim().toLowerCase(Locale.ROOT);
+        if (!userDAO.login(email, password)) {
+            writeError(resp, HttpServletResponse.SC_UNAUTHORIZED,
+                    "아이디 또는 비밀번호가 올바르지 않습니다.");
+            return;
+        }
+
+        // 기존 로그인 전 세션을 폐기하고 새 세션을 발급합니다.
+        HttpSession oldSession = req.getSession(false);
+        if (oldSession != null) {
+            oldSession.invalidate();
+        }
+
+        HttpSession session = req.getSession(true);
+        session.setAttribute("userEmail", email);
+        session.setMaxInactiveInterval(1800);
+
+        resp.getWriter().write("{\"message\":\"로그인 성공\"}");
+    }
+
+    private void handlePasswordCode(JsonObject body, HttpServletResponse resp)
+            throws IOException {
+        String email = stringValue(body, "email");
+        if (!isValidEmail(email)) {
+            writeError(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    "이메일 형식이 올바르지 않습니다.");
+            return;
+        }
+
+        email = email.trim().toLowerCase(Locale.ROOT);
+        UserDTO account = userDAO.getUserByEmail(email);
+
+        if (account != null && VerificationManager.acquireSendSlot(email)) {
+            String code = String.format(
+                    Locale.ROOT, "%06d", SECURE_RANDOM.nextInt(1_000_000));
+
+            VerificationManager.saveCode(email, code);
+            if (!EmailUtil.sendVerificationCode(email, code)) {
+                VerificationManager.clearCode(email);
             }
         }
+
+        // 계정 존재 여부를 응답으로 알려주지 않습니다.
+        resp.getWriter().write(
+                "{\"message\":\"계정이 존재하면 인증 코드를 발송했습니다.\"}");
+    }
+
+    private void handlePasswordReset(JsonObject body, HttpServletResponse resp)
+            throws IOException {
+        String email = stringValue(body, "email");
+        String code = stringValue(body, "code");
+        String newPassword = stringValue(body, "newPassword");
+
+        if (!isValidEmail(email)
+                || code == null
+                || !code.matches("\\d{6}")
+                || !UserDTO.isValidPassword(newPassword)) {
+            writeError(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    "이메일, 인증 코드 또는 새 비밀번호를 확인해 주세요.");
+            return;
+        }
+
+        email = email.trim().toLowerCase(Locale.ROOT);
+        if (!VerificationManager.verifyCode(email, code)) {
+            writeError(resp, HttpServletResponse.SC_UNAUTHORIZED,
+                    "인증 코드가 올바르지 않거나 만료되었습니다.");
+            return;
+        }
+
+        if (userDAO.updatePassword(email, newPassword)) {
+            resp.getWriter().write("{\"message\":\"비밀번호가 변경되었습니다.\"}");
+        } else {
+            writeError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "비밀번호 변경에 실패했습니다.");
+        }
+    }
+
+    private void handleWithdraw(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("userEmail") == null) {
+            writeError(resp, HttpServletResponse.SC_UNAUTHORIZED,
+                    "로그인이 필요합니다.");
+            return;
+        }
+
+        String email = (String) session.getAttribute("userEmail");
+        if (userDAO.deleteUser(email)) {
+            session.invalidate();
+            resp.getWriter().write("{\"message\":\"회원 탈퇴가 완료되었습니다.\"}");
+        } else {
+            writeError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "회원 탈퇴 처리에 실패했습니다.");
+        }
+    }
+
+    private static boolean isSupportedPath(String path) {
+        return "/signup".equals(path)
+                || "/login".equals(path)
+                || "/password/code".equals(path)
+                || "/password/reset".equals(path)
+                || "/withdraw".equals(path);
+    }
+
+    private static boolean isValidEmail(String email) {
+        return email != null && EMAIL_PATTERN.matcher(email.trim()).matches();
+    }
+
+    private static String stringValue(JsonObject body, String key) {
+        JsonElement value = body.get(key);
+        return value != null
+                && value.isJsonPrimitive()
+                && value.getAsJsonPrimitive().isString()
+                ? value.getAsString()
+                : null;
+    }
+
+    private static void prepareJsonResponse(HttpServletRequest req,
+                                            HttpServletResponse resp) {
+        req.setCharacterEncoding("UTF-8");
+        resp.setContentType("application/json; charset=UTF-8");
+        resp.setHeader("Cache-Control", "no-store");
+    }
+
+    private static void writeError(HttpServletResponse resp, int status,
+                                   String message) throws IOException {
+        resp.setStatus(status);
+        resp.getWriter().write(new Gson().toJson(Map.of("error", message)));
     }
 }

@@ -1,33 +1,108 @@
 package com.diet.app.util;
 
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-// 이메일 인증코드 메모리 저장 및 검증 유틸리티 클래스
-public class VerificationManager{
-    private static final Map<String, VerificationData> store = new ConcurrentHashMap<>();
+// 이메일 인증 코드 저장, 만료, 발송 제한 및 입력 횟수 관리
+public final class VerificationManager {
+    private static final long CODE_LIFETIME_MS = 3 * 60 * 1000L;
+    private static final long SEND_WINDOW_MS = 15 * 60 * 1000L;
+    private static final int MAX_SENDS_PER_WINDOW = 3;
+    private static final int MAX_VERIFY_ATTEMPTS = 5;
 
-    private record VerificationData(String code, long expireTime) {}
+    private static final ConcurrentHashMap<String, VerificationData> codes =
+            new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, SendWindow> sendWindows =
+            new ConcurrentHashMap<>();
 
-    // 인증코드 저장 및 3분 유효기간 설정 (관련 데이터: USERS.email 기준 임시 인증코드)
-    public static void saveCode(String email, String code) {
-        store.put(email, new VerificationData(code, System.currentTimeMillis() + (3 * 60 * 1000)));
+    private VerificationManager() {
     }
 
-    // 입력된 인증코드 유효성 및 만료 여부 검증 (관련 데이터: USERS.email 기준 입력 인증코드)
-    public static boolean verifyCode(String email, String inputCode) {
-        VerificationData data = store.get(email);
-        if (data == null) return false;
-        
-        if (System.currentTimeMillis() > data.expireTime()) {
-            store.remove(email);
+    private record VerificationData(String code, long expiresAt, int attempts) {
+    }
+
+    private record SendWindow(long startedAt, int count) {
+    }
+
+    public static boolean acquireSendSlot(String email) {
+        if (email == null || email.isBlank()) {
             return false;
         }
-        
-        if (data.code().equals(inputCode)) {
-            store.remove(email);
-            return true;
+
+        String key = normalize(email);
+        long now = System.currentTimeMillis();
+        AtomicBoolean allowed = new AtomicBoolean(false);
+
+        sendWindows.compute(key, (ignored, window) -> {
+            if (window == null || now - window.startedAt() >= SEND_WINDOW_MS) {
+                allowed.set(true);
+                return new SendWindow(now, 1);
+            }
+
+            if (window.count() < MAX_SENDS_PER_WINDOW) {
+                allowed.set(true);
+                return new SendWindow(window.startedAt(), window.count() + 1);
+            }
+
+            return window;
+        });
+
+        return allowed.get();
+    }
+
+    public static void saveCode(String email, String code) {
+        if (email == null || code == null) {
+            return;
         }
-        return false;
+
+        codes.put(normalize(email),
+                new VerificationData(code, System.currentTimeMillis() + CODE_LIFETIME_MS, 0));
+    }
+
+    public static boolean verifyCode(String email, String inputCode) {
+        if (email == null || inputCode == null) {
+            return false;
+        }
+
+        String key = normalize(email);
+        long now = System.currentTimeMillis();
+        AtomicBoolean verified = new AtomicBoolean(false);
+
+        codes.compute(key, (ignored, data) -> {
+            if (data == null || now >= data.expiresAt()) {
+                return null;
+            }
+
+            boolean matches = MessageDigest.isEqual(
+                    data.code().getBytes(StandardCharsets.US_ASCII),
+                    inputCode.getBytes(StandardCharsets.US_ASCII));
+
+            if (matches) {
+                verified.set(true);
+                return null;
+            }
+
+            int nextAttempt = data.attempts() + 1;
+            if (nextAttempt >= MAX_VERIFY_ATTEMPTS) {
+                return null;
+            }
+
+            return new VerificationData(data.code(), data.expiresAt(), nextAttempt);
+        });
+
+        return verified.get();
+    }
+
+    public static void clearCode(String email) {
+        if (email != null) {
+            codes.remove(normalize(email));
+        }
+    }
+
+    private static String normalize(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }

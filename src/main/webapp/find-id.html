@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>아이디 찾기</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/auth.js" defer></script>
+</head>
+<body>
+<main class="card">
+    <h1>아이디 찾기</h1>
+
+    <form id="findIdForm">
+        <div class="form-group">
+            <label for="findName">이름</label>
+            <input id="findName" type="text" required>
+        </div>
+
+        <div class="form-group">
+            <label for="findQuestion">본인 확인 질문</label>
+            <select id="findQuestion" required>
+                <option value="">질문 선택</option>
+                <option value="childhood_nickname">어릴 때 별명은?</option>
+                <option value="first_school">처음 다닌 학교 이름은?</option>
+                <option value="favorite_food">좋아하는 음식은?</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="findAnswer">답변</label>
+            <input id="findAnswer" type="text" autocomplete="off" required>
+        </div>
+
+        <button type="submit">아이디 확인</button>
+        <p class="message" id="findIdMessage" role="status"></p>
+    </form>
+
+    <div class="link-row">
+        <a href="login.html">로그인</a>
+        <a href="reset-password.html">비밀번호 재설정</a>
+    </div>
+</main>
+</body>
+</html>

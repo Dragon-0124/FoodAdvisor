@@ -3,365 +3,370 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>백엔드 테스트</title>
+    <title>식단 관리 앱</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/auth.js" defer></script>
+
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
-        
-        /* 상단 네비게이션바 */
-        .navbar { display: flex; justify-content: flex-end; align-items: center; padding: 15px 30px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .btn-nav { padding: 8px 15px; margin-left: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: #fff; }
-        .btn-login { background-color: #3498db; }
-        .btn-signup { background-color: #2ecc71; }
-        .btn-logout { background-color: #e74c3c; display: none; }
-        
-        /* 메인 컨테이너 */
-        .main-container { display: flex; flex-direction: column; align-items: center; margin-top: 40px; }
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            margin: 32px auto;
+            padding: 0 16px;
+        }
 
-        /* ⏱️ 디지털 시계 및 세션 표시 */
-        .digital-clock { font-size: 36px; font-weight: bold; color: #2c3e50; font-variant-numeric: tabular-nums; margin-bottom: 5px; letter-spacing: 2px; }
-        .session-info { font-size: 15px; font-weight: bold; color: #e74c3c; margin-bottom: 25px; display: none; }
+        .digital-clock {
+            color: #2c3e50;
+            font-size: 32px;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+        }
 
-        /* 🕰️ 아날로그 시계 스타일 */
-        .clock { width: 220px; height: 220px; border: 8px solid #333; border-radius: 50%; position: relative; background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        
-        /* 시계 중앙 핀 */
-        .clock::after { content: ''; position: absolute; width: 14px; height: 14px; background: #e74c3c; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; }
-        
-        /* 시계 바늘 */
-        .hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; background: #333; border-radius: 4px; z-index: 5; }
-        .hour-hand { width: 6px; height: 60px; margin-left: -3px; background: #2c3e50; }
-        .minute-hand { width: 4px; height: 85px; margin-left: -2px; background: #7f8c8d; }
-        .second-hand { width: 2px; height: 95px; margin-left: -1px; background: #e74c3c; z-index: 6; }
+        .clock {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            border: 8px solid #333;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 4px 10px #00000033;
+        }
 
-        /* 시계 숫자 (1~12) */
-        .number { position: absolute; width: 100%; height: 100%; top: 0; left: 0; text-align: center; font-weight: bold; font-size: 18px; color: #333; padding-top: 10px; box-sizing: border-box; }
-        .number div { display: inline-block; }
-        .num1 { transform: rotate(30deg); } .num1 div { transform: rotate(-30deg); }
-        .num2 { transform: rotate(60deg); } .num2 div { transform: rotate(-60deg); }
-        .num3 { transform: rotate(90deg); } .num3 div { transform: rotate(-90deg); }
-        .num4 { transform: rotate(120deg); } .num4 div { transform: rotate(-120deg); }
-        .num5 { transform: rotate(150deg); } .num5 div { transform: rotate(-150deg); }
-        .num6 { transform: rotate(180deg); } .num6 div { transform: rotate(-180deg); }
-        .num7 { transform: rotate(210deg); } .num7 div { transform: rotate(-210deg); }
-        .num8 { transform: rotate(240deg); } .num8 div { transform: rotate(-240deg); }
-        .num9 { transform: rotate(270deg); } .num9 div { transform: rotate(-270deg); }
-        .num10 { transform: rotate(300deg); } .num10 div { transform: rotate(-300deg); }
-        .num11 { transform: rotate(330deg); } .num11 div { transform: rotate(-330deg); }
-        .num12 { transform: rotate(0deg); } .num12 div { transform: rotate(0deg); }
+        .clock::after {
+            position: absolute;
+            z-index: 10;
+            top: 50%;
+            left: 50%;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #e74c3c;
+            content: "";
+            transform: translate(-50%, -50%);
+        }
 
-        /* 👤 유저 정보 카드 */
-        .user-card { margin-top: 40px; background: #fff; padding: 25px; border-radius: 12px; width: 350px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none; }
-        .user-card h3 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; text-align: center; }
-        .user-stat { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
-        .highlight { font-size: 24px; font-weight: bold; color: #27ae60; text-align: center; margin-top: 15px; }
+        .hand {
+            position: absolute;
+            z-index: 5;
+            bottom: 50%;
+            left: 50%;
+            border-radius: 4px;
+            background: #333;
+            transform-origin: bottom;
+        }
 
-        /* 모달 창 */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: #fff; padding: 30px; border-radius: 8px; width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; }
-        .close-btn { position: absolute; top: 15px; right: 15px; font-size: 20px; cursor: pointer; color: #aaa; }
-        .form-group { margin-bottom: 15px; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-submit { width: 100%; padding: 12px; border: none; border-radius: 4px; color: white; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .hour-hand {
+            width: 6px;
+            height: 60px;
+            margin-left: -3px;
+            background: #2c3e50;
+        }
+
+        .minute-hand {
+            width: 4px;
+            height: 85px;
+            margin-left: -2px;
+            background: #7f8c8d;
+        }
+
+        .second-hand {
+            z-index: 6;
+            width: 2px;
+            height: 95px;
+            margin-left: -1px;
+            background: #e74c3c;
+        }
+
+        .number {
+            position: absolute;
+            top: 0;
+            left: 0;
+            box-sizing: border-box;
+            width: 100%;
+            height: 100%;
+            padding-top: 10px;
+            color: #333;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .number div {
+            display: inline-block;
+        }
+
+        .num1 { transform: rotate(30deg); }
+        .num1 div { transform: rotate(-30deg); }
+        .num2 { transform: rotate(60deg); }
+        .num2 div { transform: rotate(-60deg); }
+        .num3 { transform: rotate(90deg); }
+        .num3 div { transform: rotate(-90deg); }
+        .num4 { transform: rotate(120deg); }
+        .num4 div { transform: rotate(-120deg); }
+        .num5 { transform: rotate(150deg); }
+        .num5 div { transform: rotate(-150deg); }
+        .num6 { transform: rotate(180deg); }
+        .num6 div { transform: rotate(-180deg); }
+        .num7 { transform: rotate(210deg); }
+        .num7 div { transform: rotate(-210deg); }
+        .num8 { transform: rotate(240deg); }
+        .num8 div { transform: rotate(-240deg); }
+        .num9 { transform: rotate(270deg); }
+        .num9 div { transform: rotate(-270deg); }
+        .num10 { transform: rotate(300deg); }
+        .num10 div { transform: rotate(-300deg); }
+        .num11 { transform: rotate(330deg); }
+        .num11 div { transform: rotate(-330deg); }
+
+        .user-card,
+        .diet-card {
+            width: min(100%, 560px);
+            margin-top: 12px;
+            padding: 24px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 4px 15px #0000001a;
+        }
+
+        .user-card h1,
+        .diet-card h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .user-stat {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .highlight {
+            margin-top: 16px;
+            color: #27ae60;
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .weight-link {
+            display: block;
+            margin: 20px 0;
+            padding: 12px;
+            border-radius: 8px;
+            background: #16a085;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .weight-link:hover {
+            background: #138d75;
+        }
+
+        .diet-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .diet-row .form-group {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .message {
+            min-height: 22px;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 520px) {
+            .diet-row {
+                flex-direction: column;
+            }
+
+            .user-card,
+            .diet-card {
+                padding: 18px;
+            }
+        }
     </style>
 </head>
+
 <body>
+<main class="main-container">
+    <section class="user-card" id="loggedOutView">
+        <h1>식단 관리 앱</h1>
+        <p class="muted">로그인하거나 새 계정을 만들어 시작하세요.</p>
+        <div class="link-row">
+            <a class="button-link" href="login.html">로그인</a>
+            <a class="button-link secondary" href="signup.html">회원가입</a>
+        </div>
+    </section>
 
-    <!-- 우측 상단 네비게이션 -->
-    <div class="navbar">
-        <button class="btn-nav btn-login" id="btnOpenLogin" onclick="openModal('loginModal')">로그인</button>
-        <button class="btn-nav btn-signup" id="btnOpenSignup" onclick="openModal('signupModal')">회원가입</button>
-        <button class="btn-nav btn-logout" id="btnLogout" onclick="logout()">로그아웃</button>
+    <div class="digital-clock" id="digitalClock">오전 12:00:00</div>
+
+    <div class="clock" aria-label="현재 시각 아날로그 시계">
+        <div class="number num1"><div>1</div></div>
+        <div class="number num2"><div>2</div></div>
+        <div class="number num3"><div>3</div></div>
+        <div class="number num4"><div>4</div></div>
+        <div class="number num5"><div>5</div></div>
+        <div class="number num6"><div>6</div></div>
+        <div class="number num7"><div>7</div></div>
+        <div class="number num8"><div>8</div></div>
+        <div class="number num9"><div>9</div></div>
+        <div class="number num10"><div>10</div></div>
+        <div class="number num11"><div>11</div></div>
+        <div class="number num12"><div>12</div></div>
+
+        <div class="hand hour-hand" id="hourHand"></div>
+        <div class="hand minute-hand" id="minuteHand"></div>
+        <div class="hand second-hand" id="secondHand"></div>
     </div>
 
-    <!-- 메인 컨텐츠 영역 -->
-    <div class="main-container">
-        
-        <!-- 1. 디지털 시계 및 세션 타이머 -->
-        <div class="digital-clock" id="digitalClock">00:00:00</div>
-        <div class="session-info" id="sessionInfo">(세션 남은 시간: <span id="sessionTimer">00:00</span>)</div>
+    <section class="user-card" id="loggedInView" hidden>
+        <h1 id="welcomeText">환영합니다</h1>
 
-        <!-- 2. 아날로그 시계 -->
-        <div class="clock">
-            <!-- 숫자 1~12 -->
-            <div class="number num1"><div>1</div></div>
-            <div class="number num2"><div>2</div></div>
-            <div class="number num3"><div>3</div></div>
-            <div class="number num4"><div>4</div></div>
-            <div class="number num5"><div>5</div></div>
-            <div class="number num6"><div>6</div></div>
-            <div class="number num7"><div>7</div></div>
-            <div class="number num8"><div>8</div></div>
-            <div class="number num9"><div>9</div></div>
-            <div class="number num10"><div>10</div></div>
-            <div class="number num11"><div>11</div></div>
-            <div class="number num12"><div>12</div></div>
-
-            <div class="hand hour-hand" id="hourHand"></div>
-            <div class="hand minute-hand" id="minuteHand"></div>
-            <div class="hand second-hand" id="secondHand"></div>
+        <div class="user-stat">
+            <span>성별 / 나이</span>
+            <strong id="profileDemographics"></strong>
         </div>
-
-        <!-- 3. 로그인 유저 프로필 카드 -->
-        <div class="user-card" id="userCard">
-            <h3 id="cardTitle">환영합니다!</h3>
-            <div class="user-stat"><span>성별/나이:</span><strong id="cardDemographics"></strong></div>
-            <div class="user-stat"><span>신체 정보:</span><strong id="cardBody"></strong></div>
-            <div class="user-stat"><span>나의 목표:</span><strong id="cardGoal"></strong></div>
-            <div class="user-stat"><span>선호 음식:</span><strong id="cardPref"></strong></div>
-            <div class="highlight" id="cardCalories"></div>
+        <div class="user-stat">
+            <span>신체 정보</span>
+            <strong id="profileBody"></strong>
         </div>
-    </div>
-	<!-- 4. 식단 기록 폼 (로그인 시 보임) -->
-        <div class="user-card" id="dietCard" style="margin-top: 20px; display: none; background: #e8f6f3; border: 2px solid #1abc9c;">
-            <h3 style="color: #16a085; border-bottom-color: #1abc9c;">🍽️ 오늘 먹은 식단 기록</h3>
-            
+        <div class="user-stat">
+            <span>목표</span>
+            <strong id="profileGoal"></strong>
+        </div>
+        <div class="user-stat">
+            <span>선호 음식</span>
+            <strong id="profilePreference"></strong>
+        </div>
+        <div class="highlight" id="profileCalories"></div>
+
+        <a class="weight-link" href="weight-tracker.html">
+            체중 변화 그래프 보기
+        </a>
+
+        <button type="button" id="logoutButton">로그아웃</button>
+
+        <section class="diet-card">
+            <h2>오늘 먹은 식단 기록</h2>
+
             <div class="form-group">
-                <label>날짜</label>
+                <label for="dietDate">날짜</label>
                 <input type="date" id="dietDate">
             </div>
-            
-            <div style="display: flex; gap:10px;">
-                <div class="form-group" style="flex:1;">
-                    <label>구분</label>
+
+            <div class="diet-row">
+                <div class="form-group">
+                    <label for="dietMealType">식사 구분</label>
                     <select id="dietMealType">
                         <option value="아침">아침</option>
                         <option value="점심">점심</option>
                         <option value="저녁">저녁</option>
                     </select>
                 </div>
-                <div class="form-group" style="flex:2;">
-                    <label>음식 선택</label>
+
+                <div class="form-group">
+                    <label for="dietFoodId">음식</label>
                     <select id="dietFoodId">
                         <option value="1">닭가슴살</option>
                         <option value="2">현미밥</option>
                         <option value="3">연어 샐러드</option>
                     </select>
                 </div>
-                <div class="form-group" style="flex:1;">
-                    <label>먹은 양</label>
+
+                <div class="form-group">
+                    <label for="dietPortion">섭취량</label>
                     <select id="dietPortion">
-                        <option value="0.5">0.5 인분</option>
-                        <option value="1.0" selected>1 인분</option>
-                        <option value="2.0">2 인분</option>
+                        <option value="0.5">0.5인분</option>
+                        <option value="1" selected>1인분</option>
+                        <option value="2">2인분</option>
                     </select>
                 </div>
             </div>
-            
-            <button class="btn-submit" style="background-color: #1abc9c;" onclick="recordDiet()">식단 저장하기</button>
-        </div>
 
-    <!-- 팝업 모달 1: 로그인 -->
-    <div class="modal-overlay" id="loginModal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('loginModal')">&times;</span>
-            <h2 style="margin-top:0;">로그인</h2>
-            <div class="form-group"><input type="email" id="loginEmail" placeholder="이메일"></div>
-            <div class="form-group"><input type="password" id="loginPassword" placeholder="비밀번호"></div>
-            <button class="btn-submit" style="background-color: #3498db;" onclick="login()">로그인</button>
-        </div>
-    </div>
-
-    <!-- 팝업 모달 2: 회원가입 -->
-    <div class="modal-overlay" id="signupModal">
-        <div class="modal-content" style="width: 500px;">
-            <span class="close-btn" onclick="closeModal('signupModal')">&times;</span>
-            <h2 style="margin-top:0;">회원가입</h2>
-            <div class="form-group"><input type="email" id="regEmail" placeholder="이메일"></div>
-            <div class="form-group"><input type="password" id="regPassword" placeholder="비밀번호"></div>
-            <div class="form-group"><input type="text" id="regName" placeholder="이름"></div>
-            
-            <div style="display: flex; gap:10px; margin-bottom: 15px;">
-                <select id="regGender" style="flex:1;"><option value="남">남성</option><option value="여">여성</option></select>
-                <input type="number" id="regAge" placeholder="나이" style="flex:1;">
-                <input type="number" id="regHeight" placeholder="키(cm)" style="flex:1;">
-                <input type="number" step="0.1" id="regWeight" placeholder="체중(kg)" style="flex:1;">
-            </div>
-
-            <div style="display: flex; gap:10px; margin-bottom: 15px;">
-                <select id="regActivity" style="flex:1;">
-                    <option value="SEDENTARY">운동 거의 안함</option>
-                    <option value="LIGHTLY_ACTIVE">가벼운 활동</option>
-                    <option value="MODERATELY_ACTIVE" selected>보통 활동</option>
-                    <option value="VERY_ACTIVE">많은 활동</option>
-                    <option value="EXTRA_ACTIVE">매우 많은 활동(운동선수 등)</option>
-                </select>
-                <select id="regGoal" style="flex:1;">
-                    <option value="체중감량">체중 감량</option>
-                    <option value="체중유지" selected>체중 유지</option>
-                    <option value="근육량증가">근육량 증가</option>
-                </select>
-                <select id="regPref" style="flex:1;">
-                <option value="한식" selected>한식</option>
-                    <option value="중식">중식</option>
-                    <option value="양식">양식</option>
-                    <option value="일식">일식</option>
-                    <option value="기타">기타</option>
-                </select>
-            </div>
-            <button class="btn-submit" style="background-color: #2ecc71;" onclick="signup()">가입하기</button>
-        </div>
-    </div>
-
+            <button type="button" id="recordDietButton">식단 저장하기</button>
+            <p class="message" id="dietMessage" role="status"></p>
+        </section>
+    </section>
+</main>
 
 <script>
-    const CONTEXT_PATH = '/FoodAdvisor';
-
-    /* ========== 1. 실시간 시계 로직 ========== */
     function updateClock() {
         const now = new Date();
         const hours = now.getHours();
         const minutes = now.getMinutes();
         const seconds = now.getSeconds();
 
-        // 1-1. 디지털 시계 업데이트
-        const ampm = hours >= 12 ? '오후' : '오전';
-        const displayHour = hours % 12 || 12; // 12시간제
-        const hh = String(displayHour).padStart(2, '0');
-        const mm = String(minutes).padStart(2, '0');
-        const ss = String(seconds).padStart(2, '0');
-        document.getElementById('digitalClock').innerText = `${ampm} ${hh}:${mm}:${ss}`;
+        const ampm = hours >= 12 ? "오후" : "오전";
+        const displayHour = hours % 12 || 12;
+        const hh = String(displayHour).padStart(2, "0");
+        const mm = String(minutes).padStart(2, "0");
+        const ss = String(seconds).padStart(2, "0");
 
-        // 1-2. 아날로그 시계 바늘 각도 업데이트
-        const secondDeg = (seconds / 60) * 360;
-        const minuteDeg = (minutes / 60) * 360 + (seconds / 60) * 6;
-        const hourDeg = ((hours % 12) / 12) * 360 + (minutes / 60) * 30;
+        document.getElementById("digitalClock").textContent =
+            `${ampm} ${hh}:${mm}:${ss}`;
 
-        document.getElementById('secondHand').style.transform = `rotate(${secondDeg}deg)`;
-        document.getElementById('minuteHand').style.transform = `rotate(${minuteDeg}deg)`;
-        document.getElementById('hourHand').style.transform = `rotate(${hourDeg}deg)`;
+        document.getElementById("secondHand").style.transform =
+            `rotate(${seconds * 6}deg)`;
+        document.getElementById("minuteHand").style.transform =
+            `rotate(${minutes * 6 + seconds * 0.1}deg)`;
+        document.getElementById("hourHand").style.transform =
+            `rotate(${(hours % 12) * 30 + minutes * 0.5}deg)`;
     }
+
+    updateClock();
     setInterval(updateClock, 1000);
-    updateClock(); // 로딩 즉시 1회 실행
 
-
-    /* ========== 2. 모달(팝업) 제어 로직 ========== */
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-
-    /* ========== 3. 세션 및 API 로직 ========== */
-    let sessionInterval;
-
-    function startSessionTimer(seconds) {
-        clearInterval(sessionInterval);
-        let remain = seconds;
-        sessionInterval = setInterval(() => {
-            if (remain > 0) {
-                remain--;
-                const m = String(Math.floor(remain / 60)).padStart(2, '0');
-                const s = String(remain % 60).padStart(2, '0');
-                document.getElementById('sessionTimer').innerText = `${m}:${s}`;
-            } else {
-                clearInterval(sessionInterval);
-                checkSession(); // 만료 시 리프레시
-            }
-        }, 1000);
+    function localDateString(date = new Date()) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
     }
 
-    async function checkSession() {
-        try {
-            const response = await fetch(`${CONTEXT_PATH}/api/auth/session`);
-            const data = await response.json();
+    document.getElementById("dietDate").value = localDateString();
 
-            if (data.loggedIn) {
-                // 로그인 O: 버튼 숨김, 로그아웃 표시, 세션 타이머 노출
-                document.getElementById('btnOpenLogin').style.display = 'none';
-                document.getElementById('btnOpenSignup').style.display = 'none';
-                document.getElementById('btnLogout').style.display = 'inline-block';
-                document.getElementById('dietCard').style.display = 'block';
-                document.getElementById('sessionInfo').style.display = 'block';
-                startSessionTimer(data.remainingTime);
-
-                // DB 유저 카드 노출
-                const u = data.user;
-                document.getElementById('cardTitle').innerText = `${u.name} 님의 플랜`;
-                document.getElementById('cardDemographics').innerText = `${u.gender}성 / ${u.age}세`;
-                document.getElementById('cardBody').innerText = `${u.heightCm}cm / ${u.weightKg}kg`;
-                document.getElementById('cardGoal').innerText = u.goal;
-                document.getElementById('cardPref').innerText = u.pref;
-                document.getElementById('cardCalories').innerText = `🎯 일일 ${u.targetDailyCalories} kcal`;
-                document.getElementById('userCard').style.display = 'block';
-
-            } else {
-                // 로그인 X: 기본 상태 복구, 세션 타이머 숨김, 유저 카드 숨김
-                clearInterval(sessionInterval);
-                document.getElementById('btnOpenLogin').style.display = 'inline-block';
-                document.getElementById('btnOpenSignup').style.display = 'inline-block';
-                document.getElementById('btnLogout').style.display = 'none';
-                document.getElementById('dietCard').style.display = 'none';
-                document.getElementById('sessionInfo').style.display = 'none';
-                document.getElementById('userCard').style.display = 'none';
-            }
-        } catch (error) { console.error("Session Error:", error); }
-    }
-
-    async function login() {
-        const payload = { email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value };
-        const res = await fetch(`${CONTEXT_PATH}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        
-        if (res.ok) {
-            closeModal('loginModal');
-            checkSession(); 
-        } else {
-            alert('로그인 실패: 이메일과 비밀번호를 확인해주세요.');
-        }
-    }
-
-    async function signup() {
-        const payload = {
-            email: document.getElementById('regEmail').value,
-            password: document.getElementById('regPassword').value,
-            name: document.getElementById('regName').value,
-            gender: document.getElementById('regGender').value,
-            age: parseInt(document.getElementById('regAge').value||0),
-            heightCm: parseFloat(document.getElementById('regHeight').value||0),
-            weightKg: parseFloat(document.getElementById('regWeight').value||0),
-            actLevel: document.getElementById('regActivity').value,
-            goal: document.getElementById('regGoal').value,
-            preferance: document.getElementById('regPref').value
-        };
-        const res = await fetch(`${CONTEXT_PATH}/api/auth/signup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        
-        if(res.ok) {
-            alert('가입 성공! 로그인 해주세요.');
-            closeModal('signupModal');
-            openModal('loginModal');
-        } else { alert('회원가입 실패'); }
-    }
-
-    async function logout() {
-        await fetch(`${CONTEXT_PATH}/api/auth/logout`, { method: 'POST' });
-        checkSession();
-    }
-
-    window.onload = checkSession;
-    
- 	// 기본 날짜를 오늘로 설정하는 로직
-    document.getElementById('dietDate').valueAsDate = new Date();
-
-    // 식단 기록 API 호출 함수
     async function recordDiet() {
+        const message = document.getElementById("dietMessage");
         const payload = {
-            recordDate: document.getElementById('dietDate').value,
-            mealType: document.getElementById('dietMealType').value,
-            foodId: parseInt(document.getElementById('dietFoodId').value),
-            portion: parseFloat(document.getElementById('dietPortion').value)
+            recordDate: document.getElementById("dietDate").value,
+            mealType: document.getElementById("dietMealType").value,
+            foodId: Number(document.getElementById("dietFoodId").value),
+            portion: Number(document.getElementById("dietPortion").value)
         };
 
-        const res = await fetch(`${CONTEXT_PATH}/api/diets/record`, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify(payload) 
-        });
-        
-        if(res.ok) {
-            alert('✅ 성공적으로 내 DB에 식단이 저장되었습니다!');
-        } else {
-            const err = await res.json();
-            alert(`기록 실패: ${err.error}`);
+        try {
+            const response = await fetch("/FoodAdvisor/api/diets/record", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "식단 저장에 실패했습니다.");
+            }
+
+            message.textContent = "식단을 저장했습니다.";
+            message.style.color = "#16856f";
+        } catch (error) {
+            message.textContent =
+                error.message || "백엔드 연결을 확인해 주세요.";
+            message.style.color = "#c0392b";
         }
     }
-</script>
 
+    document.getElementById("recordDietButton")
+        .addEventListener("click", recordDiet);
+</script>
 </body>
 </html>
