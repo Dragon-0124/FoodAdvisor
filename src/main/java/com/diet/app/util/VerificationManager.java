@@ -1,4 +1,4 @@
-package com.diet.app.util;
+		package com.diet.app.util;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

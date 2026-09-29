@@ -116,6 +116,7 @@ public class AuthServlet extends HttpServlet {
         switch (pathInfo) {
             case "/signup" -> handleSignup(body, resp);
             case "/login" -> handleLogin(body, req, resp);
+            case "/find-id" -> handleFindId(body, resp); // 아이디 찾기 라우팅 추가
             case "/password/code" -> handlePasswordCode(body, resp);
             case "/password/reset" -> handlePasswordReset(body, resp);
             case "/withdraw" -> handleWithdraw(req, resp);
@@ -145,7 +146,8 @@ public class AuthServlet extends HttpServlet {
                 user.weightKg(),
                 user.actLevel(),
                 user.goal(),
-                user.preferance(),
+                user.preference(),
+                user.securityQuestion(),
                 targetCalories
         );
 
@@ -175,7 +177,6 @@ public class AuthServlet extends HttpServlet {
             return;
         }
 
-        // 기존 로그인 전 세션을 폐기하고 새 세션을 발급합니다.
         HttpSession oldSession = req.getSession(false);
         if (oldSession != null) {
             oldSession.invalidate();
@@ -186,6 +187,30 @@ public class AuthServlet extends HttpServlet {
         session.setMaxInactiveInterval(1800);
 
         resp.getWriter().write("{\"message\":\"로그인 성공\"}");
+    }
+
+    // ========== 아이디 찾기 처리 로직 ==========
+    private void handleFindId(JsonObject body, HttpServletResponse resp) throws IOException {
+        String name = stringValue(body, "name");
+        String securityQuestion = stringValue(body, "securityQuestion");
+        String securityAnswer = stringValue(body, "securityAnswer");
+
+        if (name == null || name.isBlank() || 
+            securityQuestion == null || securityQuestion.isBlank() || 
+            securityAnswer == null || securityAnswer.isBlank()) {
+            writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "이름, 질문, 답변을 모두 입력해 주세요.");
+            return;
+        }
+
+        // DB에서 이름, 질문, 답변으로 이메일 조회
+        String email = userDAO.findEmailBySecurityInfo(name.trim(), securityQuestion, securityAnswer.trim());
+
+        if (email != null) {
+            String maskedEmail = maskEmail(email);
+            resp.getWriter().write(gson.toJson(Map.of("email", maskedEmail)));
+        } else {
+            writeError(resp, HttpServletResponse.SC_NOT_FOUND, "일치하는 계정을 찾지 못했습니다.");
+        }
     }
 
     private void handlePasswordCode(JsonObject body, HttpServletResponse resp)
@@ -267,6 +292,7 @@ public class AuthServlet extends HttpServlet {
     private static boolean isSupportedPath(String path) {
         return "/signup".equals(path)
                 || "/login".equals(path)
+                || "/find-id".equals(path) // 지원 경로 추가
                 || "/password/code".equals(path)
                 || "/password/reset".equals(path)
                 || "/withdraw".equals(path);
@@ -287,7 +313,7 @@ public class AuthServlet extends HttpServlet {
 
     private static void prepareJsonResponse(HttpServletRequest req,
                                             HttpServletResponse resp) {
-        req.setCharacterEncoding("UTF-8");
+        resp.setCharacterEncoding("UTF-8");
         resp.setContentType("application/json; charset=UTF-8");
         resp.setHeader("Cache-Control", "no-store");
     }
@@ -296,5 +322,19 @@ public class AuthServlet extends HttpServlet {
                                    String message) throws IOException {
         resp.setStatus(status);
         resp.getWriter().write(new Gson().toJson(Map.of("error", message)));
+    }
+
+    // 이메일 앞자리 마스킹 처리 유틸리티
+    private static String maskEmail(String email) {
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 1) return email; 
+        
+        String idPart = email.substring(0, atIndex);
+        String domainPart = email.substring(atIndex);
+        
+        int visibleCount = Math.max(1, (int) Math.ceil(idPart.length() / 2.0));
+        String maskedId = idPart.substring(0, visibleCount) + "*".repeat(idPart.length() - visibleCount);
+        
+        return maskedId + domainPart;
     }
 }

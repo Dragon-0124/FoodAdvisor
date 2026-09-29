@@ -6,8 +6,8 @@ import com.diet.app.dto.UserDTO;
 public class CalBMR {
 
     // 활동량 수준(activity_level)에 따른 승수 반환
-    private static double getActivityMultiplier(String activityLevel) {
-        return switch (activityLevel != null ? activityLevel.toUpperCase() : "SEDENTARY") {
+    private static double getActivityMultiplier(String actLevel) {
+        return switch (actLevel != null ? actLevel.toUpperCase() : "SEDENTARY") {
             case "SEDENTARY" -> 1.2;
             case "MODERATELY_ACTIVE" -> 1.55;
             case "VERY_ACTIVE" -> 1.725;

@@ -15,7 +15,8 @@ public record UserDTO(
 		double weightKg,
 		String actLevel,
 		String goal,
-		String preferance,
+		String preference,
+		String securityQuestion,
 		int targetDailyCalories
 ) {
 	private static final Pattern EMAIL_PATTERN =

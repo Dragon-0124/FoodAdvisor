@@ -7,9 +7,10 @@ import com.diet.app.util.DBConnection;
 public class DietDAO {
 
     // 식단 기록 추가 (DB INSERT: user_id, record_date, meal_type, food_name, portion, total_calories, total_carbs, total_protein, total_fat, total_sugar)
-    public boolean insertDietRecord(String email, DietRequestDTO dto) {
+    @SuppressWarnings("unused")
+	public boolean insertDietRecord(String email, DietRequestDTO dto) {
         var sql = """
-            INSERT INTO USER_DIET_RECORDS (
+            INSERT INTO USER_PERFERENCE (
                 user_id, record_date, meal_type, food_name, portion,
                 total_calories, total_carbs, total_protein, total_fat, total_sugar
             )
@@ -116,7 +117,8 @@ public class DietDAO {
     }
 
     // 식단 기록 수정 (DB UPDATE: WHERE record_id 기준 meal_type, portion, total_calories, total_carbs, total_protein, total_fat, total_sugar 덮어쓰기)
-    public boolean updateDietRecord(Long dietId, String email, DietRequestDTO dto) {
+    @SuppressWarnings("unused")
+	public boolean updateDietRecord(Long dietId, String email, DietRequestDTO dto) {
         String sql = """
             UPDATE USER_DIET_RECORDS r
             JOIN USERS u ON r.user_id = u.user_id

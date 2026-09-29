@@ -33,4 +33,11 @@ public class DBConnection {
             return null;
         }
     }
+    //톰캣 종료 시 커넥션 풀 자원을 해제하는 메서드
+    public static void close() {
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+            System.out.println("✅ [DB] HikariCP 커넥션 풀 정상 종료 완료");
+        }
+    }
 }

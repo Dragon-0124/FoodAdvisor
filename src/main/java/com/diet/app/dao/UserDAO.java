@@ -7,12 +7,12 @@ import com.diet.app.util.PasswordEncoder;
 // 사용자 DB 접근 객체 (회원가입, 로그인, 계정 관리)
 public class UserDAO {
 
-    // 신규 회원가입 (DB INSERT: email, password, name, gender, age, height_cm, weight_kg, activity_level, goal, preferance, target_daily_calories)
+    // 신규 회원가입 (DB INSERT: email, password, name, gender, age, height_cm, weight_kg, actLevel, goal, preference, securityQuestion, target_daily_calories)
     @SuppressWarnings("unused")
 	public boolean insertUser(UserDTO user) {
         var sql = """
-            INSERT INTO USERS (email, password, name, gender, age, height_cm, weight_kg, activity_level, goal, preferance, target_daily_calories)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO USERS (email, password, name, gender, age, height_cm, weight_kg, actLevel, goal, preference,securityQuestion, target_daily_calories)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         try (var conn = DBConnection.getConnection();
@@ -31,8 +31,9 @@ public class UserDAO {
             pstmt.setDouble(7, user.weightKg());
             pstmt.setString(8, user.actLevel() != null ? user.actLevel() : "SEDENTARY");
             pstmt.setString(9, user.goal() != null ? user.goal() : "체중유지");
-            pstmt.setString(10, user.preferance());
-            pstmt.setInt(11, user.targetDailyCalories());
+            pstmt.setString(10, user.preference());
+            pstmt.setString(11, user.securityQuestion());
+            pstmt.setInt(12, user.targetDailyCalories());
 
             var result = pstmt.executeUpdate();
             if (result > 0) {
@@ -117,7 +118,7 @@ public class UserDAO {
         }
     }
 
-    // 회원 정보 조회 (DB SELECT: email 조건으로 user_id, email, name, gender, age, height_cm, weight_kg, activity_level, goal, preferance, target_daily_calories 조회)
+    // 회원 정보 조회 (DB SELECT: email 조건으로 user_id, email, name, gender, age, height_cm, weight_kg, actLevel, goal, preference, securityQuestion, target_daily_calories 조회)
     @SuppressWarnings("unused")
 	public UserDTO getUserByEmail(String email) {
         var sql = "SELECT * FROM USERS WHERE email = ?";
@@ -137,14 +138,37 @@ public class UserDAO {
                         rs.getInt("age"),
                         rs.getDouble("height_cm"),
                         rs.getDouble("weight_kg"),
-                        rs.getString("activity_level"),
+                        rs.getString("actLevel"),
                         rs.getString("goal"),
-                        rs.getString("preferance"),
+                        rs.getString("preference"),
+                        rs.getString("securityQuestion"),
                         rs.getInt("target_daily_calories")
                     );
                 }
             }
         } catch (Exception e) { e.printStackTrace(); }
+        return null;
+    }
+    public String findEmailBySecurityInfo(String name, String question, String answer) {
+        String sql = "SELECT email FROM USERS WHERE name = ? AND security_question = ? AND security_answer = ?";
+        
+        try (var conn = DBConnection.getConnection();
+             var pstmt = conn.prepareStatement(sql)) {
+             
+            if (conn == null) return null;
+            
+            pstmt.setString(1, name);
+            pstmt.setString(2, question);
+            pstmt.setString(3, answer);
+            
+            try (var rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("email");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 }

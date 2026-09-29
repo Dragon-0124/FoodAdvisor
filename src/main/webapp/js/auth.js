@@ -3,6 +3,7 @@ const SESSION_KEY = "foodAdvisor.demo.session.v1";
 const SESSION_LENGTH_MS = 30 * 60 * 1000;
 const HASH_ITERATIONS = 120000;
 
+
 function readUsers() {
     try {
         const value = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
@@ -21,7 +22,7 @@ function toBase64(bytes) {
 }
 
 async function hashValue(value, saltBase64) {
-    if (!window.crypto?.subtle) {
+    if (!window.crypto || !window.crypto.subtle) {
         throw new Error("암호화 기능을 사용할 수 없습니다. localhost에서 열어주세요.");
     }
 
@@ -55,7 +56,7 @@ async function makeSecret(value) {
 }
 
 async function matchesSecret(value, salt, expectedHash) {
-    return await hashValue(value, salt) === expectedHash;
+    return (await hashValue(value, salt)) === expectedHash;
 }
 
 function normalizeAnswer(value) {
@@ -97,6 +98,24 @@ function setMessage(id, text, isError = false) {
     if (!element) return;
     element.textContent = text;
     element.style.color = isError ? "#c0392b" : "#16856f";
+}
+
+function startSessionTimer(seconds) {
+    clearInterval(sessionInterval);
+    let remain = seconds;
+    sessionInterval = setInterval(() => {
+        if (remain > 0) {
+            remain--;
+            const m = String(Math.floor(remain / 60)).padStart(2, '0');
+            const s = String(remain % 60).padStart(2, '0');
+            const timerEl = document.getElementById('sessionTimer');
+            if (timerEl) timerEl.innerText = `${m}:${s}`;
+        } else {
+            clearInterval(sessionInterval);
+            localStorage.removeItem(SESSION_KEY);
+            renderMainPage();
+        }
+    }, 1000);
 }
 
 async function handleSignup(event) {
@@ -170,7 +189,7 @@ async function handleLogin(event) {
         const password = document.getElementById("loginPassword").value;
         const user = readUsers().find(item => item.email === email);
 
-        if (!user || !await matchesSecret(password, user.passwordSalt, user.passwordHash)) {
+        if (!user || !(await matchesSecret(password, user.passwordSalt, user.passwordHash))) {
             setMessage("loginMessage", "이메일 또는 비밀번호를 확인해 주세요.", true);
             return;
         }
@@ -235,7 +254,7 @@ async function handleResetPassword(event) {
         const user = users.find(item => item.email === email);
 
         if (!user || user.securityQuestion !== question
-            || !await matchesSecret(answer, user.answerSalt, user.answerHash)) {
+            || !(await matchesSecret(answer, user.answerSalt, user.answerHash))) {
             setMessage("resetPasswordMessage", "아이디 또는 본인 확인 정보를 확인해 주세요.", true);
             return;
         }
@@ -252,9 +271,16 @@ async function handleResetPassword(event) {
 }
 
 function renderMainPage() {
+    // 기존 View
     const loggedOut = document.getElementById("loggedOutView");
     const loggedIn = document.getElementById("loggedInView");
-    if (!loggedOut || !loggedIn) return;
+    
+    const btnLogin = document.getElementById('btnOpenLogin');
+    const btnSignup = document.getElementById('btnOpenSignup');
+    const btnLogout = document.getElementById('btnLogout');
+    const dietCard = document.getElementById('dietCard');
+    const sessionInfo = document.getElementById('sessionInfo');
+    const userCard = document.getElementById('userCard');
 
     let session;
     try {
@@ -269,34 +295,99 @@ function renderMainPage() {
 
     if (!user) {
         localStorage.removeItem(SESSION_KEY);
-        loggedOut.hidden = false;
-        loggedIn.hidden = true;
+        clearInterval(sessionInterval);
+
+        if (loggedOut) loggedOut.hidden = false;
+        if (loggedIn) loggedIn.hidden = true;
+
+        if (btnLogin) btnLogin.style.display = 'inline-block';
+        if (btnSignup) btnSignup.style.display = 'inline-block';
+        if (btnLogout) btnLogout.style.display = 'none';
+        if (dietCard) dietCard.style.display = 'none';
+        if (sessionInfo) sessionInfo.style.display = 'none';
+        if (userCard) userCard.style.display = 'none';
         return;
     }
 
-    loggedOut.hidden = true;
-    loggedIn.hidden = false;
-    document.getElementById("welcomeText").textContent = `${user.name} 님, 환영합니다`;
-    document.getElementById("profileDemographics").textContent =
-        `${user.gender}성 / ${user.age}세`;
-    document.getElementById("profileBody").textContent =
-        `${user.heightCm}cm / ${user.weightKg}kg`;
-    document.getElementById("profileGoal").textContent = user.goal;
-    document.getElementById("profilePreference").textContent = user.preferance;
-    document.getElementById("profileCalories").textContent =
-        `${user.targetDailyCalories} kcal`;
+    if (loggedOut) loggedOut.hidden = true;
+    if (loggedIn) loggedIn.hidden = false;
+
+    if (btnLogin) btnLogin.style.display = 'none';
+    if (btnSignup) btnSignup.style.display = 'none';
+    if (btnLogout) btnLogout.style.display = 'inline-block';
+    if (dietCard) dietCard.style.display = 'block';
+    if (sessionInfo) sessionInfo.style.display = 'block';
+    if (userCard) userCard.style.display = 'block';
+
+    // 1. 기존 데이터 매핑
+    const welcomeText = document.getElementById("welcomeText");
+    if (welcomeText) welcomeText.textContent = `${user.name} 님, 환영합니다`;
+    
+    const profileDemographics = document.getElementById("profileDemographics");
+    if (profileDemographics) profileDemographics.textContent = `${user.gender}성 / ${user.age}세`;
+    
+    const profileBody = document.getElementById("profileBody");
+    if (profileBody) profileBody.textContent = `${user.heightCm}cm / ${user.weightKg}kg`;
+    
+    const profileGoal = document.getElementById("profileGoal");
+    if (profileGoal) profileGoal.textContent = user.goal;
+    
+    const profilePreference = document.getElementById("profilePreference");
+    if (profilePreference) profilePreference.textContent = user.preferance;
+    
+    const profileCalories = document.getElementById("profileCalories");
+    if (profileCalories) profileCalories.textContent = `${user.targetDailyCalories} kcal`;
+
+    const cardTitle = document.getElementById('cardTitle');
+    if (cardTitle) cardTitle.innerText = `${user.name} 님의 플랜`;
+    
+    const cardDemographics = document.getElementById('cardDemographics');
+    if (cardDemographics) cardDemographics.innerText = `${user.gender}성 / ${user.age}세`;
+    
+    const cardBody = document.getElementById('cardBody');
+    if (cardBody) cardBody.innerText = `${user.heightCm}cm / ${user.weightKg}kg`;
+    
+    const cardGoal = document.getElementById('cardGoal');
+    if (cardGoal) cardGoal.innerText = user.goal;
+    
+    const cardPref = document.getElementById('cardPref');
+    if (cardPref) cardPref.innerText = user.preferance || "미입력";
+    
+    const cardCalories = document.getElementById('cardCalories');
+    if (cardCalories) cardCalories.innerText = `🎯 일일 ${user.targetDailyCalories} kcal`;
+
+    const remainingSeconds = Math.floor((session.expiresAt - Date.now()) / 1000);
+    startSessionTimer(remainingSeconds);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("signupForm")?.addEventListener("submit", handleSignup);
-    document.getElementById("loginForm")?.addEventListener("submit", handleLogin);
-    document.getElementById("findIdForm")?.addEventListener("submit", handleFindId);
-    document.getElementById("resetPasswordForm")?.addEventListener("submit", handleResetPassword);
+    const signupForm = document.getElementById("signupForm");
+    if (signupForm) signupForm.addEventListener("submit", handleSignup);
 
-    document.getElementById("logoutButton")?.addEventListener("click", () => {
-        localStorage.removeItem(SESSION_KEY);
-        renderMainPage();
-    });
+    const loginForm = document.getElementById("loginForm");
+    if (loginForm) loginForm.addEventListener("submit", handleLogin);
+
+    const findIdForm = document.getElementById("findIdForm");
+    if (findIdForm) findIdForm.addEventListener("submit", handleFindId);
+
+    const resetPasswordForm = document.getElementById("resetPasswordForm");
+    if (resetPasswordForm) resetPasswordForm.addEventListener("submit", handleResetPassword);
+
+    const logoutButton = document.getElementById("logoutButton");
+    if (logoutButton) {
+        logoutButton.addEventListener("click", () => {
+            localStorage.removeItem(SESSION_KEY);
+            renderMainPage();
+        });
+    }
+    
+    const btnLogout = document.getElementById('btnLogout');
+    if (btnLogout) {
+        btnLogout.addEventListener("click", () => {
+            localStorage.removeItem(SESSION_KEY);
+            renderMainPage();
+        });
+    }
 
     renderMainPage();
 });

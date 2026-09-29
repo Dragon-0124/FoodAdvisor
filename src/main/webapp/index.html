@@ -334,34 +334,57 @@
 
     document.getElementById("dietDate").value = localDateString();
 
-    async function recordDiet() {
-        const message = document.getElementById("dietMessage");
+    function recordDiet(event) {
+        if (event) event.preventDefault();
+
+        // 1. 로컬 세션 검증
+        let session;
+        try {
+            session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+        } catch {
+            session = null;
+        }
+
+        if (!session || Date.now() >= session.expiresAt) {
+            alert("로그인이 필요합니다.");
+            localStorage.removeItem(SESSION_KEY);
+            renderMainPage();
+            return;
+        }
+
+        // 2. 입력 데이터 가져오기
+        const dateEl = document.getElementById('dietDate');
+        const mealTypeEl = document.getElementById('dietMealType');
+        const foodIdEl = document.getElementById('dietFoodId');
+        const portionEl = document.getElementById('dietPortion');
+
+        if (!dateEl || !mealTypeEl || !foodIdEl || !portionEl) {
+            alert("식단 입력 양식을 찾을 수 없습니다.");
+            return;
+        }
+
         const payload = {
-            recordDate: document.getElementById("dietDate").value,
-            mealType: document.getElementById("dietMealType").value,
-            foodId: Number(document.getElementById("dietFoodId").value),
-            portion: Number(document.getElementById("dietPortion").value)
+            email: session.email,
+            recordDate: dateEl.value,
+            mealType: mealTypeEl.value,
+            foodId: parseInt(foodIdEl.value),
+            portion: parseFloat(portionEl.value),
+            createdAt: Date.now()
         };
 
+        // 3. 로컬 스토리지에 식단 배열로 저장
         try {
-            const response = await fetch("/FoodAdvisor/api/diets/record", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || "식단 저장에 실패했습니다.");
-            }
-
-            message.textContent = "식단을 저장했습니다.";
-            message.style.color = "#16856f";
+            const diets = JSON.parse(localStorage.getItem(DIETS_KEY) || "[]");
+            diets.push(payload);
+            localStorage.setItem(DIETS_KEY, JSON.stringify(diets));
+            
+            alert('✅ 성공적으로 내 DB(로컬 스토리지)에 식단이 저장되었습니다!');
+            
+            // (선택) 저장 후 입력창 초기화
+            foodIdEl.value = "";
+            portionEl.value = "";
         } catch (error) {
-            message.textContent =
-                error.message || "백엔드 연결을 확인해 주세요.";
-            message.style.color = "#c0392b";
+            alert("식단 기록 중 오류가 발생했습니다.");
         }
     }
 
