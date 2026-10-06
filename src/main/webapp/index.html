@@ -183,6 +183,18 @@
             margin-top: 12px;
         }
 
+        .nutrition-preview {
+            margin: 12px 0 20px;
+            padding: 16px;
+            border-radius: 8px;
+            background: #f5f8fa;
+        }
+
+        .nutrition-preview h3 {
+            margin: 0 0 14px;
+            font-size: 16px;
+        }
+
         @media (max-width: 520px) {
             .diet-row {
                 flex-direction: column;
@@ -274,11 +286,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="dietFoodId">음식</label>
-                    <select id="dietFoodId">
-                        <option value="1">닭가슴살</option>
-                        <option value="2">현미밥</option>
-                        <option value="3">연어 샐러드</option>
+                    <label for="foodSearch">음식 검색</label>
+                    <input id="foodSearch" type="search" maxlength="50"
+                           placeholder="음식 이름을 입력하세요">
+                    <button type="button" id="searchFoodButton">음식 검색</button>
+                    <select id="dietFoodId" aria-label="검색된 음식" disabled>
+                        <option value="">먼저 음식을 검색해 주세요</option>
                     </select>
                 </div>
 
@@ -291,6 +304,15 @@
                     </select>
                 </div>
             </div>
+
+            <section class="nutrition-preview" aria-live="polite" aria-atomic="true">
+                <h3 id="nutritionFoodName">음식을 선택하면 영양 정보를 확인할 수 있습니다</h3>
+                <div class="user-stat"><span>칼로리</span><strong id="nutritionCalories">-</strong></div>
+                <div class="user-stat"><span>탄수화물</span><strong id="nutritionCarbs">-</strong></div>
+                <div class="user-stat"><span>단백질</span><strong id="nutritionProtein">-</strong></div>
+                <div class="user-stat"><span>지방</span><strong id="nutritionFat">-</strong></div>
+                <div class="user-stat"><span>당</span><strong id="nutritionSugar">-</strong></div>
+            </section>
 
             <button type="button" id="recordDietButton">식단 저장하기</button>
             <p class="message" id="dietMessage" role="status"></p>
@@ -333,6 +355,115 @@
     }
 
     document.getElementById("dietDate").value = localDateString();
+
+    const foodSearchEl = document.getElementById("foodSearch");
+    const foodSelectEl = document.getElementById("dietFoodId");
+    const portionSelectEl = document.getElementById("dietPortion");
+
+    function formatNutrient(value, unit) {
+        const rounded = Math.round(value * 10) / 10;
+        return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)} ${unit}`;
+    }
+
+    function clearNutritionPreview() {
+        document.getElementById("nutritionFoodName").textContent =
+            "음식을 선택하면 영양 정보를 확인할 수 있습니다";
+        ["Calories", "Carbs", "Protein", "Fat", "Sugar"].forEach(nutrient => {
+            document.getElementById(`nutrition${nutrient}`).textContent = "-";
+        });
+    }
+
+    function updateNutritionPreview() {
+        const selectedFood = foodSelectEl.selectedOptions[0];
+        if (!foodSelectEl.value || !selectedFood) {
+            clearNutritionPreview();
+            return;
+        }
+
+        const portion = Number(portionSelectEl.value);
+        const nutrients = {
+            Calories: [Number(selectedFood.dataset.calories), "kcal"],
+            Carbs: [Number(selectedFood.dataset.carbs), "g"],
+            Protein: [Number(selectedFood.dataset.protein), "g"],
+            Fat: [Number(selectedFood.dataset.fat), "g"],
+            Sugar: [Number(selectedFood.dataset.sugar), "g"]
+        };
+
+        document.getElementById("nutritionFoodName").textContent =
+            `${selectedFood.textContent} · ${portion}인분`;
+        Object.entries(nutrients).forEach(([name, [amount, unit]]) => {
+            document.getElementById(`nutrition${name}`).textContent =
+                formatNutrient(amount * portion, unit);
+        });
+    }
+
+    async function searchFoods() {
+        const keyword = foodSearchEl.value.trim();
+        const messageEl = document.getElementById("dietMessage");
+        if (!keyword) {
+            messageEl.textContent = "검색할 음식 이름을 입력해 주세요.";
+            messageEl.style.color = "#c0392b";
+            foodSearchEl.focus();
+            return;
+        }
+
+        const searchButton = document.getElementById("searchFoodButton");
+        searchButton.disabled = true;
+        messageEl.textContent = "음식 정보를 불러오는 중입니다.";
+        messageEl.style.color = "#607d8b";
+        foodSelectEl.disabled = true;
+        foodSelectEl.replaceChildren(new Option("검색 중...", ""));
+        clearNutritionPreview();
+
+        try {
+            const response = await fetch(
+                `api/foods?keyword=${encodeURIComponent(keyword)}`,
+                { headers: { Accept: "application/json" } }
+            );
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.error || "음식 검색에 실패했습니다.");
+            }
+
+            foodSelectEl.replaceChildren();
+            if (result.length === 0) {
+                foodSelectEl.add(new Option("검색 결과가 없습니다", ""));
+                messageEl.textContent = "검색 결과가 없습니다. 다른 음식 이름을 입력해 주세요.";
+                messageEl.style.color = "#c0392b";
+                return;
+            }
+
+            foodSelectEl.add(new Option("음식을 선택해 주세요", ""));
+            result.forEach(food => {
+                const option = new Option(food.name, food.foodId);
+                option.dataset.calories = food.avgCalories;
+                option.dataset.carbs = food.carbs_g;
+                option.dataset.protein = food.protein_g;
+                option.dataset.fat = food.fat_g;
+                option.dataset.sugar = food.sugar_g;
+                foodSelectEl.add(option);
+            });
+            foodSelectEl.disabled = false;
+            messageEl.textContent = `${result.length}개의 음식을 찾았습니다.`;
+            messageEl.style.color = "#16856f";
+        } catch (error) {
+            foodSelectEl.replaceChildren(new Option("음식을 검색해 주세요", ""));
+            messageEl.textContent = error.message || "음식 정보를 불러오지 못했습니다.";
+            messageEl.style.color = "#c0392b";
+        } finally {
+            searchButton.disabled = false;
+        }
+    }
+
+    document.getElementById("searchFoodButton").addEventListener("click", searchFoods);
+    foodSearchEl.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            searchFoods();
+        }
+    });
+    foodSelectEl.addEventListener("change", updateNutritionPreview);
+    portionSelectEl.addEventListener("change", updateNutritionPreview);
 
     function recordDiet(event) {
         if (event) event.preventDefault();

@@ -25,6 +25,7 @@
 * **`DietServlet.java`**: 식단 CRUD 및 통계 API
 * 식단 기록 등록/수정/삭제 (`/api/diets/record`, `/update`, `/delete`)
 * 일일 영양소 요약 및 기간별(주간/월간) 통계 조회 (`/daily`, `/stats`)
+* **`FoodServlet.java`**: 음식 이름 검색 API (`GET /api/foods?keyword=닭가슴살`)
 
 
 
@@ -62,3 +63,6 @@
 * **`USERS`**: 사용자 개인정보, 신체 데이터, 계정 정보 및 산출된 목표 칼로리(`target_daily_calories`) 저장.
 * **`FOODS`**: 공용 식품 영양 DB 및 사용자 직접 등록(Custom) 식품 데이터 보관.
 * **`USER_DIET_RECORDS`**: 사용자별/날짜별/식사유형별 섭취 기록 저장. (수정 시 `FOODS` 데이터를 참조하여 부분 영양소 재계산 처리)
+
+홈 화면의 식단 입력에서 음식 이름을 검색하면 `FOODS` 테이블의 영양정보를 불러옵니다.
+음식과 0.5인분·1인분·2인분을 선택하면 칼로리, 탄수화물, 단백질, 지방, 당 섭취량을 비례해 표시합니다.

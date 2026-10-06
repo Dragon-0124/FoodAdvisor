@@ -2,6 +2,7 @@ const USERS_KEY = "foodAdvisor.demo.users.v1";
 const SESSION_KEY = "foodAdvisor.demo.session.v1";
 const SESSION_LENGTH_MS = 30 * 60 * 1000;
 const HASH_ITERATIONS = 120000;
+let sessionInterval;
 
 
 function readUsers() {

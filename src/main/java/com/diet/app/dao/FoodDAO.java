@@ -75,14 +75,18 @@ public class FoodDAO {
     }
     
     // 음식 검색 페이징 처리 (DB SELECT: name 조건 및 LIMIT, OFFSET 적용하여 food_id, name, avg_calories, carbs_g, protein_g, fat_g, sugar_g 조회)
-    public List<FoodDTO> searchFoodByNamePaged(String keyword, int page, int pageSize) {
+    public List<FoodDTO> searchFoodByNamePaged(String keyword, int page, int pageSize) throws SQLException {
         List<FoodDTO> foodList = new ArrayList<>();
         int offset = (page - 1) * pageSize;
         String sql = "SELECT * FROM foods WHERE name LIKE ? ORDER BY name LIMIT ? OFFSET ?";
 
-        try (Connection conn = DBConnection.getConnection();
+        Connection connection = DBConnection.getConnection();
+        if (connection == null) {
+            throw new SQLException("음식 데이터베이스에 연결할 수 없습니다.");
+        }
+
+        try (Connection conn = connection;
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
             pstmt.setString(1, "%" + keyword + "%");
             pstmt.setInt(2, pageSize);
             pstmt.setInt(3, offset);
@@ -96,7 +100,7 @@ public class FoodDAO {
                     ));
                 }
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        }
         return foodList;
     }
 
