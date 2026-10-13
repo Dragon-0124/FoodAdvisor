@@ -148,6 +148,7 @@ public class AuthServlet extends HttpServlet {
                 user.goal(),
                 user.preference(),
                 user.securityQuestion(),
+                user.securityAnswer(),
                 targetCalories
         );
 

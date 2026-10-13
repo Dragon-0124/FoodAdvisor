@@ -103,21 +103,4 @@ public class FoodDAO {
         }
         return foodList;
     }
-
-    // 커스텀 식품 직접 등록 (DB INSERT: name, avg_calories, carbs_g, protein_g, fat_g, sugar_g, user_id, is_custom)
-    public boolean insertCustomFood(Long userId, FoodDTO food) {
-        String sql = "INSERT INTO foods (name, avg_calories, carbs_g, protein_g, fat_g, sugar_g, user_id, is_custom) VALUES (?, ?, ?, ?, ?, ?, ?, 1)";
-        
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, food.name());
-            pstmt.setInt(2, food.avgCalories());
-            pstmt.setDouble(3, food.carbs_g());
-            pstmt.setDouble(4, food.protein_g());
-            pstmt.setDouble(5, food.fat_g());
-            pstmt.setDouble(6, food.sugar_g());
-            pstmt.setLong(7, userId);
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
-    }
 }
