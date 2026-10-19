@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>푸드바이저 메인 화면</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            background: #f3f6f8;
+            color: #263238;
+            font-family: "Malgun Gothic", sans-serif;
+        }
+
+        .container {
+            width: min(1100px, 100%);
+            margin: 0 auto;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .topbar h1 {
+            margin: 0;
+            font-size: 27px;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button,
+        .link-button {
+            padding: 10px 14px;
+            border: 0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .primary-button {
+            color: white;
+            background: #2878c7;
+        }
+
+        .secondary-button {
+            color: #34434c;
+            background: #e8eef2;
+        }
+
+        .week-card,
+        .panel,
+        .meal-card,
+        .chart-card {
+            padding: 20px;
+            border-radius: 14px;
+            background: white;
+            box-shadow: 0 3px 12px rgba(30, 50, 70, 0.07);
+        }
+
+        .week-card {
+            margin-bottom: 20px;
+        }
+
+        .week-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .week-heading h2 {
+            margin: 0;
+            font-size: 19px;
+        }
+
+        .week-label-year,
+        .date-title-year {
+            display: block;
+            color: #34245d;
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1.25;
+        }
+
+        .week-label-range,
+        .date-title-detail {
+            display: block;
+            margin-top: 4px;
+            color: #6f6388;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .week-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .week-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .day-button {
+            min-height: 66px;
+            padding: 8px 4px;
+            border: 1px solid #e0e7eb;
+            border-radius: 9px;
+            background: #fff;
+            color: #34434c;
+            cursor: pointer;
+        }
+
+        .day-button span {
+            display: block;
+        }
+
+        .day-button .day-name {
+            margin-bottom: 5px;
+            color: #71808a;
+            font-size: 12px;
+        }
+
+        .day-button.selected {
+            border-color: #2878c7;
+            color: #fff;
+            background: #2878c7;
+        }
+
+        .day-button.selected .day-name {
+            color: #eaf4ff;
+        }
+
+        .date-title {
+            margin: 0 0 18px;
+            font-size: 20px;
+            line-height: 1.3;
+        }
+
+        .meals {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .meal-card h3 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0 0 14px;
+            font-size: 18px;
+        }
+
+        .meal-list {
+            min-height: 100px;
+        }
+
+        .food-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 9px 0;
+            border-bottom: 1px solid #edf0f2;
+            font-size: 14px;
+        }
+
+        .food-row button {
+            padding: 3px 7px;
+            color: #b34b4b;
+            background: #fff0f0;
+            font-size: 12px;
+        }
+
+        .meal-empty {
+            padding: 20px 0;
+            color: #87949b;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .meal-total {
+            margin-top: 12px;
+            color: #53636d;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .meal-add {
+            width: 100%;
+            margin-top: 12px;
+            color: #2878c7;
+            background: #edf6ff;
+        }
+
+        .daily-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 18px;
+            padding: 18px 20px;
+            border-radius: 12px;
+            color: #145c48;
+            background: #e8f6f1;
+            font-size: 17px;
+            font-weight: bold;
+        }
+
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .chart-card h2 {
+            margin: 0 0 6px;
+            font-size: 19px;
+        }
+
+        .chart-description {
+            margin: 0 0 12px;
+            color: #71808a;
+            font-size: 13px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 250px;
+        }
+
+        .note {
+            margin-top: 12px;
+            color: #71808a;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        dialog {
+            width: min(420px, calc(100% - 28px));
+            padding: 24px;
+            border: 0;
+            border-radius: 14px;
+            box-shadow: 0 8px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        dialog::backdrop {
+            background: rgba(20, 30, 40, 0.45);
+        }
+
+        dialog h2 {
+            margin-top: 0;
+        }
+
+        .form-field {
+            margin-bottom: 14px;
+        }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .form-field input,
+        .form-field select {
+            width: 100%;
+            min-height: 42px;
+            padding: 9px;
+            border: 1px solid #ccd5dc;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        .meal-entry-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .meal-entry-column {
+            min-width: 0;
+            padding: 14px;
+            border: 1px solid #e7e1f2;
+            border-radius: 12px;
+            background: #fbfaff;
+        }
+
+        .meal-entry-column h3 {
+            margin: 0 0 12px;
+            color: #5e3ea8;
+            font-size: 16px;
+        }
+
+        .meal-entry-column .form-field {
+            margin-bottom: 10px;
+        }
+
+        .meal-entry-column .form-field:last-child {
+            margin-bottom: 0;
+        }
+
+        .meal-entry-column label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .meal-entry-column input, .meal-entry-column select {
+            width: 100%;
+            min-width: 0;
+            min-height: 40px;
+            padding: 8px;
+            border: 1px solid #ccd5dc;
+            border-radius: 7px;
+            font-size: 14px;
+            background: #fff;
+        }
+        .food-name-wrap { position: relative; }
+        .food-suggestions { position:absolute; z-index:30; top:calc(100% + 4px); left:0; right:0; display:none; max-height:220px; overflow:auto; background:#fff; border:1px solid #ddd2f7; border-radius:10px; box-shadow:0 10px 25px rgba(50,30,90,.14); }
+        .food-suggestions.open { display:block; }
+        .food-suggestion { display:flex; justify-content:space-between; gap:8px; width:100%; border:0; border-radius:0; background:#fff; color:#33264a; text-align:left; padding:10px 12px; cursor:pointer; }
+        .food-suggestion:hover,.food-suggestion.active { background:#f2edff; }
+        .food-suggestion small { color:#776a91; white-space:nowrap; }
+        .food-help { margin:5px 0 0; color:#827790; font-size:11px; line-height:1.45; }
+        .calorie-result { background:#f5f1ff!important; color:#5d3aa8; font-weight:700; }
+
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        @media (max-width: 760px) {
+            .meal-entry-grid {
+                grid-template-columns: 1fr;
+            }
+
+            body {
+                padding: 14px;
+            }
+
+            .meals,
+            .charts {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                align-items: flex-start;
+            }
+
+            .topbar h1 {
+                font-size: 22px;
+            }
+
+            .week-days {
+                gap: 4px;
+            }
+
+            .day-button {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 450px) {
+            .topbar {
+                flex-direction: column;
+            }
+
+            .top-actions {
+                width: 100%;
+            }
+
+            .top-actions button,
+            .top-actions a {
+                flex: 1;
+                text-align: center;
+            }
+
+            .week-card,
+            .panel,
+            .meal-card,
+            .chart-card {
+                padding: 15px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="css/style.css">
+
+    <style id="foodadvisor-violet-theme">
+      :root{--violet:#7856d8;--violet-dark:#6240c2;--lavender:#f0eaff;--page:#f7f5fc;--ink:#29243a;--muted:#827d91;--stroke:#ece8f5}
+      body{background:var(--page)!important;color:var(--ink)!important;font-family:Inter,"Pretendard","Noto Sans KR",system-ui,-apple-system,sans-serif!important}
+      .container,.main-container{max-width:1120px}
+      .week-card,.panel,.meal-card,.chart-card,.user-card,.diet-card,.stat-card,.summary-card{border:1px solid var(--stroke)!important;border-radius:22px!important;background:#fff!important;box-shadow:0 10px 30px rgba(70,48,120,.06)!important}
+      .topbar h1,h1,h2,h3{color:var(--ink);letter-spacing:-.035em}
+      button,.link-button,.primary-button{border-radius:13px!important;transition:transform .16s,box-shadow .16s,background .16s}
+      .primary-button,button.primary-button,button[type=submit],.weight-link{background:linear-gradient(135deg,#8564e7,#6d4bd0)!important;color:#fff!important;box-shadow:0 7px 17px rgba(109,75,208,.18)}
+      .primary-button:hover,.weight-link:hover,button[type=submit]:hover{background:#6240c2!important;transform:translateY(-1px)}
+      .secondary-button{background:#f1edfa!important;color:#5d4a8f!important}
+      input,select,textarea{border:1px solid #e5def2!important;border-radius:12px!important;background:#fcfbff!important;color:var(--ink)!important}
+      input:focus,select:focus,textarea:focus{outline:none;border-color:#8a6be2!important;box-shadow:0 0 0 4px rgba(120,86,216,.13)!important}
+      a{color:#6d4bd0}
+      .week-day.active,.active,.selected{background:#7856d8!important;color:#fff!important;border-color:#7856d8!important}
+      .highlight{background:#f0eaff!important;color:#6240c2!important}
+      .user-stat{border-color:#ece8f5!important}
+      table th{background:#f7f4fd!important;color:#675c80!important}
+      @media(max-width:650px){body{padding:14px!important}.topbar{align-items:flex-start;flex-wrap:wrap}.top-actions{flex-wrap:wrap}}
+    </style>
+
+</head>
+
+<body>
+<main class="container">
+    <header class="topbar">
+        <h1>식단 관리 대시보드</h1>
+
+        <div class="top-actions">
+            <a class="link-button secondary-button" href="weight-tracker.html">
+                신체 변화 그래프
+            </a>
+
+            <button class="secondary-button" id="openFoodEntry" type="button">
+                오늘의 식단 입력
+            </button>
+
+            <button class="third-button" id="logoutButton" type="button">
+                로그아웃
+            </button>
+        </div>
+    </header>
+
+    <section class="week-card">
+        <div class="week-heading">
+            <h2 id="weekLabel">이번 주</h2>
+            <div class="week-controls">
+                <button class="secondary-button" id="previousWeek" type="button">이전 주</button>
+                <button class="secondary-button" id="nextWeek" type="button">다음 주</button>
+            </div>
+        </div>
+        <div class="week-days" id="weekDays"></div>
+    </section>
+
+    <section class="panel">
+        <h2 class="date-title" id="selectedDateTitle"></h2>
+        <div class="meals" id="meals"></div>
+
+        <div class="daily-total">
+            <span>하루 총 섭취 칼로리</span>
+            <span id="dailyCalories">0 kcal</span>
+        </div>
+    </section>
+
+    <section class="charts">
+        <article class="chart-card">
+            <h2>주간 칼로리 그래프</h2>
+            <p class="chart-description">날짜별 총 섭취량 (kcal)</p>
+            <canvas id="calorieChart"></canvas>
+        </article>
+
+        <article class="chart-card">
+            <h2>체중 변화 그래프</h2>
+            <p class="chart-description">저장한 측정 기록 (kg)</p>
+            <canvas id="weightChart"></canvas>
+            <p class="note">
+                체중 기록은 브라우저에 저장된 신체 기록을 불러옵니다.
+                기록이 없다면 <strong>신체 기록</strong> 페이지에서 입력해 주세요.
+            </p>
+        </article>
+    </section>
+</main>
+
+<dialog id="foodDialog" style="width:min(900px, calc(100% - 28px)); border:0; border-radius:18px; padding:24px; box-shadow:0 20px 60px rgba(35,20,65,.22);">
+    <form id="foodForm">
+        <h2 id="foodDialogTitle" style="margin:0 0 8px;">오늘의 식단 입력</h2>
+        <p id="foodDialogDescription" style="margin:0 0 18px; color:#746b82; font-size:14px;">아침·점심·저녁을 한 번에 입력할 수 있어요. 입력하지 않은 식사는 건너뜁니다.</p>
+
+        <div class="form-field" style="margin-bottom:18px;">
+            <label for="foodDate">날짜</label>
+            <input id="foodDate" type="date" required style="width:100%; min-height:42px; padding:9px; border:1px solid #ccd5dc; border-radius:7px; font-size:15px;">
+        </div>
+
+        <div class="meal-entry-grid">
+            <section class="meal-entry-column" data-meal="아침">
+                <h3>아침</h3>
+                <div class="form-field"><label for="breakfastName">음식 이름</label><div class="food-name-wrap"><input id="breakfastName" class="food-name-input" data-prefix="breakfast" type="text" maxlength="60" placeholder="음식 이름 검색" autocomplete="off" aria-autocomplete="list" aria-expanded="false"><div class="food-suggestions" id="breakfastSuggestions" role="listbox"></div></div><p class="food-help">음식 이름 입력 후 Tab으로 첫 후보 적용</p></div>
+                <div class="form-field"><label for="breakfastAmountMode">입력 방식</label><select id="breakfastAmountMode" class="amount-mode"><option value="grams">그램(g)</option><option value="servings">인분</option></select></div>
+                <div class="form-field"><label for="breakfastAmount">먹은 양</label><input id="breakfastAmount" class="food-amount" type="number" min="0.1" step="0.1" placeholder="예: 200"></div>
+                <div class="form-field serving-grams-field" id="breakfastServingWrap" hidden><label for="breakfastServingGrams">1인분 기준 (g)</label><input id="breakfastServingGrams" class="serving-grams" type="number" min="0.1" step="0.1" placeholder="예: 150"><p class="food-help">DB에 기준이 없으므로 직접 입력</p></div>
+                <div class="form-field"><label for="breakfastCalories">계산된 열량 (kcal)</label><input id="breakfastCalories" class="calorie-result" type="number" min="0" step="1" placeholder="음식 선택 후 자동 계산" readonly></div>
+            </section>
+            <section class="meal-entry-column" data-meal="점심">
+                <h3>점심</h3>
+                <div class="form-field"><label for="lunchName">음식 이름</label><div class="food-name-wrap"><input id="lunchName" class="food-name-input" data-prefix="lunch" type="text" maxlength="60" placeholder="음식 이름 검색" autocomplete="off" aria-autocomplete="list" aria-expanded="false"><div class="food-suggestions" id="lunchSuggestions" role="listbox"></div></div><p class="food-help">음식 이름 입력 후 Tab으로 첫 후보 적용</p></div>
+                <div class="form-field"><label for="lunchAmountMode">입력 방식</label><select id="lunchAmountMode" class="amount-mode"><option value="grams">그램(g)</option><option value="servings">인분</option></select></div>
+                <div class="form-field"><label for="lunchAmount">먹은 양</label><input id="lunchAmount" class="food-amount" type="number" min="0.1" step="0.1" placeholder="예: 200"></div>
+                <div class="form-field serving-grams-field" id="lunchServingWrap" hidden><label for="lunchServingGrams">1인분 기준 (g)</label><input id="lunchServingGrams" class="serving-grams" type="number" min="0.1" step="0.1" placeholder="예: 150"><p class="food-help">DB에 기준이 없으므로 직접 입력</p></div>
+                <div class="form-field"><label for="lunchCalories">계산된 열량 (kcal)</label><input id="lunchCalories" class="calorie-result" type="number" min="0" step="1" placeholder="음식 선택 후 자동 계산" readonly></div>
+            </section>
+            <section class="meal-entry-column" data-meal="저녁">
+                <h3>저녁</h3>
+                <div class="form-field"><label for="dinnerName">음식 이름</label><div class="food-name-wrap"><input id="dinnerName" class="food-name-input" data-prefix="dinner" type="text" maxlength="60" placeholder="음식 이름 검색" autocomplete="off" aria-autocomplete="list" aria-expanded="false"><div class="food-suggestions" id="dinnerSuggestions" role="listbox"></div></div><p class="food-help">음식 이름 입력 후 Tab으로 첫 후보 적용</p></div>
+                <div class="form-field"><label for="dinnerAmountMode">입력 방식</label><select id="dinnerAmountMode" class="amount-mode"><option value="grams">그램(g)</option><option value="servings">인분</option></select></div>
+                <div class="form-field"><label for="dinnerAmount">먹은 양</label><input id="dinnerAmount" class="food-amount" type="number" min="0.1" step="0.1" placeholder="예: 200"></div>
+                <div class="form-field serving-grams-field" id="dinnerServingWrap" hidden><label for="dinnerServingGrams">1인분 기준 (g)</label><input id="dinnerServingGrams" class="serving-grams" type="number" min="0.1" step="0.1" placeholder="예: 150"><p class="food-help">DB에 기준이 없으므로 직접 입력</p></div>
+                <div class="form-field"><label for="dinnerCalories">계산된 열량 (kcal)</label><input id="dinnerCalories" class="calorie-result" type="number" min="0" step="1" placeholder="음식 선택 후 자동 계산" readonly></div>
+            </section>
+        </div>
+        <p class="food-help" style="margin:14px 0 0; font-size:12px;">※ 음식 후보는 학교 DB API 연동 후 표시됩니다. DB의 100g당 평균 열량을 기준으로 자동 계산합니다.</p>
+        <div class="dialog-actions">
+            <button class="secondary-button" id="cancelFood" type="button">취소</button>
+            <button class="primary-button" type="submit">입력한 식단 저장</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="js/food-service.js"></script>
+<script>
+    const MEAL_STORAGE_KEY = "foodAdvisor.dashboardMeals.v1";
+    const BODY_STORAGE_KEY = "foodAdvisor.bodyMetrics.v1";
+
+    const mealNames = ["아침", "점심", "저녁"];
+    let selectedDate = localDateString(new Date());
+    let weekOffset = 0;
+    let dialogMealMode = "all";
+
+    function localDateString(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    function dateFromString(value) {
+        const [year, month, day] = value.split("-").map(Number);
+        return new Date(year, month - 1, day);
+    }
+
+    function loadMeals() {
+        try {
+            const data = JSON.parse(localStorage.getItem(MEAL_STORAGE_KEY) || "[]");
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            console.error("식단 기록을 읽지 못했습니다.", error);
+            return [];
+        }
+    }
+
+    function saveMeals(records) {
+        localStorage.setItem(MEAL_STORAGE_KEY, JSON.stringify(records));
+    }
+
+    function getWeekDates() {
+        const date = dateFromString(selectedDate);
+        const day = date.getDay();
+        const mondayOffset = day === 0 ? -6 : 1 - day;
+        const monday = new Date(date);
+        monday.setDate(date.getDate() + mondayOffset + weekOffset * 7);
+
+        return Array.from({ length: 7 }, (_, index) => {
+            const current = new Date(monday);
+            current.setDate(monday.getDate() + index);
+            return current;
+        });
+    }
+
+    function renderWeek() {
+        const dates = getWeekDates();
+        const labels = ["월", "화", "수", "목", "금", "토", "일"];
+        const weekDays = document.getElementById("weekDays");
+
+        weekDays.replaceChildren();
+
+        dates.forEach((date, index) => {
+            const dateString = localDateString(date);
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "day-button";
+            if (dateString === selectedDate) {
+                button.classList.add("selected");
+            }
+
+            const dayName = document.createElement("span");
+            dayName.className = "day-name";
+            dayName.textContent = labels[index];
+
+            const dayNumber = document.createElement("span");
+            dayNumber.textContent = `${date.getMonth() + 1}/${date.getDate()}`;
+
+            button.append(dayName, dayNumber);
+            button.addEventListener("click", () => {
+                selectedDate = dateString;
+                weekOffset = 0;
+                render();
+            });
+
+            weekDays.appendChild(button);
+        });
+
+        const first = dates[0];
+        const last = dates[6];
+        const weekLabel = document.getElementById("weekLabel");
+        weekLabel.replaceChildren();
+        const yearLine = document.createElement("span");
+        yearLine.className = "week-label-year";
+        yearLine.textContent = `${first.getFullYear()}년`;
+        const rangeLine = document.createElement("span");
+        rangeLine.className = "week-label-range";
+        rangeLine.textContent = `${first.getMonth() + 1}/${first.getDate()} ~ ${last.getMonth() + 1}/${last.getDate()}`;
+        weekLabel.append(yearLine, rangeLine);
+    }
+
+    function renderMeals() {
+        const mealsContainer = document.getElementById("meals");
+        mealsContainer.replaceChildren();
+
+        const allRecords = loadMeals();
+        const dailyRecords = allRecords.filter(record => record.date === selectedDate);
+        let dailyTotal = 0;
+
+        mealNames.forEach(mealName => {
+            const card = document.createElement("article");
+            card.className = "meal-card";
+
+            const heading = document.createElement("h3");
+            heading.textContent = mealName;
+
+            const list = document.createElement("div");
+            list.className = "meal-list";
+
+            const mealRecords = dailyRecords.filter(record => record.meal === mealName);
+
+            if (mealRecords.length === 0) {
+                const empty = document.createElement("div");
+                empty.className = "meal-empty";
+                empty.textContent = "등록된 음식이 없습니다.";
+                list.appendChild(empty);
+            } else {
+                mealRecords.forEach(record => {
+                    dailyTotal += Number(record.calories) || 0;
+
+                    const row = document.createElement("div");
+                    row.className = "food-row";
+
+                    const food = document.createElement("span");
+                    food.textContent = record.name;
+
+                    const right = document.createElement("span");
+                    right.textContent = `${Number(record.calories)} kcal `;
+
+                    const deleteButton = document.createElement("button");
+                    deleteButton.type = "button";
+                    deleteButton.textContent = "삭제";
+                    deleteButton.addEventListener("click", () => deleteMeal(record.id));
+
+                    right.appendChild(deleteButton);
+                    row.append(food, right);
+                    list.appendChild(row);
+                });
+            }
+
+            const total = mealRecords.reduce(
+                (sum, record) => sum + (Number(record.calories) || 0),
+                0
+            );
+
+            const mealTotal = document.createElement("div");
+            mealTotal.className = "meal-total";
+            mealTotal.textContent = `합계 ${total} kcal`;
+
+            const addButton = document.createElement("button");
+            addButton.type = "button";
+            addButton.className = "meal-add";
+            addButton.textContent = `${mealName} 식단 추가`;
+            addButton.addEventListener("click", () => openFoodDialog(mealName));
+
+            card.append(heading, list, mealTotal, addButton);
+            mealsContainer.appendChild(card);
+        });
+
+        const date = dateFromString(selectedDate);
+        const selectedDateTitle = document.getElementById("selectedDateTitle");
+        selectedDateTitle.replaceChildren();
+        const dateYearLine = document.createElement("span");
+        dateYearLine.className = "date-title-year";
+        dateYearLine.textContent = `${date.getFullYear()}년`;
+        const dateDetailLine = document.createElement("span");
+        dateDetailLine.className = "date-title-detail";
+        dateDetailLine.textContent = `${date.getMonth() + 1}/${date.getDate()} 식단`;
+        selectedDateTitle.append(dateYearLine, dateDetailLine);
+
+        document.getElementById("dailyCalories").textContent =
+            `${dailyTotal} kcal`;
+
+        renderCalorieChart();
+    }
+
+    function openFoodDialog(mealName = null) {
+        dialogMealMode = mealName || "all";
+        document.getElementById("foodDate").value = selectedDate;
+        ["breakfastName", "breakfastAmountMode", "breakfastAmount", "breakfastServingGrams", "breakfastCalories", "lunchName", "lunchAmountMode", "lunchAmount", "lunchServingGrams", "lunchCalories", "dinnerName", "dinnerAmountMode", "dinnerAmount", "dinnerServingGrams", "dinnerCalories"].forEach(id => {
+            document.getElementById(id).value = "";
+        });
+        document.querySelectorAll(".amount-mode").forEach(select => select.value = "grams");
+        document.querySelectorAll(".food-suggestions").forEach(list => list.classList.remove("open"));
+        document.querySelectorAll(".serving-grams-field").forEach(field => field.hidden = true);
+
+        const isSingleMeal = Boolean(mealName);
+        document.getElementById("foodDialogTitle").textContent = isSingleMeal
+            ? `${mealName} 식단 추가`
+            : "오늘의 식단 입력";
+        document.getElementById("foodDialogDescription").textContent = isSingleMeal
+            ? `${mealName} 식단만 입력할 수 있어요.`
+            : "아침·점심·저녁을 한 번에 입력할 수 있어요. 입력하지 않은 식사는 건너뜁니다.";
+        document.querySelectorAll(".meal-entry-column[data-meal]").forEach(section => {
+            section.hidden = isSingleMeal && section.dataset.meal !== mealName;
+        });
+
+        const mealFields = {
+            "아침": "breakfastName",
+            "점심": "lunchName",
+            "저녁": "dinnerName"
+        };
+        if (mealName && mealFields[mealName]) document.getElementById(mealFields[mealName]).focus();
+        document.getElementById("foodDialog").showModal();
+    }
+
+    function deleteMeal(id) {
+        saveMeals(loadMeals().filter(record => record.id !== id));
+        render();
+    }
+
+    // Food autocomplete + calorie calculator. Food lookup is isolated in js/food-service.js.
+    const foodUiState = new Map();
+    function closeFoodSuggestions(input) {
+        const list = document.getElementById(input.dataset.prefix + "Suggestions");
+        list.classList.remove("open");
+        input.setAttribute("aria-expanded", "false");
+        foodUiState.delete(input.id);
+    }
+    function chooseFood(input, food) {
+        input.value = food.name;
+        input.dataset.selectedFood = JSON.stringify(food);
+        closeFoodSuggestions(input);
+        updateFoodCalories(input.dataset.prefix);
+        const prefix = input.dataset.prefix;
+        document.getElementById(prefix + "Amount").focus();
+    }
+    function showFoodSuggestions(input, foods) {
+        const list = document.getElementById(input.dataset.prefix + "Suggestions");
+        list.replaceChildren();
+        if (!foods.length) { closeFoodSuggestions(input); return; }
+        foodUiState.set(input.id, { foods, active: 0 });
+        foods.forEach((food, index) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "food-suggestion" + (index === 0 ? " active" : "");
+            button.setAttribute("role", "option");
+            const name = document.createElement("span"); name.textContent = food.name;
+            const kcal = document.createElement("small"); kcal.textContent = `${food.kcalPer100g} kcal / 100g`;
+            button.append(name, kcal);
+            button.addEventListener("mousedown", event => { event.preventDefault(); chooseFood(input, food); });
+            list.appendChild(button);
+        });
+        list.classList.add("open"); input.setAttribute("aria-expanded", "true");
+    }
+    document.querySelectorAll(".food-name-input").forEach(input => {
+        input.addEventListener("input", async () => {
+            delete input.dataset.selectedFood;
+            document.getElementById(input.dataset.prefix + "Calories").value = "";
+            const query = input.value.trim();
+            if (!query) { closeFoodSuggestions(input); return; }
+            try { showFoodSuggestions(input, await FoodService.searchFoods(query)); }
+            catch (error) { closeFoodSuggestions(input); console.error("음식 검색 오류", error); }
+        });
+        input.addEventListener("keydown", event => {
+            const state = foodUiState.get(input.id);
+            if (!state) return;
+            if (event.key === "Tab" && !event.shiftKey) {
+                event.preventDefault();
+                chooseFood(input, state.foods[state.active] || state.foods[0]);
+            } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                event.preventDefault();
+                state.active = (state.active + (event.key === "ArrowDown" ? 1 : -1) + state.foods.length) % state.foods.length;
+                const list = document.getElementById(input.dataset.prefix + "Suggestions");
+                [...list.children].forEach((el, i) => el.classList.toggle("active", i === state.active));
+                list.children[state.active]?.scrollIntoView({ block: "nearest" });
+            } else if (event.key === "Escape") closeFoodSuggestions(input);
+        });
+        input.addEventListener("blur", () => setTimeout(() => closeFoodSuggestions(input), 100));
+    });
+    document.querySelectorAll(".amount-mode").forEach(select => select.addEventListener("change", () => {
+        const prefix = select.id.replace("AmountMode", "");
+        document.getElementById(prefix + "ServingWrap").hidden = select.value !== "servings";
+        updateFoodCalories(prefix);
+    }));
+    document.querySelectorAll(".food-amount, .serving-grams").forEach(input => input.addEventListener("input", () => {
+        const prefix = input.id.replace("Amount", "").replace("ServingGrams", "");
+        updateFoodCalories(prefix);
+    }));
+    function updateFoodCalories(prefix) {
+        const nameInput = document.getElementById(prefix + "Name");
+        let food = null;
+        try { food = nameInput.dataset.selectedFood ? JSON.parse(nameInput.dataset.selectedFood) : null; } catch {}
+        const mode = document.getElementById(prefix + "AmountMode").value;
+        const amount = Number(document.getElementById(prefix + "Amount").value);
+        const servingGrams = Number(document.getElementById(prefix + "ServingGrams").value);
+        const grams = mode === "servings" ? amount * servingGrams : amount;
+        const output = document.getElementById(prefix + "Calories");
+        output.value = food && amount > 0 && grams > 0 ? Math.round((grams * Number(food.kcalPer100g) / 100) * 10) / 10 : "";
+    }
+
+    document.getElementById("foodForm").addEventListener("submit", event => {
+        event.preventDefault();
+
+        const entries = ["아침", "점심", "저녁"].map((meal, index) => {
+            const prefix = ["breakfast", "lunch", "dinner"][index];
+            const nameInput = document.getElementById(prefix + "Name");
+            const food = nameInput.dataset.selectedFood ? JSON.parse(nameInput.dataset.selectedFood) : null;
+            return {
+                meal,
+                name: nameInput.value.trim(),
+                caloriesText: document.getElementById(prefix + "Calories").value,
+                calories: Number(document.getElementById(prefix + "Calories").value),
+                amount: Number(document.getElementById(prefix + "Amount").value),
+                amountMode: document.getElementById(prefix + "AmountMode").value,
+                servingGrams: Number(document.getElementById(prefix + "ServingGrams").value),
+                foodId: food?.id ?? null,
+                grams: document.getElementById(prefix + "AmountMode").value === "servings"
+                    ? Number(document.getElementById(prefix + "Amount").value) * Number(document.getElementById(prefix + "ServingGrams").value)
+                    : Number(document.getElementById(prefix + "Amount").value)
+            };
+        });
+
+        const activeEntries = dialogMealMode === "all"
+            ? entries
+            : entries.filter(item => item.meal === dialogMealMode);
+        const filled = activeEntries.filter(item => item.name || item.caloriesText !== "" || item.amount > 0);
+        if (filled.length === 0) {
+            alert("아침, 점심, 저녁 중 최소 한 끼의 음식 이름과 칼로리를 입력해 주세요.");
+            return;
+        }
+        if (filled.some(item => !item.name || !item.foodId || !Number.isFinite(item.calories) || item.calories < 0 || !(item.amount > 0) || !(item.grams > 0) || (item.amountMode === "servings" && !(item.servingGrams > 0)))) {
+            alert("음식 자동완성 후보를 선택하고 먹은 양을 입력해 주세요. 인분 방식은 1인분 기준 g 수도 필요합니다.");
+            return;
+        }
+
+        const records = loadMeals();
+        const date = document.getElementById("foodDate").value;
+        filled.forEach(item => records.push({
+            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            date,
+            meal: item.meal,
+            name: item.name,
+            calories: item.calories,
+            amount: item.amount,
+            amountMode: item.amountMode,
+            grams: item.grams,
+            foodId: item.foodId
+        }));
+
+        saveMeals(records);
+        selectedDate = date;
+        document.getElementById("foodDialog").close();
+        render();
+    });
+
+    document.getElementById("cancelFood").addEventListener("click", () => {
+        document.getElementById("foodDialog").close();
+    });
+
+    function moveWeek(amount) {
+        const date = dateFromString(selectedDate);
+        date.setDate(date.getDate() + amount * 7);
+        selectedDate = localDateString(date);
+        weekOffset = 0;
+        render();
+    }
+
+    document.getElementById("previousWeek").addEventListener("click", () => moveWeek(-1));
+    document.getElementById("nextWeek").addEventListener("click", () => moveWeek(1));
+    document.getElementById("openFoodEntry").addEventListener("click", () => openFoodDialog());
+
+    function drawLineChart(canvasId, points, color, unit, emptyText) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext("2d");
+        const rect = canvas.getBoundingClientRect();
+        const ratio = window.devicePixelRatio || 1;
+
+        canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+        canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+        const width = rect.width;
+        const height = rect.height;
+        ctx.clearRect(0, 0, width, height);
+
+        if (points.length === 0) {
+            ctx.fillStyle = "#71808a";
+            ctx.font = "14px Malgun Gothic, sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(emptyText, width / 2, height / 2);
+            return;
+        }
+
+        const padding = { top: 20, right: 18, bottom: 42, left: 55 };
+        const plotWidth = width - padding.left - padding.right;
+        const plotHeight = height - padding.top - padding.bottom;
+        const values = points.map(point => point.value);
+
+        let minValue = Math.min(...values);
+        let maxValue = Math.max(...values);
+
+        if (minValue === maxValue) {
+            minValue -= 1;
+            maxValue += 1;
+        } else {
+            const margin = (maxValue - minValue) * 0.15;
+            minValue -= margin;
+            maxValue += margin;
+        }
+
+        const x = index => points.length === 1
+            ? padding.left + plotWidth / 2
+            : padding.left + index / (points.length - 1) * plotWidth;
+
+        const y = value =>
+            padding.top + (maxValue - value) / (maxValue - minValue) * plotHeight;
+
+        ctx.font = "11px Malgun Gothic, sans-serif";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+
+        for (let index = 0; index <= 4; index++) {
+            const value = maxValue - (maxValue - minValue) * index / 4;
+            const lineY = padding.top + plotHeight * index / 4;
+
+            ctx.beginPath();
+            ctx.strokeStyle = "#e8edf0";
+            ctx.moveTo(padding.left, lineY);
+            ctx.lineTo(width - padding.right, lineY);
+            ctx.stroke();
+
+            ctx.fillStyle = "#71808a";
+            ctx.fillText(`${value.toFixed(0)}${unit}`, padding.left - 7, lineY);
+        }
+
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+
+        points.forEach((point, index) => {
+            if (index === 0) {
+                ctx.moveTo(x(index), y(point.value));
+            } else {
+                ctx.lineTo(x(index), y(point.value));
+            }
+        });
+
+        ctx.stroke();
+
+        points.forEach((point, index) => {
+            ctx.beginPath();
+            ctx.fillStyle = "#fff";
+            ctx.arc(x(index), y(point.value), 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = color;
+            ctx.stroke();
+
+            ctx.fillStyle = "#71808a";
+            ctx.font = "11px Malgun Gothic, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.fillText(point.label, x(index), height - padding.bottom + 12);
+        });
+    }
+
+    function renderCalorieChart() {
+        const dates = getWeekDates();
+        const allRecords = loadMeals();
+
+        const points = dates.map(date => {
+            const dateString = localDateString(date);
+            const calories = allRecords
+                .filter(record => record.date === dateString)
+                .reduce((sum, record) => sum + (Number(record.calories) || 0), 0);
+
+            return {
+                label: `${date.getMonth() + 1}/${date.getDate()}`,
+                value: calories
+            };
+        });
+
+        drawLineChart(
+            "calorieChart",
+            points,
+            "#7856d8",
+            " kcal",
+            "식단 기록을 추가하면 그래프가 표시됩니다."
+        );
+    }
+
+    function renderWeightChart() {
+        let records = [];
+
+        try {
+            const saved = JSON.parse(localStorage.getItem(BODY_STORAGE_KEY) || "[]");
+            if (Array.isArray(saved)) {
+                records = saved
+                    .filter(record => record && Number.isFinite(Number(record.weight)))
+                    .sort((a, b) => a.date.localeCompare(b.date))
+                    .map(record => ({
+                        label: record.date.slice(5),
+                        value: Number(record.weight)
+                    }));
+            }
+        } catch (error) {
+            console.error("체중 기록을 읽지 못했습니다.", error);
+        }
+
+        drawLineChart(
+            "weightChart",
+            records,
+            "#9a82e8",
+            " kg",
+            "체중 기록이 없습니다."
+        );
+    }
+
+    // Preview mode: do not require a server session while building the UI.
+    // Replace this handler with the confirmed backend logout API during integration.
+    document.getElementById("logoutButton").addEventListener("click", () => {
+        localStorage.removeItem("foodAdvisor.demo.session.v1");
+        window.location.href = "login.html";
+    });
+
+    function render() {
+        renderWeek();
+        renderMeals();
+        renderWeightChart();
+    }
+
+    window.addEventListener("resize", render);
+    render();
+</script>
+    <script src="js/ui-effects.js" defer></script>
+</body>
+</html>
