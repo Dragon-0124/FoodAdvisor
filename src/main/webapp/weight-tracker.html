@@ -196,12 +196,34 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="css/style.css">
+
+    <style id="foodadvisor-violet-theme">
+      :root{--violet:#7856d8;--violet-dark:#6240c2;--lavender:#f0eaff;--page:#f7f5fc;--ink:#29243a;--muted:#827d91;--stroke:#ece8f5}
+      body{background:var(--page)!important;color:var(--ink)!important;font-family:Inter,"Pretendard","Noto Sans KR",system-ui,-apple-system,sans-serif!important}
+      .container,.main-container{max-width:1120px}
+      .week-card,.panel,.meal-card,.chart-card,.user-card,.diet-card,.stat-card,.summary-card{border:1px solid var(--stroke)!important;border-radius:22px!important;background:#fff!important;box-shadow:0 10px 30px rgba(70,48,120,.06)!important}
+      .topbar h1,h1,h2,h3{color:var(--ink);letter-spacing:-.035em}
+      button,.link-button,.primary-button{border-radius:13px!important;transition:transform .16s,box-shadow .16s,background .16s}
+      .primary-button,button.primary-button,button[type=submit],.weight-link{background:linear-gradient(135deg,#8564e7,#6d4bd0)!important;color:#fff!important;box-shadow:0 7px 17px rgba(109,75,208,.18)}
+      .primary-button:hover,.weight-link:hover,button[type=submit]:hover{background:#6240c2!important;transform:translateY(-1px)}
+      .secondary-button{background:#f1edfa!important;color:#5d4a8f!important}
+      input,select,textarea{border:1px solid #e5def2!important;border-radius:12px!important;background:#fcfbff!important;color:var(--ink)!important}
+      input:focus,select:focus,textarea:focus{outline:none;border-color:#8a6be2!important;box-shadow:0 0 0 4px rgba(120,86,216,.13)!important}
+      a{color:#6d4bd0}
+      .week-day.active,.active,.selected{background:#7856d8!important;color:#fff!important;border-color:#7856d8!important}
+      .highlight{background:#f0eaff!important;color:#6240c2!important}
+      .user-stat{border-color:#ece8f5!important}
+      table th{background:#f7f4fd!important;color:#675c80!important}
+      @media(max-width:650px){body{padding:14px!important}.topbar{align-items:flex-start;flex-wrap:wrap}.top-actions{flex-wrap:wrap}}
+    </style>
+
 </head>
 <body>
 <main class="container">
     <header>
         <h1>신체 변화 기록</h1>
-        <a class="back-link" href="index.html">메인으로</a>
+        <a class="back-link" href="dashboard.html">메인 화면으로</a>
     </header>
 
     <section class="card">
@@ -482,8 +504,8 @@
             tableBody.appendChild(row);
         });
 
-        drawChart("weightChart", records, "weight", "#2878c7", " kg");
-        drawChart("muscleChart", records, "muscle", "#19a783", " kg");
+        drawChart("weightChart", records, "weight", "#7856d8", " kg");
+        drawChart("muscleChart", records, "muscle", "#9a82e8", " kg");
         drawChart("bodyFatChart", records, "bodyFat", "#e27845", "%");
     }
 
@@ -569,5 +591,6 @@
     dateInput.value = getLocalDateString();
     render();
 </script>
+    <script src="js/ui-effects.js" defer></script>
 </body>
-</html>
+</html>
