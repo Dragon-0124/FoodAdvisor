@@ -18,8 +18,8 @@ public class UserDAO {
     public boolean insertUser(UserDTO user) {
         final String insertUserSql = """
             INSERT INTO users (email, password, name, gender, age, height_cm, weight_kg,
-                               securityQuestion, target_daily_calories)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                               activity_level, securityQuestion, target_daily_calories)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         try (Connection conn = DBConnection.getConnection()) {
@@ -35,8 +35,9 @@ public class UserDAO {
                 pstmt.setInt(5, user.age());
                 pstmt.setDouble(6, user.heightCm());
                 pstmt.setDouble(7, user.weightKg());
-                pstmt.setString(8, packSecurity(user.securityQuestion(), user.securityAnswer()));
-                pstmt.setInt(9, user.targetDailyCalories());
+                pstmt.setString(8, user.actLevel());
+                pstmt.setString(9, packSecurity(user.securityQuestion(), user.securityAnswer()));
+                pstmt.setInt(10, user.targetDailyCalories());
 
                 if (pstmt.executeUpdate() == 0) return false;
 
@@ -171,11 +172,11 @@ public class UserDAO {
     }
 
     // 회원 정보 조회 (users + user_preferences 의 첫 번째 선호 category)
-    // actLevel, goal, securityAnswer 는 DB 에 저장되지 않으므로 null 로 반환합니다.
+    // goal, securityAnswer 는 DB 에 저장되지 않으므로 null 로 반환합니다.
     public UserDTO getUserByEmail(String email) {
         final String sql = """
             SELECT u.user_id, u.email, u.name, u.gender, u.age, u.height_cm, u.weight_kg,
-                   u.securityQuestion, u.target_daily_calories,
+                   u.activity_level, u.securityQuestion, u.target_daily_calories,
                    (SELECT p.category FROM user_preferences p
                      WHERE p.user_id = u.user_id AND p.category IS NOT NULL
                      ORDER BY p.preference_id LIMIT 1) AS preference
@@ -200,7 +201,7 @@ public class UserDAO {
                             rs.getInt("age"),
                             rs.getDouble("height_cm"),
                             rs.getDouble("weight_kg"),
-                            null,
+                            rs.getString("activity_level"),
                             null,
                             rs.getString("preference"),
                             unpackQuestion(rs.getString("securityQuestion")),

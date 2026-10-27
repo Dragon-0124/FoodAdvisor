@@ -218,12 +218,97 @@
       @media(max-width:650px){body{padding:14px!important}.topbar{align-items:flex-start;flex-wrap:wrap}.top-actions{flex-wrap:wrap}}
     </style>
 
+    <!-- 레이아웃 + 반응형 (PC > 1024px, 태블릿 641~1024px, 모바일 <= 640px). 버튼 모양은 css/style.css 공통 규칙을 따릅니다. -->
+    <style id="weight-ui-system">
+      /* style.css 의 .card 는 로그인 카드용(최대 480px, 'FOOD ADVISOR' 라벨) → 이 페이지에서는 해제 */
+      .container .card { width:auto; margin:0 0 20px; padding:24px; border:1px solid var(--stroke)!important; border-radius:22px!important; box-shadow:0 10px 30px rgba(70,48,120,.06)!important; }
+      .container .card::before { display:none; }
+
+      body { padding:28px!important; }
+      header { flex-wrap:wrap; }
+      .header-actions { display:flex; flex-wrap:wrap; gap:8px; }
+      h1 { font-size:28px; }
+      .card h2 { font-size:19px; }
+
+      /* 입력: 측정값 4칸 + 저장 버튼을 한 줄에 */
+      .input-grid { grid-template-columns:repeat(4, minmax(0, 1fr)) minmax(120px, auto); gap:12px; }
+      label { font-size:13px; font-weight:700; color:#39334c; }
+      input { min-height:46px!important; padding:10px 12px!important; font-size:15px; }
+      .save-button { width:100%; min-height:46px!important; padding:0 20px!important; border-radius:12px!important; white-space:nowrap; }
+
+      /* 그래프: PC 3열 */
+      .charts { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; margin-bottom:20px; }
+      .charts .card { margin:0; padding:20px; }
+      canvas { height:220px; }
+
+      /* 예측 카드 */
+      .forecast-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+      .forecast-head h2 { margin:0!important; }
+      .forecast-range { display:inline-flex; padding:4px; border-radius:12px; background:#f1edfa; }
+      .forecast-range button { min-height:34px; padding:0 16px; border:0; border-radius:9px!important; background:transparent; color:#6f6388; font-size:14px; font-weight:700; cursor:pointer; }
+      .forecast-range button[aria-pressed="true"] { background:#fff; color:#5d3aa8; box-shadow:0 2px 8px rgba(70,48,120,.12); }
+      .forecast-summary { margin:0 0 14px; color:#3d3550; font-size:15px; line-height:1.55; }
+      .forecast-summary strong { color:#5d3aa8; }
+      .forecast-stats { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; margin-bottom:12px; }
+      .forecast-stats[hidden] { display:none; }
+      .forecast-stats div { display:flex; flex-direction:column; gap:2px; padding:14px 16px; border-radius:14px; background:#f7f4fd; }
+      .forecast-stats span { color:#746b82; font-size:13px; }
+      .forecast-stats strong { color:#2f2445; font-size:18px; font-variant-numeric:tabular-nums; }
+      .forecast-stats small { color:#827790; font-size:12px; }
+      .forecast-stats .is-down { color:#2f7a57; }
+      .forecast-stats .is-up { color:#b8532c; }
+      .forecast-basis { margin:0; color:#746b82; font-size:13px; line-height:1.6; }
+      .forecast-card .hint { margin-top:8px; font-size:12px; color:#9a91a9; }
+
+      /* 기록 표 */
+      th { font-size:13px; }
+      td { font-size:14px; }
+      .clear-button { margin-top:14px; }
+
+      /* ---------- 태블릿 ---------- */
+      @media (max-width:1024px) {
+        body { padding:20px!important; }
+        .input-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+        .input-grid .save-button { grid-column:1 / -1; }
+        .charts { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+        .charts .card:last-child { grid-column:1 / -1; }
+      }
+
+      /* ---------- 모바일 ---------- */
+      @media (max-width:640px) {
+        body { padding:14px!important; }
+        header { flex-direction:column; align-items:stretch; gap:12px; margin-bottom:16px; }
+        .header-actions { display:grid; grid-template-columns:1fr 1fr; }
+        header .link-button { width:100%; }
+        h1 { font-size:22px; }
+        .container .card { padding:16px; border-radius:18px!important; }
+        .input-grid > div:first-child { grid-column:1 / -1; }  /* 날짜는 한 줄 전체 */
+        .charts { grid-template-columns:1fr; }
+        .charts .card { padding:16px; }
+        .forecast-stats { gap:6px; }
+        .forecast-stats div { padding:10px; }
+        .forecast-stats strong { font-size:14px; white-space:nowrap; letter-spacing:-.03em; }
+        .forecast-range { width:100%; }
+        .forecast-range button { flex:1; }
+        canvas { height:200px; }
+        table { white-space:normal; }  /* 표 머리글 줄바꿈 허용 → 가로 스크롤 없이 5칸이 들어가게 */
+        th, td { padding:9px 4px; font-size:12px; word-break:keep-all; }
+        .clear-button { width:100%; }
+      }
+      @media (max-width:380px) {
+        .input-grid { grid-template-columns:1fr; }
+      }
+    </style>
+
 </head>
 <body>
 <main class="container">
     <header>
         <h1>신체 변화 기록</h1>
-        <a class="back-link" href="dashboard.html">메인 화면으로</a>
+        <div class="header-actions">
+            <a class="link-button secondary-button" href="dashboard.html">메인 화면으로</a>
+            <a class="link-button secondary-button" href="exercise.html">운동 기록</a>
+        </div>
     </header>
 
     <section class="card">
@@ -260,22 +345,45 @@
         </p>
     </section>
 
+    <!-- 현재 식습관·운동량이 유지될 때의 예측 (서버 BodyForecast). 아래 그래프에 점선으로 이어서 그립니다 -->
+    <section class="card forecast-card" id="forecastCard">
+        <div class="forecast-head">
+            <h2>앞으로의 변화 예측</h2>
+            <div class="forecast-range" role="group" aria-label="예측 기간">
+                <button type="button" data-days="30">30일</button>
+                <button type="button" data-days="60" aria-pressed="true">60일</button>
+                <button type="button" data-days="90">90일</button>
+            </div>
+        </div>
+        <p class="forecast-summary" id="forecastSummary">예측을 계산하는 중입니다…</p>
+        <div class="forecast-stats" id="forecastStats" hidden>
+            <div><span>체중</span><strong id="forecastWeight">-</strong><small id="forecastWeightRange"></small></div>
+            <div><span>체지방률</span><strong id="forecastBodyFat">-</strong><small id="forecastBodyFatNote"></small></div>
+            <div><span>골격근량</span><strong id="forecastMuscle">-</strong><small id="forecastMuscleNote"></small></div>
+        </div>
+        <p class="forecast-basis" id="forecastBasis"></p>
+        <p class="hint">
+            최근 식단·운동 기록이 그대로 유지된다고 가정한 대략적인 추정이며 의학적 진단이 아닙니다.
+            음식 기록이 빠진 날이 많거나 수분 변화가 크면 실제와 달라질 수 있어요.
+        </p>
+    </section>
+
     <section class="charts">
         <article class="card chart-card">
             <h2>체중 변화</h2>
-            <p class="chart-description">단위: kg</p>
+            <p class="chart-description">단위: kg · 실선 실제 · 점선 예측</p>
             <canvas id="weightChart" aria-label="날짜별 체중 그래프"></canvas>
         </article>
 
         <article class="card chart-card">
             <h2>골격근량 변화</h2>
-            <p class="chart-description">단위: kg</p>
+            <p class="chart-description">단위: kg · 실선 실제 · 점선 예측</p>
             <canvas id="muscleChart" aria-label="날짜별 골격근량 그래프"></canvas>
         </article>
 
         <article class="card chart-card">
             <h2>체지방률 변화</h2>
-            <p class="chart-description">단위: %</p>
+            <p class="chart-description">단위: % · 실선 실제 · 점선 예측</p>
             <canvas id="bodyFatChart" aria-label="날짜별 체지방률 그래프"></canvas>
         </article>
     </section>
@@ -299,15 +407,21 @@
         <div id="emptyMessage" class="empty-message" hidden>
             아직 저장된 기록이 없습니다.
         </div>
-        <button class="clear-button" id="clearAllButton" type="button">
+        <button class="outline-button clear-button" id="clearAllButton" type="button">
             모든 기록 삭제
         </button>
     </section>
 </main>
 
+<script src="js/api.js"></script>
+<script src="js/data-adapter.js"></script>
 <script>
-    const STORAGE_KEY = "foodAdvisor.bodyMetrics.v1";
+    const api = window.FoodAdvisorApi;
+    const appData = window.FoodAdvisorData;
     const fields = ["weight", "muscle", "bodyFat"];
+
+    // 서버(DB)에서 불러온 신체 기록 캐시입니다. (날짜 오름차순)
+    let bodyRecords = [];
 
     const form = document.getElementById("recordForm");
     const dateInput = document.getElementById("recordDate");
@@ -322,46 +436,30 @@
         return `${year}-${month}-${day}`;
     }
 
-    function loadRecords() {
+    // 서버에서 신체 기록을 다시 불러와 화면을 그립니다. 기록이 바뀌면 예측도 다시 계산합니다.
+    async function refresh() {
         try {
-            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-
-            if (!Array.isArray(saved)) {
-                return [];
-            }
-
-            return saved
-                .filter(record => record && /^\d{4}-\d{2}-\d{2}$/.test(record.date))
-                .map(record => ({
-                    date: record.date,
-                    weight: isValidStoredValue(record.weight) ? Number(record.weight) : null,
-                    muscle: isValidStoredValue(record.muscle) ? Number(record.muscle) : null,
-                    bodyFat: isValidStoredValue(record.bodyFat) ? Number(record.bodyFat) : null
-                }))
-                .filter(record => fields.some(field => record[field] !== null))
-                .sort((a, b) => a.date.localeCompare(b.date));
+            bodyRecords = (await appData.getBodyMetrics())
+                .filter(record => fields.some(field => record[field] !== null));
         } catch (error) {
-            console.error("기록을 불러오지 못했습니다.", error);
-            return [];
+            api.handleError(error, "신체 기록을 불러오지 못했습니다.");
+            return;
         }
-    }
-
-    function isValidStoredValue(value) {
-        return value !== null &&
-            value !== undefined &&
-            value !== "" &&
-            Number.isFinite(Number(value)) &&
-            Number(value) > 0;
-    }
-
-    function saveRecords(records) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        render();
+        await loadForecast();
     }
 
     function formatValue(value) {
         return value === null ? "-" : Number(value).toFixed(1);
     }
 
+    // 날짜 문자열 -> 일 단위 숫자 (그래프 x축을 실제 날짜 간격으로 그리기 위함)
+    function dayNumber(dateString) {
+        const [year, month, day] = dateString.split("-").map(Number);
+        return Date.UTC(year, month - 1, day) / 86400000;
+    }
+
+    // 실제 기록(실선) + 예측(점선, 체중은 오차 범위 음영)을 한 그래프에 그립니다.
     function drawChart(canvasId, records, field, color, unit) {
         const canvas = document.getElementById(canvasId);
         const ctx = canvas.getContext("2d");
@@ -376,11 +474,20 @@
         const height = rect.height;
         ctx.clearRect(0, 0, width, height);
 
-        const points = records
+        const actual = records
             .filter(record => record[field] !== null)
-            .map(record => ({ date: record.date, value: record[field] }));
+            .map(record => ({ day: dayNumber(record.date), date: record.date, value: record[field] }));
+        const predicted = forecast && forecast.available
+            ? forecast.points
+                .filter(point => point[field] !== null && point[field] !== undefined)
+                .map(point => ({
+                    day: dayNumber(point.date), date: point.date, value: point[field],
+                    low: field === "weight" ? point.weightLow : null,
+                    high: field === "weight" ? point.weightHigh : null
+                }))
+            : [];
 
-        if (points.length === 0) {
+        if (actual.length === 0 && predicted.length === 0) {
             ctx.fillStyle = "#71808a";
             ctx.font = "14px Malgun Gothic, sans-serif";
             ctx.textAlign = "center";
@@ -388,89 +495,233 @@
             return;
         }
 
-        const padding = { top: 20, right: 18, bottom: 42, left: 48 };
+        const padding = { top: 22, right: 18, bottom: 42, left: 52 };
         const plotWidth = width - padding.left - padding.right;
         const plotHeight = height - padding.top - padding.bottom;
 
-        const values = points.map(point => point.value);
+        const days = [...actual, ...predicted].map(point => point.day);
+        const minDay = Math.min(...days);
+        const maxDay = Math.max(...days);
+        const values = [
+            ...actual.map(point => point.value),
+            ...predicted.flatMap(point => [point.value, point.low, point.high]).filter(value => value !== null)
+        ];
         let minValue = Math.min(...values);
         let maxValue = Math.max(...values);
-
-        if (minValue === maxValue) {
-            minValue -= 1;
-            maxValue += 1;
+        if (maxValue - minValue < 1) {
+            const middle = (maxValue + minValue) / 2;
+            minValue = middle - 1;
+            maxValue = middle + 1;
         } else {
             const margin = (maxValue - minValue) * 0.15;
             minValue -= margin;
             maxValue += margin;
         }
 
-        const x = index => points.length === 1
+        const x = day => maxDay === minDay
             ? padding.left + plotWidth / 2
-            : padding.left + (index / (points.length - 1)) * plotWidth;
+            : padding.left + ((day - minDay) / (maxDay - minDay)) * plotWidth;
+        const y = value => padding.top + ((maxValue - value) / (maxValue - minValue)) * plotHeight;
 
-        const y = value =>
-            padding.top + ((maxValue - value) / (maxValue - minValue)) * plotHeight;
-
+        // 눈금
         ctx.font = "11px Malgun Gothic, sans-serif";
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
-
         for (let i = 0; i <= 4; i++) {
             const value = maxValue - ((maxValue - minValue) * i / 4);
             const lineY = padding.top + (plotHeight * i / 4);
-
             ctx.beginPath();
             ctx.strokeStyle = "#e8edf0";
             ctx.lineWidth = 1;
             ctx.moveTo(padding.left, lineY);
             ctx.lineTo(width - padding.right, lineY);
             ctx.stroke();
-
             ctx.fillStyle = "#71808a";
             ctx.fillText(`${value.toFixed(1)}${unit}`, padding.left - 7, lineY);
         }
 
-        ctx.beginPath();
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
-
-        points.forEach((point, index) => {
-            if (index === 0) {
-                ctx.moveTo(x(index), y(point.value));
-            } else {
-                ctx.lineTo(x(index), y(point.value));
+        if (predicted.length) {
+            // 오차 범위 음영 (체중: 음식 기록 ±10%)
+            const band = predicted.filter(point => point.low !== null && point.high !== null);
+            if (band.length > 1) {
+                ctx.beginPath();
+                band.forEach((point, index) => index === 0 ? ctx.moveTo(x(point.day), y(point.high)) : ctx.lineTo(x(point.day), y(point.high)));
+                [...band].reverse().forEach(point => ctx.lineTo(x(point.day), y(point.low)));
+                ctx.closePath();
+                ctx.fillStyle = color + "1f";
+                ctx.fill();
             }
-        });
 
-        ctx.stroke();
+            // 오늘 표시선
+            const todayX = x(predicted[0].day);
+            ctx.beginPath();
+            ctx.setLineDash([3, 4]);
+            ctx.strokeStyle = "#c9bfe0";
+            ctx.lineWidth = 1;
+            ctx.moveTo(todayX, padding.top - 6);
+            ctx.lineTo(todayX, height - padding.bottom);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = "#8a7fa3";
+            ctx.textAlign = todayX > width - 60 ? "right" : "center";
+            ctx.textBaseline = "bottom";
+            ctx.fillText("오늘", todayX, padding.top - 8);
+        }
 
-        points.forEach((point, index) => {
+        // 실제 기록 (실선)
+        if (actual.length) {
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            actual.forEach((point, index) => index === 0 ? ctx.moveTo(x(point.day), y(point.value)) : ctx.lineTo(x(point.day), y(point.value)));
+            ctx.stroke();
+        }
+
+        // 예측 (점선): 마지막 실제 기록에서 이어서 그립니다.
+        if (predicted.length) {
+            const start = actual.length ? actual[actual.length - 1] : predicted[0];
+            ctx.beginPath();
+            ctx.setLineDash([7, 6]);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.5;
+            ctx.moveTo(x(start.day), y(start.value));
+            predicted.forEach(point => ctx.lineTo(x(point.day), y(point.value)));
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            const end = predicted[predicted.length - 1];
             ctx.beginPath();
             ctx.fillStyle = "#fff";
-            ctx.arc(x(index), y(point.value), 5, 0, Math.PI * 2);
+            ctx.arc(x(end.day), y(end.value), 4, 0, Math.PI * 2);
             ctx.fill();
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 2;
             ctx.strokeStyle = color;
             ctx.stroke();
-        });
+            ctx.fillStyle = color;
+            ctx.font = "bold 12px Malgun Gothic, sans-serif";
+            ctx.textAlign = "right";
+            ctx.textBaseline = "bottom";
+            ctx.fillText(`${end.value.toFixed(1)}${unit}`, x(end.day) - 6, y(end.value) - 6);
+            ctx.font = "11px Malgun Gothic, sans-serif";
+        }
 
-        const labelIndexes = points.length <= 6
-            ? points.map((_, index) => index)
-            : [0, Math.floor((points.length - 1) / 2), points.length - 1];
+        // 실제 기록 점 (기록이 아주 많으면 생략)
+        if (actual.length <= 40) {
+            actual.forEach(point => {
+                ctx.beginPath();
+                ctx.fillStyle = "#fff";
+                ctx.arc(x(point.day), y(point.value), 4.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = color;
+                ctx.stroke();
+            });
+        }
 
+        // 날짜 라벨: 처음 · (오늘) · 끝, 서로 겹치면 생략
+        const labels = [minDay];
+        if (predicted.length) labels.push(predicted[0].day);
+        labels.push(maxDay);
         ctx.fillStyle = "#71808a";
-        ctx.textAlign = "center";
         ctx.textBaseline = "top";
-
-        labelIndexes.forEach(index => {
-            const label = points[index].date.slice(5);
-            ctx.fillText(label, x(index), height - padding.bottom + 12);
+        let lastX = -Infinity;
+        labels.forEach((labelDay, index) => {
+            const labelX = x(labelDay);
+            if (labelX - lastX < 46) return;
+            const date = new Date(labelDay * 86400000);
+            const text = `${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+            ctx.textAlign = index === 0 ? "left" : index === labels.length - 1 ? "right" : "center";
+            ctx.fillText(text, index === 0 ? labelX - 14 : labelX, height - padding.bottom + 12);
+            lastX = labelX;
         });
     }
 
+    // ---------- 예측 ----------
+    let forecast = null;     // 서버 응답 { available, reason?, baselineDate, assumptions, points }
+    let forecastDays = 60;
+
+    async function loadForecast() {
+        try {
+            forecast = await appData.getBodyForecast(forecastDays);
+        } catch (error) {
+            forecast = { available: false, reason: "예측을 불러오지 못했습니다." };
+            console.error(error);
+        }
+        renderForecast();
+        render();
+    }
+
+    function changeText(from, to, unit) {
+        const diff = Math.round((to - from) * 10) / 10;
+        const sign = diff > 0 ? "+" : "";
+        return {
+            text: `${from.toFixed(1)} → ${to.toFixed(1)}${unit}`,
+            diff: `${sign}${diff.toFixed(1)}${unit}`,
+            direction: diff > 0 ? "is-up" : diff < 0 ? "is-down" : ""
+        };
+    }
+
+    function renderForecast() {
+        const summary = document.getElementById("forecastSummary");
+        const stats = document.getElementById("forecastStats");
+        const basis = document.getElementById("forecastBasis");
+        document.querySelectorAll(".forecast-range button").forEach(button => {
+            button.setAttribute("aria-pressed", String(Number(button.dataset.days) === forecastDays));
+        });
+
+        if (!forecast || !forecast.available) {
+            stats.hidden = true;
+            basis.textContent = "";
+            summary.textContent = (forecast && forecast.reason) || "예측을 계산할 수 없습니다.";
+            return;
+        }
+
+        const first = forecast.points[0];
+        const last = forecast.points[forecast.points.length - 1];
+        const a = forecast.assumptions;
+        const weight = changeText(first.weight, last.weight, "kg");
+
+        const strong = document.createElement("strong");
+        strong.textContent = `약 ${last.weight.toFixed(1)}kg (${weight.diff})`;
+        summary.replaceChildren(`지금처럼 먹고 운동하면 ${forecastDays}일 후 체중은 `, strong, "으로 예상돼요.");
+
+        const setStat = (valueId, noteId, from, to, unit, missingNote) => {
+            const valueEl = document.getElementById(valueId);
+            const noteEl = document.getElementById(noteId);
+            noteEl.className = "";
+            if (from === null || to === null || from === undefined || to === undefined) {
+                valueEl.textContent = "-";
+                noteEl.textContent = missingNote;
+                return;
+            }
+            const change = changeText(from, to, unit);
+            valueEl.textContent = change.text;
+            noteEl.textContent = change.diff;
+            noteEl.className = change.direction;
+        };
+        setStat("forecastWeight", "forecastWeightRange", first.weight, last.weight, "kg", "");
+        document.getElementById("forecastWeightRange").textContent += ` (범위 ${last.weightLow.toFixed(1)}~${last.weightHigh.toFixed(1)}kg)`;
+        setStat("forecastBodyFat", "forecastBodyFatNote", first.bodyFat, last.bodyFat, "%", "체지방률을 기록하면 예측돼요");
+        setStat("forecastMuscle", "forecastMuscleNote", first.muscle, last.muscle, "kg", "체지방률과 골격근량을 기록하면 예측돼요");
+        stats.hidden = false;
+
+        const parts = [
+            `최근 14일 중 ${a.loggedDays}일 식단 기록`,
+            `하루 평균 섭취 ${a.avgIntakeKcal.toLocaleString("ko-KR")}kcal (단백질 ${a.avgProteinG}g)`,
+            `운동 ${a.avgExerciseKcalPerDay}kcal/일${a.strengthTraining ? " · 근력 운동 포함" : ""}`,
+            `추정 소비 ${a.estimatedTdee.toLocaleString("ko-KR")}kcal/일${a.calibrated ? " (실제 체중 변화로 보정)" : ""}`
+        ];
+        if (a.weightOnly) parts.push("체지방률 기록이 없어 체중만 장기 규칙으로 예측 (처음 몇 달의 변화는 실제보다 작게 나올 수 있어요. 체지방률을 기록하면 더 정확해져요)");
+        basis.textContent = "근거: " + parts.join(" · ");
+    }
+
+    document.querySelectorAll(".forecast-range button").forEach(button => button.addEventListener("click", () => {
+        forecastDays = Number(button.dataset.days);
+        loadForecast();
+    }));
+
     function render() {
-        const records = loadRecords();
+        const records = bodyRecords;
 
         tableBody.replaceChildren();
         emptyMessage.hidden = records.length !== 0;
@@ -495,7 +746,7 @@
             const actionCell = document.createElement("td");
             const deleteButton = document.createElement("button");
             deleteButton.type = "button";
-            deleteButton.className = "delete-button";
+            deleteButton.className = "danger-button small-button";
             deleteButton.textContent = "삭제";
             deleteButton.addEventListener("click", () => deleteRecord(record.date));
             actionCell.appendChild(deleteButton);
@@ -509,13 +760,16 @@
         drawChart("bodyFatChart", records, "bodyFat", "#e27845", "%");
     }
 
-    function deleteRecord(date) {
-        const records = loadRecords().filter(record => record.date !== date);
-        saveRecords(records);
-        render();
+    async function deleteRecord(date) {
+        try {
+            await appData.deleteBodyMetric(date);
+        } catch (error) {
+            api.handleError(error, "기록을 삭제하지 못했습니다.");
+        }
+        await refresh();
     }
 
-    form.addEventListener("submit", event => {
+    form.addEventListener("submit", async event => {
         event.preventDefault();
 
         const date = dateInput.value;
@@ -553,44 +807,49 @@
             }
         }
 
-        const records = loadRecords();
-        const existing = records.find(record => record.date === date);
-
-        if (existing) {
-            fields.forEach(field => {
-                if (values[field] !== null) {
-                    existing[field] = values[field];
-                }
-            });
-        } else {
-            records.push({ date, ...values });
+        const submitButton = form.querySelector("button[type=submit]");
+        submitButton.disabled = true;  // 저장 중 중복 제출 방지
+        try {
+            // 입력하지 않은 항목(null)은 서버에서 같은 날짜의 기존 값을 그대로 유지합니다.
+            await appData.saveBodyMetric({ date, ...values });
+        } catch (error) {
+            api.handleError(error, "측정 기록을 저장하지 못했습니다.");
+            return;
+        } finally {
+            submitButton.disabled = false;
         }
-
-        records.sort((a, b) => a.date.localeCompare(b.date));
-        saveRecords(records);
 
         fields.forEach(field => {
             document.getElementById(field).value = "";
         });
 
-        render();
+        await refresh();
         alert("측정 기록을 저장했습니다.");
     });
 
-    document.getElementById("clearAllButton").addEventListener("click", () => {
+    document.getElementById("clearAllButton").addEventListener("click", async () => {
         if (!confirm("저장된 모든 측정 기록을 삭제할까요?")) {
             return;
         }
 
-        localStorage.removeItem(STORAGE_KEY);
-        render();
+        try {
+            await appData.clearBodyMetrics();
+        } catch (error) {
+            api.handleError(error, "기록을 삭제하지 못했습니다.");
+        }
+        await refresh();
     });
 
     window.addEventListener("resize", render);
 
     dateInput.value = getLocalDateString();
-    render();
+
+    // 시작: 로그인 확인 -> 서버(DB)에서 신체 기록 불러오기
+    (async () => {
+        if (!await api.requireLogin()) return;
+        await refresh();
+    })();
 </script>
     <script src="js/ui-effects.js" defer></script>
 </body>
-</html>
+</html>

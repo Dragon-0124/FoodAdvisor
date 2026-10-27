@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>운동 기록</title>
+    <link rel="stylesheet" href="css/style.css">
+
+    <style id="foodadvisor-violet-theme">
+      :root{--violet:#7856d8;--violet-dark:#6240c2;--lavender:#f0eaff;--page:#f7f5fc;--ink:#29243a;--muted:#827d91;--stroke:#ece8f5}
+      body{background:var(--page)!important;color:var(--ink)!important;font-family:Inter,"Pretendard","Noto Sans KR",system-ui,-apple-system,sans-serif!important}
+      h1,h2,h3{color:var(--ink);letter-spacing:-.035em}
+      button,.link-button,.primary-button{border-radius:13px!important;transition:transform .16s,box-shadow .16s,background .16s}
+      .primary-button,button.primary-button,button[type=submit]{background:linear-gradient(135deg,#8564e7,#6d4bd0)!important;color:#fff!important;box-shadow:0 7px 17px rgba(109,75,208,.18)}
+      .primary-button:hover,button[type=submit]:hover{background:#6240c2!important;transform:translateY(-1px)}
+      input,select,textarea{border:1px solid #e5def2!important;border-radius:12px!important;background:#fcfbff!important;color:var(--ink)!important}
+      input:focus,select:focus,textarea:focus{outline:none;border-color:#8a6be2!important;box-shadow:0 0 0 4px rgba(120,86,216,.13)!important}
+      a{color:#6d4bd0}
+    </style>
+
+    <!-- 레이아웃 + 반응형 (PC > 1024px, 태블릿 641~1024px, 모바일 <= 640px). 버튼 모양은 css/style.css 공통 규칙을 따릅니다. -->
+    <style>
+      * { box-sizing:border-box; }
+      body { margin:0; padding:28px; }
+      .container { width:min(100%, 1120px); margin:0 auto; }
+      .page-header { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px 16px; margin-bottom:24px; }
+      .page-header h1 { margin:0; font-size:28px; }
+      .header-actions { display:flex; flex-wrap:wrap; gap:8px; }
+
+      .panel { margin:0 0 20px; padding:24px; border:1px solid var(--stroke); border-radius:22px; background:#fff; box-shadow:0 10px 30px rgba(70,48,120,.06); }
+      .panel h2 { margin:0 0 16px; font-size:19px; }
+
+      /* 입력: 날짜 · 종류 · 강도 · 시간 · 예상 열량 · 저장 */
+      .exercise-form { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)) minmax(120px, auto); gap:12px; align-items:end; }
+      .field label { display:block; margin-bottom:7px; color:#39334c; font-size:13px; font-weight:700; }
+      .field input, .field select { width:100%; min-height:46px; padding:10px 12px; font-size:15px; }
+      .exercise-form button[type=submit] { width:100%; min-height:46px; padding:0 20px; border:0; white-space:nowrap; }
+      .intensity-group { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:4px; padding:4px; border-radius:12px; background:#f1edfa; }
+      .intensity-group input { position:absolute; opacity:0; pointer-events:none; }
+      .intensity-group label { display:flex; align-items:center; justify-content:center; min-height:38px; margin:0; border-radius:9px; color:#6f6388; font-size:14px; font-weight:700; cursor:pointer; }
+      .intensity-group input:checked + label { background:#fff; color:#5d3aa8; box-shadow:0 2px 8px rgba(70,48,120,.12); }
+      .intensity-group input:focus-visible + label { outline:3px solid rgba(120,86,216,.32); }
+      .estimate { margin:14px 0 0; padding:12px 14px; border-radius:12px; background:#f7f4fd; color:#5d4a8f; font-size:14px; }
+      .estimate strong { color:#5d3aa8; font-size:16px; }
+      .hint { margin:8px 0 0; color:#827790; font-size:12px; line-height:1.5; }
+
+      /* 최근 7일 요약 */
+      .summary { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; }
+      .summary div { display:flex; flex-direction:column; gap:2px; padding:14px 16px; border-radius:14px; background:#f7f4fd; }
+      .summary span { color:#746b82; font-size:13px; }
+      .summary strong { color:#2f2445; font-size:20px; font-variant-numeric:tabular-nums; }
+
+      /* 기록 목록 (날짜별) */
+      .day-group + .day-group { margin-top:14px; }
+      .day-title { display:flex; justify-content:space-between; margin:0 0 6px; color:#5d4a8f; font-size:14px; font-weight:700; }
+      .day-title span { color:#827790; font-weight:600; }
+      .exercise-list { list-style:none; margin:0; padding:0; border:1px solid #f0ecf7; border-radius:14px; overflow:hidden; }
+      .exercise-list li { display:flex; align-items:center; gap:12px; padding:12px 14px; }
+      .exercise-list li + li { border-top:1px solid #f0ecf7; }
+      .exercise-info { flex:1; min-width:0; }
+      .exercise-info strong { display:block; color:#2f2445; font-size:15px; }
+      .exercise-info small { color:#827790; font-size:13px; }
+      .intensity-badge { display:inline-block; margin-left:6px; padding:1px 7px; border-radius:6px; background:#f1edfa; color:#6f5aa8; font-size:11px; font-weight:700; vertical-align:2px; }
+      .intensity-badge.HIGH { background:#ffe9e1; color:#b8532c; }
+      .intensity-badge.LOW { background:#eaf6f0; color:#2f7a57; }
+      .exercise-kcal { color:#5d3aa8; font-size:15px; font-weight:700; white-space:nowrap; }
+      .empty-message { padding:28px 10px; color:#827790; text-align:center; }
+
+      @media (max-width:1024px) {
+        body { padding:20px; }
+        .exercise-form { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+        .exercise-form button[type=submit] { grid-column:1 / -1; }
+      }
+      @media (max-width:640px) {
+        body { padding:14px; }
+        .page-header { flex-direction:column; align-items:stretch; margin-bottom:16px; }
+        .page-header h1 { font-size:22px; }
+        .header-actions { display:grid; grid-template-columns:1fr 1fr; }
+        .panel { padding:16px; border-radius:18px; }
+        .exercise-form { grid-template-columns:1fr; }
+        .summary { gap:6px; }
+        .summary div { padding:10px; }
+        .summary strong { font-size:16px; white-space:nowrap; }
+        .exercise-list li { padding:10px 12px; gap:8px; }
+      }
+    </style>
+</head>
+<body>
+<main class="container">
+    <header class="page-header">
+        <h1>운동 기록</h1>
+        <div class="header-actions">
+            <a class="link-button secondary-button" href="dashboard.html">메인 화면으로</a>
+            <a class="link-button secondary-button" href="weight-tracker.html">신체 변화 그래프</a>
+        </div>
+    </header>
+
+    <section class="panel">
+        <h2>운동 입력</h2>
+        <form id="exerciseForm" class="exercise-form">
+            <div class="field">
+                <label for="exerciseDate">날짜</label>
+                <input type="date" id="exerciseDate" required>
+            </div>
+            <div class="field">
+                <label for="exerciseType">운동 종류</label>
+                <select id="exerciseType" required></select>
+            </div>
+            <div class="field">
+                <span id="intensityLabel" style="display:block; margin-bottom:7px; color:#39334c; font-size:13px; font-weight:700;">강도</span>
+                <div class="intensity-group" role="radiogroup" aria-labelledby="intensityLabel">
+                    <input type="radio" name="intensity" id="intensityLow" value="LOW"><label for="intensityLow">낮음</label>
+                    <input type="radio" name="intensity" id="intensityModerate" value="MODERATE" checked><label for="intensityModerate">보통</label>
+                    <input type="radio" name="intensity" id="intensityHigh" value="HIGH"><label for="intensityHigh">높음</label>
+                </div>
+            </div>
+            <div class="field">
+                <label for="exerciseMinutes">운동 시간 (분)</label>
+                <input type="number" id="exerciseMinutes" min="1" max="600" step="1" placeholder="예: 40" required>
+            </div>
+            <button type="submit">기록 저장</button>
+        </form>
+        <p class="estimate" id="estimate">운동 종류와 시간을 입력하면 예상 소모 열량이 표시됩니다.</p>
+        <p class="hint">
+            강도 기준 — 낮음: 대화가 편한 정도 · 보통: 대화는 되지만 숨이 참 · 높음: 대화가 어려울 정도.<br>
+            소모 열량 = MET(운동 종류·강도) × 체중 × 시간이며, 체중은 가장 최근 신체 기록을 사용합니다.
+        </p>
+    </section>
+
+    <section class="panel">
+        <h2>최근 7일</h2>
+        <div class="summary">
+            <div><span>운동한 날</span><strong id="sumDays">0일</strong></div>
+            <div><span>총 운동 시간</span><strong id="sumMinutes">0분</strong></div>
+            <div><span>총 소모 열량</span><strong id="sumCalories">0 kcal</strong></div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>운동 기록 <small style="color:#827790; font-size:13px; font-weight:600;">최근 60일</small></h2>
+        <div id="exerciseRecords"></div>
+        <div id="emptyMessage" class="empty-message" hidden>아직 운동 기록이 없습니다.</div>
+    </section>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/data-adapter.js"></script>
+<script>
+    const api = window.FoodAdvisorApi;
+    const appData = window.FoodAdvisorData;
+    const INTENSITY_LABELS = { LOW: "낮음", MODERATE: "보통", HIGH: "높음" };
+
+    let exerciseTypes = [];  // [{ type, label, met: { LOW, MODERATE, HIGH } }]
+    let currentWeight = 0;   // 예상 열량 미리보기용 (저장 시 실제 계산은 서버에서)
+    let records = [];
+
+    const form = document.getElementById("exerciseForm");
+    const dateInput = document.getElementById("exerciseDate");
+    const typeSelect = document.getElementById("exerciseType");
+    const minutesInput = document.getElementById("exerciseMinutes");
+
+    function localDateString(date) {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    }
+    const selectedIntensity = () => form.querySelector("input[name=intensity]:checked").value;
+
+    function updateEstimate() {
+        const type = exerciseTypes.find(item => item.type === typeSelect.value);
+        const minutes = Number(minutesInput.value);
+        const estimate = document.getElementById("estimate");
+        if (!type || !(minutes > 0) || !(currentWeight > 0)) {
+            estimate.textContent = "운동 종류와 시간을 입력하면 예상 소모 열량이 표시됩니다.";
+            return;
+        }
+        const met = type.met[selectedIntensity()];
+        const kcal = Math.round(met * currentWeight * minutes / 60);
+        estimate.replaceChildren(
+            "예상 소모 열량 ", Object.assign(document.createElement("strong"), { textContent: `${kcal} kcal` }),
+            ` (MET ${met} × ${currentWeight}kg × ${minutes}분)`
+        );
+    }
+
+    function render() {
+        const container = document.getElementById("exerciseRecords");
+        document.getElementById("emptyMessage").hidden = records.length > 0;
+
+        const byDate = new Map();
+        records.forEach(record => {
+            if (!byDate.has(record.date)) byDate.set(record.date, []);
+            byDate.get(record.date).push(record);
+        });
+
+        container.replaceChildren(...[...byDate].map(([date, items]) => {
+            const group = document.createElement("section");
+            group.className = "day-group";
+            const title = document.createElement("h3");
+            title.className = "day-title";
+            const total = items.reduce((sum, item) => sum + item.calories, 0);
+            title.append(date, Object.assign(document.createElement("span"), { textContent: `${total} kcal` }));
+
+            const list = document.createElement("ul");
+            list.className = "exercise-list";
+            items.forEach(item => {
+                const li = document.createElement("li");
+                const info = document.createElement("div");
+                info.className = "exercise-info";
+                const name = document.createElement("strong");
+                name.textContent = item.label;
+                const badge = document.createElement("span");
+                badge.className = "intensity-badge " + item.intensity;
+                badge.textContent = INTENSITY_LABELS[item.intensity] || item.intensity;
+                name.appendChild(badge);
+                const detail = document.createElement("small");
+                detail.textContent = `${item.minutes}분`;
+                info.append(name, detail);
+
+                const kcal = document.createElement("span");
+                kcal.className = "exercise-kcal";
+                kcal.textContent = `${item.calories} kcal`;
+
+                const remove = document.createElement("button");
+                remove.type = "button";
+                remove.className = "danger-button small-button";
+                remove.textContent = "삭제";
+                remove.addEventListener("click", () => removeRecord(item.id));
+                li.append(info, kcal, remove);
+                list.appendChild(li);
+            });
+            group.append(title, list);
+            return group;
+        }));
+
+        // 최근 7일 요약 (오늘 포함)
+        const from = new Date(); from.setDate(from.getDate() - 6);
+        const recent = records.filter(record => record.date >= localDateString(from));
+        document.getElementById("sumDays").textContent = `${new Set(recent.map(record => record.date)).size}일`;
+        document.getElementById("sumMinutes").textContent = `${recent.reduce((sum, record) => sum + record.minutes, 0)}분`;
+        document.getElementById("sumCalories").textContent = `${recent.reduce((sum, record) => sum + record.calories, 0).toLocaleString("ko-KR")} kcal`;
+    }
+
+    async function refresh() {
+        try {
+            records = await appData.getExercises();
+        } catch (error) {
+            api.handleError(error, "운동 기록을 불러오지 못했습니다.");
+            return;
+        }
+        render();
+    }
+
+    async function removeRecord(id) {
+        if (!confirm("이 운동 기록을 삭제할까요?")) return;
+        try {
+            await appData.deleteExercise(id);
+        } catch (error) {
+            api.handleError(error, "운동 기록을 삭제하지 못했습니다.");
+        }
+        await refresh();
+    }
+
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const minutes = Number(minutesInput.value);
+        if (!dateInput.value || !typeSelect.value || !(minutes >= 1 && minutes <= 600)) {
+            alert("날짜, 운동 종류, 운동 시간(1~600분)을 입력해 주세요.");
+            return;
+        }
+        if (dateInput.value > localDateString(new Date())) {
+            alert("미래 날짜의 운동은 입력할 수 없습니다.");
+            return;
+        }
+
+        const submitButton = form.querySelector("button[type=submit]");
+        submitButton.disabled = true;  // 저장 중 중복 제출 방지
+        try {
+            await appData.addExercise({ date: dateInput.value, type: typeSelect.value, intensity: selectedIntensity(), minutes });
+        } catch (error) {
+            api.handleError(error, "운동 기록을 저장하지 못했습니다.");
+            return;
+        } finally {
+            submitButton.disabled = false;
+        }
+        minutesInput.value = "";
+        updateEstimate();
+        await refresh();
+    });
+
+    [typeSelect, minutesInput].forEach(el => el.addEventListener("input", updateEstimate));
+    form.querySelectorAll("input[name=intensity]").forEach(el => el.addEventListener("change", updateEstimate));
+    dateInput.value = localDateString(new Date());
+    dateInput.max = dateInput.value;
+
+    // 시작: 로그인 확인 -> 운동 종류(MET) / 최근 체중 / 기록 불러오기
+    (async () => {
+        const session = await api.requireLogin();
+        if (!session) return;
+        try {
+            const [types, bodyRecords] = await Promise.all([appData.getExerciseTypes(), appData.getBodyMetrics()]);
+            exerciseTypes = types;
+            const latest = [...bodyRecords].reverse().find(record => record.weight !== null);
+            currentWeight = latest ? latest.weight : Number(session.user?.weightKg) || 0;
+        } catch (error) {
+            api.handleError(error, "운동 정보를 불러오지 못했습니다.");
+        }
+        typeSelect.replaceChildren(...exerciseTypes.map(item => new Option(item.label, item.type)));
+        updateEstimate();
+        await refresh();
+    })();
+</script>
+<script src="js/ui-effects.js" defer></script>
+</body>
+</html>

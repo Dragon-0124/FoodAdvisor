@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 // 식단 기록 DB 접근 객체 (CRUD 및 통계 조회)
 // 구조: intake_logs(user_id, intake_date, meal_type) 1 : N intake_items(intake_log_id, food_id, quantity) N : 1 foods
@@ -421,6 +422,44 @@ public class DietDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    // ===================== 날짜별 섭취 합계 (체성분 예측용, 그램 단위) =====================
+    // { "YYYY-MM-DD": [kcal, carbs_g, protein_g, fat_g] } - 기록이 있는 날짜만 포함
+    public Map<String, double[]> getDailyIntakeTotals(String email, String startDate, String endDate) {
+        Map<String, double[]> totals = new TreeMap<>();
+        final String sql = """
+            SELECT l.intake_date,
+                   SUM(i.quantity * f.avg_calories) AS kcal,
+                   SUM(i.quantity * f.carbs_g)      AS carbs,
+                   SUM(i.quantity * f.protein_g)    AS protein,
+                   SUM(i.quantity * f.fat_g)        AS fat
+            FROM intake_logs l
+            JOIN users u        ON u.user_id = l.user_id
+            JOIN intake_items i ON i.intake_log_id = l.intake_log_id
+            JOIN foods f        ON f.food_id = i.food_id
+            WHERE u.email = ? AND l.intake_date BETWEEN ? AND ?
+            GROUP BY l.intake_date
+            """;
+
+        try (Connection conn = DBConnection.getConnection()) {
+            if (conn == null) return totals;
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, email);
+                pstmt.setDate(2, toSqlDate(startDate));
+                pstmt.setDate(3, toSqlDate(endDate));
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        totals.put(rs.getString("intake_date"), new double[]{
+                                rs.getDouble("kcal"), rs.getDouble("carbs"),
+                                rs.getDouble("protein"), rs.getDouble("fat")});
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return totals;
     }
 
     // ===================== 내부 공통 메서드 =====================

@@ -1,5 +1,6 @@
 package com.diet.app.controller;
 
+import com.diet.app.dao.BodyMetricsDAO;
 import com.diet.app.dao.UserDAO;
 import com.diet.app.dto.UserDTO;
 import com.diet.app.util.CalBMR;
@@ -20,6 +21,8 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -31,8 +34,18 @@ public class AuthServlet extends HttpServlet {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    // 인증 코드 확인 후 비밀번호 변경까지 허용되는 시간 (세션에 저장)
+    private static final long RESET_VERIFIED_LIFETIME_MS = 10 * 60 * 1000L;
+    private static final String RESET_VERIFIED_EMAIL = "resetVerifiedEmail";
+    private static final String RESET_VERIFIED_AT = "resetVerifiedAt";
+
+    // 가입 시 선택 입력하는 신체 값의 허용 범위 (BodyMetricsServlet 과 동일)
+    private static final double MUSCLE_MAX = 200;
+    private static final double BODY_FAT_MAX = 75;
+    private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
 
     private final UserDAO userDAO = new UserDAO();
+    private final BodyMetricsDAO bodyMetricsDAO = new BodyMetricsDAO();
     private final Gson gson = new Gson();
 
     @Override
@@ -118,7 +131,8 @@ public class AuthServlet extends HttpServlet {
             case "/login" -> handleLogin(body, req, resp);
             case "/find-id" -> handleFindId(body, resp); // 아이디 찾기 라우팅 추가
             case "/password/code" -> handlePasswordCode(body, resp);
-            case "/password/reset" -> handlePasswordReset(body, resp);
+            case "/password/verify" -> handlePasswordVerify(body, req, resp);
+            case "/password/reset" -> handlePasswordReset(body, req, resp);
             case "/withdraw" -> handleWithdraw(req, resp);
             default -> writeError(resp, HttpServletResponse.SC_NOT_FOUND,
                     "잘못된 요청입니다.");
@@ -134,6 +148,22 @@ public class AuthServlet extends HttpServlet {
             return;
         }
 
+        // 선택 입력: 골격근량/체지방률 (비어 있으면 null)
+        final Double muscleKg;
+        final Double bodyFatPct;
+        try {
+            muscleKg = optionalNumber(body, "muscleKg");
+            bodyFatPct = optionalNumber(body, "bodyFatPct");
+        } catch (IllegalArgumentException e) {
+            writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "골격근량/체지방률은 숫자로 입력해 주세요.");
+            return;
+        }
+        if (!inRange(muscleKg, MUSCLE_MAX) || !inRange(bodyFatPct, BODY_FAT_MAX)) {
+            writeError(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    "골격근량은 1~200kg, 체지방률은 1~75% 범위로 입력해 주세요.");
+            return;
+        }
+
         int targetCalories = CalBMR.calculateTargetCalories(user);
         UserDTO newUser = new UserDTO(
                 user.userId(),
@@ -144,7 +174,7 @@ public class AuthServlet extends HttpServlet {
                 user.age(),
                 user.heightCm(),
                 user.weightKg(),
-                user.actLevel(),
+                CalBMR.normalizeActivityLevel(user.actLevel()),
                 user.goal(),
                 user.preference(),
                 user.securityQuestion(),
@@ -153,10 +183,23 @@ public class AuthServlet extends HttpServlet {
         );
 
         if (userDAO.insertUser(newUser)) {
+            saveInitialBodyMetrics(newUser.email(), newUser.weightKg(), muscleKg, bodyFatPct);
             resp.getWriter().write("{\"message\":\"회원가입 완료\"}");
         } else {
             writeError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "회원가입 처리에 실패했습니다.");
+        }
+    }
+
+    // 가입 시 입력한 체중(+선택 입력한 골격근량/체지방률)을 오늘 날짜의 신체 기록으로 저장합니다.
+    // 실패해도 회원가입 자체는 성공으로 처리합니다. (신체 기록 페이지에서 다시 입력 가능)
+    private void saveInitialBodyMetrics(String email, double weightKg,
+                                        Double muscleKg, Double bodyFatPct) {
+        try {
+            bodyMetricsDAO.saveRecord(email, LocalDate.now(SEOUL).toString(),
+                    weightKg, muscleKg, bodyFatPct);
+        } catch (Exception e) {
+            System.err.println("⚠️ [DB] 가입 시 신체 기록 저장 실패 (회원가입은 완료됨): " + e.getMessage());
         }
     }
 
@@ -241,18 +284,15 @@ public class AuthServlet extends HttpServlet {
                 "{\"message\":\"계정이 존재하면 인증 코드를 발송했습니다.\"}");
     }
 
-    private void handlePasswordReset(JsonObject body, HttpServletResponse resp)
-            throws IOException {
+    // 인증 코드 확인: 성공하면 세션에 인증된 이메일을 기록합니다.
+    private void handlePasswordVerify(JsonObject body, HttpServletRequest req,
+                                      HttpServletResponse resp) throws IOException {
         String email = stringValue(body, "email");
         String code = stringValue(body, "code");
-        String newPassword = stringValue(body, "newPassword");
 
-        if (!isValidEmail(email)
-                || code == null
-                || !code.matches("\\d{6}")
-                || !UserDTO.isValidPassword(newPassword)) {
+        if (!isValidEmail(email) || code == null || !code.matches("\\d{6}")) {
             writeError(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    "이메일, 인증 코드 또는 새 비밀번호를 확인해 주세요.");
+                    "이메일과 6자리 인증 코드를 확인해 주세요.");
             return;
         }
 
@@ -262,6 +302,35 @@ public class AuthServlet extends HttpServlet {
                     "인증 코드가 올바르지 않거나 만료되었습니다.");
             return;
         }
+
+        HttpSession session = req.getSession(true);
+        session.setAttribute(RESET_VERIFIED_EMAIL, email);
+        session.setAttribute(RESET_VERIFIED_AT, System.currentTimeMillis());
+        resp.getWriter().write("{\"message\":\"인증이 완료되었습니다. 새 비밀번호를 입력해 주세요.\"}");
+    }
+
+    private void handlePasswordReset(JsonObject body, HttpServletRequest req,
+                                     HttpServletResponse resp) throws IOException {
+        String email = stringValue(body, "email");
+        String newPassword = stringValue(body, "newPassword");
+
+        if (!isValidEmail(email) || !UserDTO.isValidPassword(newPassword)) {
+            writeError(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    "이메일 또는 새 비밀번호를 확인해 주세요.");
+            return;
+        }
+
+        email = email.trim().toLowerCase(Locale.ROOT);
+        HttpSession session = req.getSession(false);
+        if (!isResetVerified(session, email)) {
+            writeError(resp, HttpServletResponse.SC_UNAUTHORIZED,
+                    "인증 코드 확인을 먼저 완료해 주세요.");
+            return;
+        }
+
+        // 인증 1회당 비밀번호 변경 1회만 허용합니다.
+        session.removeAttribute(RESET_VERIFIED_EMAIL);
+        session.removeAttribute(RESET_VERIFIED_AT);
 
         if (userDAO.updatePassword(email, newPassword)) {
             resp.getWriter().write("{\"message\":\"비밀번호가 변경되었습니다.\"}");
@@ -295,8 +364,33 @@ public class AuthServlet extends HttpServlet {
                 || "/login".equals(path)
                 || "/find-id".equals(path) // 지원 경로 추가
                 || "/password/code".equals(path)
+                || "/password/verify".equals(path)
                 || "/password/reset".equals(path)
                 || "/withdraw".equals(path);
+    }
+
+    private static boolean isResetVerified(HttpSession session, String email) {
+        if (session == null) return false;
+        Object verifiedEmail = session.getAttribute(RESET_VERIFIED_EMAIL);
+        Object verifiedAt = session.getAttribute(RESET_VERIFIED_AT);
+        return email.equals(verifiedEmail)
+                && verifiedAt instanceof Long at
+                && System.currentTimeMillis() - at < RESET_VERIFIED_LIFETIME_MS;
+    }
+
+    // 항목이 없거나 null 이면 null, 숫자면 값, 그 외 타입이면 IllegalArgumentException (BodyMetricsServlet 과 동일 규칙)
+    private static Double optionalNumber(JsonObject body, String key) {
+        JsonElement value = body.get(key);
+        if (value == null || value.isJsonNull()) return null;
+        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()) {
+            double number = value.getAsDouble();
+            if (Double.isFinite(number)) return number;
+        }
+        throw new IllegalArgumentException(key + " must be a finite number");
+    }
+
+    private static boolean inRange(Double value, double max) {
+        return value == null || (value >= 1 && value <= max);
     }
 
     private static boolean isValidEmail(String email) {

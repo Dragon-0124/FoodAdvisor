@@ -1,52 +1,145 @@
-/* DEMO ONLY: browser-local account simulation. Replace with /api/auth/* calls after backend contract is confirmed. */
+/*
+ * 로그인/회원가입/아이디 찾기/비밀번호 재설정 - 서버 AuthServlet(api/auth/*) 호출 (js/api.js 필요)
+ * 계정 정보는 서버 DB(users)에 저장되고, 로그인 상태는 서버 세션으로 유지됩니다.
+ */
 (() => {
-  const USERS_KEY = 'foodAdvisor.demo.users.v1';
-  const SESSION_KEY = 'foodAdvisor.demo.session.v1';
-  const read = key => { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; } };
-  const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+  const api = window.FoodAdvisorApi;
   const val = id => document.getElementById(id)?.value?.trim() || '';
-  const message = (id, text, error = false) => { const el = document.getElementById(id); if (el) { el.textContent = text; el.style.color = error ? '#b42318' : '#17805d'; } };
-  const users = () => read(USERS_KEY);
+  const optionalNumber = id => val(id) === '' ? null : Number(val(id));  // 빈칸이면 null (선택 입력)
+  const message = (id, text, error = false) => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = text; el.style.color = error ? '#b42318' : '#17805d'; }
+  };
+
+  // 요청 중에는 제출 버튼을 잠가 중복 제출(중복 가입 등)을 막습니다.
+  async function submitting(form, task) {
+    const buttons = form.querySelectorAll('button');
+    buttons.forEach(button => { button.disabled = true; });
+    try { await task(); } finally { buttons.forEach(button => { button.disabled = false; }); }
+  }
 
   document.getElementById('signupForm')?.addEventListener('submit', e => {
     e.preventDefault();
-    const email = val('signupEmail').toLowerCase(), password = val('signupPassword');
-    if (password !== val('signupPasswordConfirm')) return message('signupMessage', '비밀번호가 서로 다릅니다.', true);
-    const list = users();
-    if (list.some(u => u.email === email)) return message('signupMessage', '이미 가입된 이메일입니다.', true);
-    list.push({ email, password, name: val('signupName'), gender: val('signupGender'), age: val('signupAge'), height: val('signupHeight'), weight: val('signupWeight'), activity: val('signupActivity'), goal: val('signupGoal'), preference: val('signupPreference'), question: val('securityQuestion'), answer: val('securityAnswer') });
-    write(USERS_KEY, list);
-    message('signupMessage', '계정이 생성되었습니다. 로그인 화면으로 이동합니다.');
-    setTimeout(() => location.href = 'login.html', 650);
+    if (val('signupPassword') !== val('signupPasswordConfirm')) return message('signupMessage', '비밀번호가 서로 다릅니다.', true);
+    // UserDTO 필드명에 맞춰 전송합니다. (나이/키/체중은 숫자여야 합니다.)
+    const body = {
+      email: val('signupEmail').toLowerCase(),
+      password: document.getElementById('signupPassword').value,
+      name: val('signupName'),
+      gender: val('signupGender'),
+      age: Number(val('signupAge')),
+      heightCm: Number(val('signupHeight')),
+      weightKg: Number(val('signupWeight')),
+      muscleKg: optionalNumber('signupMuscle'),      // 선택: 신체 변화 기록의 첫 기록에 함께 저장
+      bodyFatPct: optionalNumber('signupBodyFat'),   // 선택
+      actLevel: val('signupActivity'),
+      goal: val('signupGoal'),
+      preference: val('signupPreference'),
+      securityQuestion: val('securityQuestion'),
+      securityAnswer: val('securityAnswer')
+    };
+    submitting(e.target, async () => {
+      try {
+        await api.post('auth/signup', body);
+        message('signupMessage', '계정이 생성되었습니다. 로그인 화면으로 이동합니다.');
+        setTimeout(() => location.href = 'login.html', 650);
+      } catch (error) {
+        message('signupMessage', error.message, true);
+      }
+    });
   });
 
   document.getElementById('loginForm')?.addEventListener('submit', e => {
     e.preventDefault();
-    const email = val('loginEmail').toLowerCase(), password = val('loginPassword');
-    const user = users().find(u => u.email === email && u.password === password);
-    if (!user) return message('loginMessage', '아이디 또는 비밀번호를 확인해 주세요.', true);
-    write(SESSION_KEY, { email: user.email, name: user.name });
-    location.href = 'dashboard.html';
+    const body = { email: val('loginEmail').toLowerCase(), password: document.getElementById('loginPassword').value };
+    submitting(e.target, async () => {
+      try {
+        await api.post('auth/login', body);
+        location.href = 'dashboard.html';
+      } catch (error) {
+        message('loginMessage', error.message, true);
+      }
+    });
   });
 
   document.getElementById('findIdForm')?.addEventListener('submit', e => {
     e.preventDefault();
-    const user = users().find(u => u.name === val('findName') && u.question === val('findQuestion') && u.answer === val('findAnswer'));
-    message('findIdMessage', user ? `가입 이메일: ${user.email}` : '일치하는 계정을 찾지 못했습니다.', !user);
+    const body = { name: val('findName'), securityQuestion: val('findQuestion'), securityAnswer: val('findAnswer') };
+    submitting(e.target, async () => {
+      try {
+        const data = await api.post('auth/find-id', body);
+        message('findIdMessage', `가입 이메일: ${data.email}`);   // 서버가 일부를 가려서(마스킹) 내려줍니다.
+      } catch (error) {
+        message('findIdMessage', error.message, true);
+      }
+    });
+  });
+
+  // 비밀번호 재설정: 1) 이메일로 인증 코드 받기  2) 인증 코드 확인  3) 새 비밀번호로 변경
+  // 인증 완료 전에는 새 비밀번호 입력칸과 저장 버튼을 잠가 둡니다.
+  const setResetVerified = verified => {
+    ['newPassword', 'newPasswordConfirm', 'resetSubmitButton'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = !verified;
+    });
+    const code = document.getElementById('resetCode');
+    const verifyButton = document.getElementById('verifyCodeButton');
+    if (code) code.readOnly = verified;
+    if (verifyButton) {
+      verifyButton.disabled = verified;
+      verifyButton.textContent = verified ? '인증 완료' : '확인';
+    }
+  };
+
+  // 인증 후 이메일을 바꾸면 다시 인증해야 합니다.
+  document.getElementById('resetEmail')?.addEventListener('input', () => setResetVerified(false));
+
+  document.getElementById('verifyCodeButton')?.addEventListener('click', async e => {
+    const button = e.currentTarget;
+    const email = val('resetEmail').toLowerCase();
+    const code = val('resetCode');
+    if (!email) return message('resetPasswordMessage', '이메일을 입력해 주세요.', true);
+    if (!/^\d{6}$/.test(code)) return message('resetPasswordMessage', '6자리 인증 코드를 입력해 주세요.', true);
+    button.disabled = true;
+    try {
+      const data = await api.post('auth/password/verify', { email, code });
+      setResetVerified(true);
+      message('resetPasswordMessage', data.message);
+      document.getElementById('newPassword')?.focus();
+    } catch (error) {
+      button.disabled = false;
+      message('resetPasswordMessage', error.message, true);
+    }
+  });
+
+  document.getElementById('sendCodeButton')?.addEventListener('click', async e => {
+    const button = e.currentTarget;
+    const email = val('resetEmail').toLowerCase();
+    if (!email) return message('resetPasswordMessage', '이메일을 입력해 주세요.', true);
+    button.disabled = true;
+    setResetVerified(false);   // 코드를 새로 받으면 이전 인증은 무효
+    try {
+      const data = await api.post('auth/password/code', { email });
+      message('resetPasswordMessage', data.message + ' (3분 이내에 입력해 주세요.)');
+    } catch (error) {
+      message('resetPasswordMessage', error.message, true);
+    } finally {
+      button.disabled = false;
+    }
   });
 
   document.getElementById('resetPasswordForm')?.addEventListener('submit', e => {
     e.preventDefault();
     if (val('newPassword') !== val('newPasswordConfirm')) return message('resetPasswordMessage', '새 비밀번호가 서로 다릅니다.', true);
-    const list = users(), user = list.find(u => u.email === val('resetEmail').toLowerCase() && u.question === val('resetQuestion') && u.answer === val('resetAnswer'));
-    if (!user) return message('resetPasswordMessage', '계정 정보가 일치하지 않습니다.', true);
-    user.password = val('newPassword'); write(USERS_KEY, list);
-    message('resetPasswordMessage', '비밀번호가 변경되었습니다. 로그인해 주세요.');
+    const body = { email: val('resetEmail').toLowerCase(), newPassword: document.getElementById('newPassword').value };
+    submitting(e.target, async () => {
+      try {
+        await api.post('auth/password/reset', body);
+        message('resetPasswordMessage', '비밀번호가 변경되었습니다. 로그인 화면으로 이동합니다.');
+        setTimeout(() => location.href = 'login.html', 900);
+      } catch (error) {
+        message('resetPasswordMessage', error.message, true);
+      }
+    });
   });
-
-  // Dashboard can use this to display a demo name and sign out.
-  window.FoodAdvisorDemoAuth = {
-    getSession: () => { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch { return null; } },
-    logout: () => { localStorage.removeItem(SESSION_KEY); location.href = 'login.html'; }
-  };
 })();

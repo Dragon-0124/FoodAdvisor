@@ -13,7 +13,7 @@ public class DBConnection {
     // 정적 블록에서 HikariCP 커넥션 풀 초기 설정 및 데이터소스 생성 (DB 연관 정보: diet_db, root 계정)
     static {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://localhost:3066/diet_db?serverTimezone=Asia/Seoul&useSSL=false&allowPublicKeyRetrieval=true");
+        config.setJdbcUrl("jdbc:mysql://localhost:3306/health_db?serverTimezone=Asia/Seoul&useSSL=false&allowPublicKeyRetrieval=true");
         config.setUsername("root");
         config.setPassword("1234");
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");

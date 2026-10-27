@@ -4,7 +4,7 @@
 body:has(> .card){display:flex;align-items:center;justify-content:center;padding:36px 18px;background:radial-gradient(ellipse at top left,#eee7ff 0,transparent 42%),var(--bg)}
 .card{width:min(100%,480px);padding:clamp(24px,5vw,40px);background:var(--surface);border:1px solid rgba(232,224,248,.9);border-radius:28px;box-shadow:var(--shadow)}.card::before{content:"FOOD ADVISOR";display:block;margin-bottom:12px;color:var(--primary);font-size:12px;font-weight:850;letter-spacing:.16em}.card h1{margin:0 0 8px;font-size:clamp(26px,4vw,32px);line-height:1.25;letter-spacing:-.04em}.card h1+p,.card>p{color:var(--muted)}form{margin-top:26px}.form-group{display:flex;flex-direction:column;gap:8px;margin-bottom:17px}.form-group label{font-size:14px;font-weight:700;color:#39334c}
 input,select,textarea{width:100%;min-height:48px;padding:12px 14px;color:var(--text);background:#fdfcff;border:1px solid #e5def2;border-radius:12px;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}input::placeholder,textarea::placeholder{color:#a0aaa2}input:focus,select:focus,textarea:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(120,86,216,.13)}button[type=submit],.primary-button{display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:50px;padding:13px 18px;border:0;border-radius:13px;background:var(--primary);color:#fff;font-weight:800;box-shadow:0 7px 16px rgba(120,86,216,.2);transition:background .15s,transform .15s}button[type=submit]:hover,.primary-button:hover{background:var(--primary-dark);transform:translateY(-1px)}button:focus-visible,a:focus-visible{outline:3px solid rgba(120,86,216,.35);outline-offset:3px}.message{min-height:1.4em;margin:12px 0 0;color:var(--muted);font-size:14px}.link-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 18px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line);font-size:13px}.link-row a{font-weight:650}
-#signupForm{display:grid;grid-template-columns:1fr 1fr;column-gap:14px}#signupForm .form-group{min-width:0}#signupForm .form-group:nth-child(1),#signupForm .form-group:nth-child(2),#signupForm .form-group:nth-child(3),#signupForm .form-group:nth-child(12),#signupForm .form-group:nth-child(13),#signupForm button,#signupForm .message{grid-column:1/-1}#signupForm button{margin-top:4px}
+#signupForm{display:grid;grid-template-columns:1fr 1fr;column-gap:14px}#signupForm .form-group{min-width:0}#signupForm .form-group-full,#signupForm button,#signupForm .message{grid-column:1/-1}#signupForm button{margin-top:4px}.optional-tag{display:inline-block;margin-left:4px;padding:1px 6px;border-radius:6px;background:#f1edfa;color:#7a6aa3;font-size:11px;font-weight:600;vertical-align:1px}
 .main-container{width:min(100% - 32px,1080px);margin:32px auto;padding:0 0 40px;align-items:stretch;gap:20px}.digital-clock{color:var(--text);font-size:clamp(24px,4vw,34px);letter-spacing:-.04em}.user-card,.diet-card{width:100%;margin-top:0;padding:clamp(20px,3vw,28px);border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow)}.user-card h1,.diet-card h2{text-align:left;letter-spacing:-.03em}.user-stat{padding:10px 0;border-bottom:1px solid var(--line)}.highlight{padding:14px;border-radius:14px;background:var(--primary-soft);color:var(--primary-dark);font-size:21px}.weight-link{border-radius:12px;background:var(--primary);transition:background .15s}.weight-link:hover{background:var(--primary-dark)}.diet-row{flex-wrap:wrap}
 @media(max-width:600px){body:has(> .card){align-items:flex-start;padding:18px 12px}.card{padding:24px 18px;border-radius:22px}#signupForm{grid-template-columns:1fr}#signupForm .form-group{grid-column:1/-1}.link-row{gap:12px}}
 
@@ -48,3 +48,19 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid rgb
 ::selection{background:#e5dcff;color:#39265f}
 @media(hover:hover){.card:hover,.user-card:hover,.diet-card:hover,.week-card:hover,.panel:hover,.meal-card:hover,.chart-card:hover,.stat-card:hover,.summary-card:hover{box-shadow:0 16px 38px rgba(70,48,120,.09)}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}.fa-click-ripple{display:none}}
+
+/* ===== 버튼 규칙 (모든 페이지 공통) =====
+   글꼴: 일반 버튼 14px, 주요 버튼(저장/로그인 등) 15px, 굵기는 모두 700
+   모양: 주요 = 보라 그라데이션, 보조(.secondary-button) = 연보라, 외곽선(.outline-button) = 흰 바탕+테두리, 위험(.danger-button) = 연빨강 */
+button,.link-button{font-family:inherit;font-size:14px;font-weight:700;line-height:1.25;letter-spacing:-.01em}
+button[type=submit],.primary-button{font-size:15px;font-weight:700}
+.secondary-button,.outline-button,.danger-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:0 18px;border:0;border-radius:12px;white-space:nowrap;text-decoration:none!important;cursor:pointer}
+.secondary-button{background:#f1edfa;color:#5d4a8f}
+.secondary-button:hover{background:#e7e0fb}
+.outline-button{background:#fff;color:#6f6388;border:1px solid #e5def2}
+.outline-button:hover{background:#f7f4fd}
+.danger-button{background:#fff0f0;color:#b34b4b}
+.danger-button:hover{background:#ffe3e3}
+.full-button{width:100%;min-height:48px}
+.small-button{min-height:30px;padding:0 10px;border-radius:8px!important;font-size:12px}
+button:disabled{opacity:.55;cursor:not-allowed;transform:none!important}

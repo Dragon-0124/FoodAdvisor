@@ -341,8 +341,47 @@
         .food-suggestion { display:flex; justify-content:space-between; gap:8px; width:100%; border:0; border-radius:0; background:#fff; color:#33264a; text-align:left; padding:10px 12px; cursor:pointer; }
         .food-suggestion:hover,.food-suggestion.active { background:#f2edff; }
         .food-suggestion small { color:#776a91; white-space:nowrap; }
+        /* 선택된 후보는 보라색 배경이므로 kcal 정보도 흰색으로 */
+        .food-suggestion.active small { color:#fff; }
         .food-help { margin:5px 0 0; color:#827790; font-size:11px; line-height:1.45; }
         .calorie-result { background:#f5f1ff!important; color:#5d3aa8; font-weight:700; }
+
+        /* 끼니별 식단 추가: 음식 추가 버튼 + 오른쪽 합계 패널 */
+        .calorie-row { display:flex; gap:6px; }
+        .calorie-row input { flex:1; }
+        .add-food-button { flex:none; min-height:40px; padding:0 12px; border:0; border-radius:8px; background:#7856d8; color:#fff; font-size:13px; font-weight:700; white-space:nowrap; cursor:pointer; }
+        .add-food-button:hover { background:#6240c2; }
+        #foodDialog:not(.single-meal) .add-food-button { display:none; }
+        #foodDialog.single-meal .meal-entry-grid { grid-template-columns:minmax(0, 1fr) minmax(0, 2fr); }
+        .meal-summary { min-width:0; padding:14px; border:1px solid #e7e1f2; border-radius:12px; background:#fff; display:flex; flex-direction:column; }
+        .meal-summary[hidden] { display:none; }
+        .meal-summary h3 { margin:0 0 12px; color:#5e3ea8; font-size:16px; }
+        .nutrient-totals { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:6px; }
+        .nutrient-total { display:flex; flex-direction:column; align-items:center; gap:1px; padding:10px 4px; border-radius:10px; background:#f7f4fd; text-align:center; }
+        .nutrient-total span { color:#746b82; font-size:12px; }
+        .nutrient-total strong { color:#2f2445; font-size:17px; font-variant-numeric:tabular-nums; }
+        .nutrient-total small { color:#9a91a9; font-size:11px; }
+        .nutrient-total.is-calories { background:#efe8ff; }
+        .nutrient-total.is-calories strong { color:#5d3aa8; }
+        .added-food-list { list-style:none; margin:12px 0 0; padding:0; overflow:auto; max-height:260px; }
+        .added-food-list li { display:flex; align-items:center; gap:10px; padding:9px 2px; border-bottom:1px solid #f0ecf7; }
+        .added-food-list li:last-child { border-bottom:0; }
+        .added-food-info { flex:1; min-width:0; }
+        .added-food-info strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; color:#2f2445; }
+        .added-food-info small { color:#827790; font-size:12px; }
+        .added-food-kcal { color:#5d3aa8; font-weight:700; font-size:14px; white-space:nowrap; }
+        .added-food-remove { flex:none; width:28px; height:28px; border:0; border-radius:8px; background:#f1edfa; color:#6d5a96; font-size:16px; line-height:1; cursor:pointer; }
+        .added-food-remove:hover { background:#e5dcff; }
+        .added-food-empty { margin:auto 0; padding:20px 8px; color:#9a91a9; font-size:13px; text-align:center; }
+        .added-food-empty[hidden] { display:none; }
+
+        /* 오늘의 식단 입력(끼니별 등록 현황) */
+        .overview-column { display:flex; flex-direction:column; min-height:240px; }
+        .overview-column .added-food-list { flex:1; margin:0; max-height:220px; }
+        .overview-empty { padding:18px 4px!important; border:0!important; color:#9a91a9; font-size:13px; justify-content:center; }
+        .overview-meal-total { margin:10px 0; padding-top:10px; border-top:1px solid #ece6f6; color:#5d3aa8; font-size:14px; font-weight:700; text-align:right; }
+        .overview-add-button { width:100%; min-height:42px; border:1px dashed #b9a6ee; border-radius:10px; background:#f5f1ff; color:#5d3aa8; font-size:14px; font-weight:700; cursor:pointer; }
+        .overview-add-button:hover { background:#ebe3ff; border-style:solid; }
 
         .dialog-actions {
             display: flex;
@@ -352,8 +391,13 @@
         }
 
         @media (max-width: 760px) {
-            .meal-entry-grid {
+            .meal-entry-grid,
+            #foodDialog.single-meal .meal-entry-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .nutrient-totals {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
             }
 
             body {
@@ -427,6 +471,173 @@
       @media(max-width:650px){body{padding:14px!important}.topbar{align-items:flex-start;flex-wrap:wrap}.top-actions{flex-wrap:wrap}}
     </style>
 
+    <!--
+      버튼 UI 통일 + 반응형 (PC > 1024px, 태블릿 641~1024px, 모바일 <= 640px)
+      css/style.css 의 button{font:inherit} 때문에 <button> 은 16px/보통, <a> 는 14px/굵게로 달라지던 것을 한 기준으로 맞춥니다.
+    -->
+    <style id="dashboard-ui-system">
+      /* ---------- 버튼 공통 글꼴 ---------- */
+      button, .link-button { font-family:inherit; font-size:14px; font-weight:700; line-height:1.25; letter-spacing:-.01em; }
+      button[type=submit], button.primary-button { font-weight:700; }  /* style.css 의 800 을 통일 */
+
+      /* 일반 버튼(상단·주 이동·끼니 추가·다이얼로그 하단) 크기 통일 */
+      .top-actions > a, .top-actions > button, .week-controls button, .dialog-actions button,
+      .meal-add, .overview-add-button {
+        display:inline-flex; align-items:center; justify-content:center; gap:6px;
+        min-height:42px; padding:0 18px!important; border-radius:12px!important;
+        white-space:nowrap; text-decoration:none!important; box-sizing:border-box;
+      }
+      .third-button { background:#fff!important; color:#6f6388!important; border:1px solid #e5def2!important; }
+      .third-button:hover { background:#f7f4fd!important; }
+
+      /* 끼니 카드의 '식단 추가' = 오늘의 식단 입력 화면의 '음식 추가하기' 와 같은 모양 */
+      .meal-add, .overview-add-button {
+        width:100%; margin-top:12px; border:1px dashed #b9a6ee!important; background:#f5f1ff!important; color:#5d3aa8!important; box-shadow:none!important;
+      }
+      .meal-add:hover, .overview-add-button:hover { background:#ebe3ff!important; border-style:solid!important; }
+      .overview-add-button { margin-top:0; }
+
+      /* 다이얼로그 하단: 취소는 글자 폭, 저장은 남은 폭 (취소가 '취/소'로 줄바꿈되던 문제) */
+      .dialog-actions .secondary-button { flex:none; min-width:96px; }
+      .dialog-actions .primary-button { flex:1; width:auto; }
+
+      /* 작은 버튼들: 큰 버튼용 padding/글꼴이 적용되지 않게 개별 지정 */
+      .day-button { font-size:14px; font-weight:700; line-height:1.2; }
+      .day-button .day-name { font-weight:600; }
+      .food-row button { min-height:0; padding:4px 9px; border-radius:8px!important; font-size:12px; font-weight:700; }
+      .food-suggestion { font-size:14px; font-weight:500; }
+      .add-food-button { padding:0 14px!important; border-radius:10px!important; font-size:13px; }
+
+      /* x(삭제) 버튼: padding 때문에 글자가 원 밖으로 밀리던 문제 → 아이콘을 정중앙에 */
+      .added-food-remove {
+        position:relative; display:inline-block; width:30px; height:30px; padding:0!important;
+        border-radius:50%!important; font-size:0; line-height:0;
+      }
+      .added-food-remove::before, .added-food-remove::after {
+        content:""; position:absolute; top:50%; left:50%; width:12px; height:2px; border-radius:2px; background:currentColor;
+      }
+      .added-food-remove::before { transform:translate(-50%, -50%) rotate(45deg); }
+      .added-food-remove::after { transform:translate(-50%, -50%) rotate(-45deg); }
+      .added-food-remove:disabled { opacity:.5; }
+
+      /* ---------- 전체 기록 (월별 달력 / 년별 12개월) ---------- */
+      .history-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+      .history-tabs { display:inline-flex; padding:4px; border-radius:12px; background:#f1edfa; }
+      .history-tab { min-height:34px; padding:0 18px!important; border:0; border-radius:9px!important; background:transparent!important; color:#6f6388; box-shadow:none!important; }
+      .history-tab[aria-selected="true"] { background:#fff!important; color:#5d3aa8; box-shadow:0 2px 8px rgba(70,48,120,.12)!important; }
+      .history-nav { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+      .history-nav strong { font-size:20px; color:#29243a; letter-spacing:-.03em; }
+      .history-move { width:42px; padding:0!important; font-size:22px; }
+      .history-stats { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; margin-bottom:16px; }
+      .history-stats div { display:flex; flex-direction:column; gap:2px; padding:12px 14px; border-radius:12px; background:#f7f4fd; }
+      .history-stats span { color:#746b82; font-size:12px; }
+      .history-stats strong { color:#2f2445; font-size:17px; font-variant-numeric:tabular-nums; }
+
+      .history-weekdays, .history-calendar { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:6px; }
+      .history-weekdays { margin-bottom:6px; }
+      .history-weekdays span { color:#827790; font-size:12px; font-weight:700; text-align:center; }
+      .history-weekdays span:last-child { color:#c0504d; }
+      .history-day {
+        display:flex; flex-direction:column; align-items:flex-start; justify-content:space-between;
+        min-height:70px; padding:7px 8px!important; border:1px solid #ece6f6!important; border-radius:10px!important;
+        background:#fff; color:#2f2445; text-align:left; font-weight:600;
+      }
+      .history-day:hover { border-color:#b9a6ee!important; }
+      .history-day.has-record { background:#f5f1ff; }
+      .history-day.is-today { border-color:#7856d8!important; box-shadow:inset 0 0 0 1px #7856d8; }
+      .history-day.is-selected { background:#7856d8!important; color:#fff!important; }
+      .history-day.is-selected .history-kcal { color:#fff; }
+      .history-day-number { font-size:13px; }
+      .history-kcal { color:#5d3aa8; font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; }
+      .history-blank { min-height:70px; }
+
+      .history-months { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; }
+      .history-month {
+        display:flex; flex-direction:column; align-items:stretch; gap:6px; min-height:112px; padding:12px 14px!important;
+        border:1px solid #ece6f6!important; border-radius:12px!important; background:#fff; color:#2f2445; text-align:left;
+      }
+      .history-month:hover { border-color:#b9a6ee!important; }
+      .history-month.is-empty { background:#fbfaff; color:#a39bb2; }
+      .history-month-name { font-size:15px; }
+      .history-month-meta { color:#746b82; font-size:12px; font-weight:500; }
+      .history-month-avg { color:#5d3aa8; font-size:16px; font-variant-numeric:tabular-nums; }
+      .history-month.is-empty .history-month-avg { color:#b6aec4; }
+      .history-bar { height:6px; margin-top:auto; border-radius:3px; background:#efe9fb; overflow:hidden; }
+      .history-bar i { display:block; height:100%; border-radius:3px; background:linear-gradient(90deg, #a58bf0, #7856d8); }
+
+      /* ---------- PC ---------- */
+      body { padding:28px!important; }
+      .topbar { flex-wrap:wrap; }
+      .top-actions { flex-wrap:wrap; justify-content:flex-end; }
+
+      /* ---------- 태블릿 ---------- */
+      @media (max-width:1024px) {
+        body { padding:20px!important; }
+        .week-card, .panel, .meal-card, .chart-card { padding:18px; }
+        .meals { gap:12px; }
+        .charts { grid-template-columns:1fr; }
+        .week-label-year, .date-title-year { font-size:24px; }
+        canvas { height:230px; }
+        .history-months { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+      }
+
+      /* 태블릿 세로까지 끼니 카드 3열 유지 (위쪽 760px 규칙의 1열을 덮어씀) */
+      @media (min-width:641px) and (max-width:820px) {
+        .meals { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; }
+        .meal-card { padding:14px; }
+        .meal-card h3 { font-size:16px; }
+        .food-row { flex-wrap:wrap; font-size:13px; }
+      }
+      @media (max-width:640px) {
+        .meals { grid-template-columns:1fr; }
+        .meal-list { min-height:0; }
+      }
+
+      /* ---------- 모바일 ---------- */
+      @media (max-width:640px) {
+        body { padding:14px!important; }
+        .topbar { flex-direction:column; align-items:stretch; gap:12px; margin-bottom:16px; }
+        .topbar h1 { font-size:22px; }
+        .top-actions { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; width:100%; }
+        .top-actions > #openFoodEntry { grid-column:1 / -1; order:-1; }
+        .top-actions > a, .top-actions > button { width:100%; padding:0 10px!important; }
+
+        .week-card, .panel, .meal-card, .chart-card { padding:15px; border-radius:18px!important; }
+        .week-heading { flex-direction:column; align-items:stretch; gap:12px; }
+        .week-controls { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); }
+        .week-controls button { padding:0 6px!important; }
+
+        #historyDialog { width:calc(100% - 20px)!important; max-height:calc(100dvh - 20px); padding:18px!important; }
+        .history-head { flex-wrap:wrap; }
+        .history-nav strong { font-size:18px; }
+        .history-stats { gap:6px; }
+        .history-stats div { padding:9px 10px; }
+        .history-stats strong { font-size:13px; white-space:nowrap; letter-spacing:-.03em; }
+        .history-weekdays, .history-calendar { gap:3px; }
+        .history-day { min-height:50px; padding:4px 3px!important; align-items:center; border-radius:8px!important; }
+        .history-blank { min-height:50px; }
+        .history-day-number { font-size:12px; }
+        .history-kcal { font-size:10px; letter-spacing:-.03em; }
+        .history-months { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
+        .history-month { min-height:96px; padding:10px 12px!important; }
+        .week-label-year, .date-title-year { font-size:22px; }
+        .week-label-range, .date-title-detail { font-size:14px; }
+        .week-days { gap:4px; }
+        .day-button { min-height:58px; padding:6px 2px; font-size:13px; }
+        .day-button .day-name { font-size:11px; margin-bottom:3px; }
+
+        .daily-total { padding:14px 16px; font-size:15px; }
+        .chart-card h2 { font-size:17px; }
+        canvas { height:210px; }
+
+        #foodDialog, #mealOverviewDialog { width:calc(100% - 20px)!important; max-height:calc(100dvh - 20px); padding:18px!important; }
+        #foodDialog h2, #mealOverviewDialog h2 { font-size:20px; }
+        .overview-column { min-height:0; }
+        .nutrient-total { padding:8px 2px; }
+        .nutrient-total strong { font-size:15px; }
+      }
+    </style>
+
 </head>
 
 <body>
@@ -437,6 +648,10 @@
         <div class="top-actions">
             <a class="link-button secondary-button" href="weight-tracker.html">
                 신체 변화 그래프
+            </a>
+
+            <a class="link-button secondary-button" href="exercise.html">
+                운동 기록
             </a>
 
             <button class="secondary-button" id="openFoodEntry" type="button">
@@ -455,6 +670,7 @@
             <div class="week-controls">
                 <button class="secondary-button" id="previousWeek" type="button">이전 주</button>
                 <button class="secondary-button" id="nextWeek" type="button">다음 주</button>
+                <button class="outline-button" id="openHistory" type="button">전체 기록</button>
             </div>
         </div>
         <div class="week-days" id="weekDays"></div>
@@ -482,7 +698,7 @@
             <p class="chart-description">저장한 측정 기록 (kg)</p>
             <canvas id="weightChart"></canvas>
             <p class="note">
-                체중 기록은 브라우저에 저장된 신체 기록을 불러옵니다.
+                체중 기록은 서버에 저장된 신체 기록을 불러옵니다.
                 기록이 없다면 <strong>신체 기록</strong> 페이지에서 입력해 주세요.
             </p>
         </article>
@@ -506,7 +722,7 @@
                 <div class="form-field"><label for="breakfastAmountMode">입력 방식</label><select id="breakfastAmountMode" class="amount-mode"><option value="grams">그램(g)</option><option value="servings">인분</option></select></div>
                 <div class="form-field"><label for="breakfastAmount">먹은 양</label><input id="breakfastAmount" class="food-amount" type="number" min="0.1" step="0.1" placeholder="예: 200"></div>
                 <div class="form-field serving-grams-field" id="breakfastServingWrap" hidden><label for="breakfastServingGrams">1인분 기준 (g)</label><input id="breakfastServingGrams" class="serving-grams" type="number" min="0.1" step="0.1" placeholder="예: 150"><p class="food-help">DB에 기준이 없으므로 직접 입력</p></div>
-                <div class="form-field"><label for="breakfastCalories">계산된 열량 (kcal)</label><input id="breakfastCalories" class="calorie-result" type="number" min="0" step="1" placeholder="음식 선택 후 자동 계산" readonly></div>
+                <div class="form-field"><label for="breakfastCalories">계산된 열량 (kcal)</label><div class="calorie-row"><input id="breakfastCalories" class="calorie-result" type="number" min="0" step="1" placeholder="음식 선택 후 자동 계산" readonly><button type="button" class="add-food-button" data-prefix="breakfast">음식 추가</button></div></div>
             </section>
             <section class="meal-entry-column" data-meal="점심">
                 <h3>점심</h3>
@@ -514,7 +730,7 @@
                 <div class="form-field"><label for="lunchAmountMode">입력 방식</label><select id="lunchAmountMode" class="amount-mode"><option value="grams">그램(g)</option><option value="servings">인분</option></select></div>
                 <div class="form-field"><label for="lunchAmount">먹은 양</label><input id="lunchAmount" class="food-amount" type="number" min="0.1" step="0.1" placeholder="예: 200"></div>
                 <div class="form-field serving-grams-field" id="lunchServingWrap" hidden><label for="lunchServingGrams">1인분 기준 (g)</label><input id="lunchServingGrams" class="serving-grams" type="number" min="0.1" step="0.1" placeholder="예: 150"><p class="food-help">DB에 기준이 없으므로 직접 입력</p></div>
-                <div class="form-field"><label for="lunchCalories">계산된 열량 (kcal)</label><input id="lunchCalories" class="calorie-result" type="number" min="0" step="1" placeholder="음식 선택 후 자동 계산" readonly></div>
+                <div class="form-field"><label for="lunchCalories">계산된 열량 (kcal)</label><div class="calorie-row"><input id="lunchCalories" class="calorie-result" type="number" min="0" step="1" placeholder="음식 선택 후 자동 계산" readonly><button type="button" class="add-food-button" data-prefix="lunch">음식 추가</button></div></div>
             </section>
             <section class="meal-entry-column" data-meal="저녁">
                 <h3>저녁</h3>
@@ -522,10 +738,23 @@
                 <div class="form-field"><label for="dinnerAmountMode">입력 방식</label><select id="dinnerAmountMode" class="amount-mode"><option value="grams">그램(g)</option><option value="servings">인분</option></select></div>
                 <div class="form-field"><label for="dinnerAmount">먹은 양</label><input id="dinnerAmount" class="food-amount" type="number" min="0.1" step="0.1" placeholder="예: 200"></div>
                 <div class="form-field serving-grams-field" id="dinnerServingWrap" hidden><label for="dinnerServingGrams">1인분 기준 (g)</label><input id="dinnerServingGrams" class="serving-grams" type="number" min="0.1" step="0.1" placeholder="예: 150"><p class="food-help">DB에 기준이 없으므로 직접 입력</p></div>
-                <div class="form-field"><label for="dinnerCalories">계산된 열량 (kcal)</label><input id="dinnerCalories" class="calorie-result" type="number" min="0" step="1" placeholder="음식 선택 후 자동 계산" readonly></div>
+                <div class="form-field"><label for="dinnerCalories">계산된 열량 (kcal)</label><div class="calorie-row"><input id="dinnerCalories" class="calorie-result" type="number" min="0" step="1" placeholder="음식 선택 후 자동 계산" readonly><button type="button" class="add-food-button" data-prefix="dinner">음식 추가</button></div></div>
             </section>
+            <!-- 끼니별 식단 추가 화면에서만 보입니다: 추가한 음식 목록과 영양소 합계 -->
+            <aside class="meal-summary" id="mealSummary" hidden>
+                <h3>추가된 음식</h3>
+                <div class="nutrient-totals">
+                    <div class="nutrient-total is-calories"><span>칼로리</span><strong id="sumCalories">0</strong><small>kcal</small></div>
+                    <div class="nutrient-total"><span>탄수화물</span><strong id="sumCarbs">0</strong><small>g</small></div>
+                    <div class="nutrient-total"><span>단백질</span><strong id="sumProtein">0</strong><small>g</small></div>
+                    <div class="nutrient-total"><span>지방</span><strong id="sumFat">0</strong><small>g</small></div>
+                    <div class="nutrient-total"><span>당</span><strong id="sumSugar">0</strong><small>g</small></div>
+                </div>
+                <ul class="added-food-list" id="addedFoodList"></ul>
+                <p class="added-food-empty" id="addedFoodEmpty">음식을 검색해 양을 입력한 뒤 <strong>음식 추가</strong>를 눌러 주세요.</p>
+            </aside>
         </div>
-        <p class="food-help" style="margin:14px 0 0; font-size:12px;">※ 음식 후보는 학교 DB API 연동 후 표시됩니다. DB의 100g당 평균 열량을 기준으로 자동 계산합니다.</p>
+        <p class="food-help" style="margin:14px 0 0; font-size:12px;">※ 음식 후보는 DB에 등록된 음식에서 검색됩니다. DB의 100g당 평균 열량을 기준으로 자동 계산합니다.</p>
         <div class="dialog-actions">
             <button class="secondary-button" id="cancelFood" type="button">취소</button>
             <button class="primary-button" type="submit">입력한 식단 저장</button>
@@ -533,10 +762,76 @@
     </form>
 </dialog>
 
+<!-- 오늘의 식단 입력: 끼니별 등록된 음식만 보여주고, '음식 추가하기'로 끼니별 추가 화면(foodDialog)을 엽니다 -->
+<dialog id="mealOverviewDialog" style="width:min(900px, calc(100% - 28px)); border:0; border-radius:18px; padding:24px; box-shadow:0 20px 60px rgba(35,20,65,.22);">
+    <h2 style="margin:0 0 8px;">오늘의 식단 입력</h2>
+    <p style="margin:0 0 18px; color:#746b82; font-size:14px;">끼니별로 <strong>음식 추가하기</strong>를 눌러 음식을 등록하세요. 추가를 마치면 이 화면으로 돌아옵니다.</p>
+
+    <div class="form-field" style="margin-bottom:18px;">
+        <label for="overviewDate">날짜</label>
+        <input id="overviewDate" type="date" required style="width:100%; min-height:42px; padding:9px; border:1px solid #ccd5dc; border-radius:7px; font-size:15px;">
+    </div>
+
+    <div class="meal-entry-grid" id="overviewGrid">
+        <section class="meal-entry-column overview-column" data-meal="아침"><h3>아침</h3><ul class="added-food-list"></ul><p class="overview-meal-total"></p><button type="button" class="overview-add-button">음식 추가하기</button></section>
+        <section class="meal-entry-column overview-column" data-meal="점심"><h3>점심</h3><ul class="added-food-list"></ul><p class="overview-meal-total"></p><button type="button" class="overview-add-button">음식 추가하기</button></section>
+        <section class="meal-entry-column overview-column" data-meal="저녁"><h3>저녁</h3><ul class="added-food-list"></ul><p class="overview-meal-total"></p><button type="button" class="overview-add-button">음식 추가하기</button></section>
+    </div>
+
+    <div class="dialog-actions">
+        <button class="primary-button" id="closeMealOverview" type="button">완료</button>
+    </div>
+</dialog>
+
+<!-- 전체 기록: 월별(달력) / 년별(12개월) 섭취 칼로리. 날짜를 누르면 그 날짜의 식단으로 이동합니다 -->
+<dialog id="historyDialog" style="width:min(900px, calc(100% - 28px)); border:0; border-radius:18px; padding:24px; box-shadow:0 20px 60px rgba(35,20,65,.22);">
+    <div class="history-head">
+        <h2 style="margin:0;">전체 기록</h2>
+        <div class="history-tabs" role="tablist" aria-label="보기 단위">
+            <button type="button" role="tab" class="history-tab" data-view="month" aria-selected="true">월별</button>
+            <button type="button" role="tab" class="history-tab" data-view="year" aria-selected="false">년별</button>
+        </div>
+    </div>
+
+    <div class="history-nav">
+        <button type="button" class="secondary-button history-move" id="historyPrev" aria-label="이전">‹</button>
+        <strong id="historyTitle"></strong>
+        <button type="button" class="secondary-button history-move" id="historyNext" aria-label="다음">›</button>
+    </div>
+
+    <div class="history-stats">
+        <div><span>기록한 날</span><strong id="historyDays">0일</strong></div>
+        <div><span>총 섭취</span><strong id="historyTotal">0 kcal</strong></div>
+        <div><span>하루 평균</span><strong id="historyAverage">0 kcal</strong></div>
+    </div>
+
+    <div id="historyMonthView">
+        <div class="history-weekdays"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
+        <div class="history-calendar" id="historyCalendar"></div>
+        <p class="food-help" style="margin:10px 0 0; font-size:12px;">날짜를 누르면 그 날의 식단으로 이동합니다.</p>
+    </div>
+    <div id="historyYearView" hidden>
+        <div class="history-months" id="historyMonths"></div>
+        <p class="food-help" style="margin:10px 0 0; font-size:12px;">월을 누르면 그 달의 달력으로 이동합니다.</p>
+    </div>
+
+    <div class="dialog-actions">
+        <button class="primary-button" id="closeHistory" type="button">닫기</button>
+    </div>
+</dialog>
+
+<script src="js/api.js"></script>
+<script src="js/data-adapter.js"></script>
 <script src="js/food-service.js"></script>
 <script>
-    const MEAL_STORAGE_KEY = "foodAdvisor.dashboardMeals.v1";
-    const BODY_STORAGE_KEY = "foodAdvisor.bodyMetrics.v1";
+    const api = window.FoodAdvisorApi;
+    const appData = window.FoodAdvisorData;
+
+    // 서버(DB)에서 불러온 데이터 캐시입니다. 화면 그리기(render)는 이 캐시만 사용합니다.
+    let dayRecords = [];    // 선택한 날짜의 식단 기록
+    let weekCalories = {};  // 이번 주 날짜별 총 섭취 열량 { "YYYY-MM-DD": kcal }
+    let bodyRecords = [];   // 신체 기록 (체중 그래프용)
+    let loadSeq = 0;        // 오래된 응답이 최신 화면을 덮어쓰지 않도록 구분하는 번호
 
     const mealNames = ["아침", "점심", "저녁"];
     let selectedDate = localDateString(new Date());
@@ -553,20 +848,6 @@
     function dateFromString(value) {
         const [year, month, day] = value.split("-").map(Number);
         return new Date(year, month - 1, day);
-    }
-
-    function loadMeals() {
-        try {
-            const data = JSON.parse(localStorage.getItem(MEAL_STORAGE_KEY) || "[]");
-            return Array.isArray(data) ? data : [];
-        } catch (error) {
-            console.error("식단 기록을 읽지 못했습니다.", error);
-            return [];
-        }
-    }
-
-    function saveMeals(records) {
-        localStorage.setItem(MEAL_STORAGE_KEY, JSON.stringify(records));
     }
 
     function getWeekDates() {
@@ -610,7 +891,7 @@
             button.addEventListener("click", () => {
                 selectedDate = dateString;
                 weekOffset = 0;
-                render();
+                reload();
             });
 
             weekDays.appendChild(button);
@@ -633,8 +914,7 @@
         const mealsContainer = document.getElementById("meals");
         mealsContainer.replaceChildren();
 
-        const allRecords = loadMeals();
-        const dailyRecords = allRecords.filter(record => record.date === selectedDate);
+        const dailyRecords = dayRecords;
         let dailyTotal = 0;
 
         mealNames.forEach(mealName => {
@@ -714,13 +994,16 @@
         renderCalorieChart();
     }
 
-    function openFoodDialog(mealName = null) {
+    function openFoodDialog(mealName = null, date = selectedDate) {
         dialogMealMode = mealName || "all";
-        document.getElementById("foodDate").value = selectedDate;
+        document.getElementById("foodDate").value = date;
         ["breakfastName", "breakfastAmountMode", "breakfastAmount", "breakfastServingGrams", "breakfastCalories", "lunchName", "lunchAmountMode", "lunchAmount", "lunchServingGrams", "lunchCalories", "dinnerName", "dinnerAmountMode", "dinnerAmount", "dinnerServingGrams", "dinnerCalories"].forEach(id => {
             document.getElementById(id).value = "";
         });
-        document.querySelectorAll(".amount-mode").forEach(select => select.value = "grams");
+        document.querySelectorAll(".amount-mode").forEach(select => {
+            select.value = "grams";
+            updateAmountUnit(select.id.replace("AmountMode", ""));
+        });
         document.querySelectorAll(".food-suggestions").forEach(list => list.classList.remove("open"));
         document.querySelectorAll(".serving-grams-field").forEach(field => field.hidden = true);
 
@@ -734,6 +1017,11 @@
         document.querySelectorAll(".meal-entry-column[data-meal]").forEach(section => {
             section.hidden = isSingleMeal && section.dataset.meal !== mealName;
         });
+        // 끼니별 추가 화면에서는 여러 음식을 담아 한 번에 저장합니다.
+        document.getElementById("foodDialog").classList.toggle("single-meal", isSingleMeal);
+        document.getElementById("mealSummary").hidden = !isSingleMeal;
+        addedFoods = [];
+        renderAddedFoods();
 
         const mealFields = {
             "아침": "breakfastName",
@@ -744,9 +1032,13 @@
         document.getElementById("foodDialog").showModal();
     }
 
-    function deleteMeal(id) {
-        saveMeals(loadMeals().filter(record => record.id !== id));
-        render();
+    async function deleteMeal(id) {
+        try {
+            await appData.deleteMeal(id);
+        } catch (error) {
+            api.handleError(error, "식단을 삭제하지 못했습니다.");
+        }
+        await reload();
     }
 
     // Food autocomplete + calorie calculator. Food lookup is isolated in js/food-service.js.
@@ -811,8 +1103,15 @@
     document.querySelectorAll(".amount-mode").forEach(select => select.addEventListener("change", () => {
         const prefix = select.id.replace("AmountMode", "");
         document.getElementById(prefix + "ServingWrap").hidden = select.value !== "servings";
+        updateAmountUnit(prefix);
         updateFoodCalories(prefix);
     }));
+    // 입력 방식(그램/인분)에 맞춰 '먹은 양' 라벨과 예시를 바꿉니다.
+    function updateAmountUnit(prefix) {
+        const servings = document.getElementById(prefix + "AmountMode").value === "servings";
+        document.querySelector(`label[for="${prefix}Amount"]`).textContent = servings ? "먹은 양 (인분)" : "먹은 양 (g)";
+        document.getElementById(prefix + "Amount").placeholder = servings ? "예: 1" : "예: 200";
+    }
     document.querySelectorAll(".food-amount, .serving-grams").forEach(input => input.addEventListener("input", () => {
         const prefix = input.id.replace("Amount", "").replace("ServingGrams", "");
         updateFoodCalories(prefix);
@@ -829,8 +1128,128 @@
         output.value = food && amount > 0 && grams > 0 ? Math.round((grams * Number(food.kcalPer100g) / 100) * 10) / 10 : "";
     }
 
-    document.getElementById("foodForm").addEventListener("submit", event => {
+    const mealPrefixes = { "아침": "breakfast", "점심": "lunch", "저녁": "dinner" };
+    function clearMealEntry(meal) {
+        const prefix = mealPrefixes[meal];
+        ["Name", "Amount", "ServingGrams", "Calories"].forEach(suffix => {
+            document.getElementById(prefix + suffix).value = "";
+        });
+        delete document.getElementById(prefix + "Name").dataset.selectedFood;
+    }
+
+    // 입력칸의 음식 1건을 읽어 검증합니다. 비어 있으면 null, 잘못되면 { error }.
+    function readMealEntry(prefix) {
+        const nameInput = document.getElementById(prefix + "Name");
+        let food = null;
+        try { food = nameInput.dataset.selectedFood ? JSON.parse(nameInput.dataset.selectedFood) : null; } catch {}
+        const amountMode = document.getElementById(prefix + "AmountMode").value;
+        const amount = Number(document.getElementById(prefix + "Amount").value);
+        const servingGrams = Number(document.getElementById(prefix + "ServingGrams").value);
+        const grams = amountMode === "servings" ? amount * servingGrams : amount;
+        if (!nameInput.value.trim() && !(amount > 0)) return null;
+        if (!food || !(amount > 0) || !(grams > 0) || (amountMode === "servings" && !(servingGrams > 0))) {
+            return { error: "음식 자동완성 후보를 선택하고 먹은 양을 입력해 주세요. 인분 방식은 1인분 기준 g 수도 필요합니다." };
+        }
+        const per = value => Number.isFinite(value) ? value * grams / 100 : 0;
+        return {
+            foodId: food.id,
+            name: food.name,
+            grams,
+            amountText: amountMode === "servings" ? `${amount}인분 (${Math.round(grams)}g)` : `${amount}g`,
+            calories: per(food.kcalPer100g),
+            carbs: per(food.carbs),
+            protein: per(food.protein),
+            fat: per(food.fat),
+            sugar: per(food.sugar)
+        };
+    }
+
+    let addedFoods = [];
+    const round1 = value => Math.round(value * 10) / 10;
+    function renderAddedFoods() {
+        const sum = key => addedFoods.reduce((total, item) => total + item[key], 0);
+        document.getElementById("sumCalories").textContent = Math.round(sum("calories"));
+        document.getElementById("sumCarbs").textContent = round1(sum("carbs"));
+        document.getElementById("sumProtein").textContent = round1(sum("protein"));
+        document.getElementById("sumFat").textContent = round1(sum("fat"));
+        document.getElementById("sumSugar").textContent = round1(sum("sugar"));
+
+        const list = document.getElementById("addedFoodList");
+        list.replaceChildren(...addedFoods.map((item, index) => {
+            const li = document.createElement("li");
+            const info = document.createElement("div");
+            info.className = "added-food-info";
+            const name = document.createElement("strong"); name.textContent = item.name;
+            const detail = document.createElement("small");
+            detail.textContent = `${item.amountText} · 탄 ${round1(item.carbs)} · 단 ${round1(item.protein)} · 지 ${round1(item.fat)} · 당 ${round1(item.sugar)}g`;
+            info.append(name, detail);
+            const kcal = document.createElement("span");
+            kcal.className = "added-food-kcal";
+            kcal.textContent = `${Math.round(item.calories)} kcal`;
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "added-food-remove";
+            remove.setAttribute("aria-label", `${item.name} 삭제`);
+            remove.textContent = "×";
+            remove.addEventListener("click", () => { addedFoods.splice(index, 1); renderAddedFoods(); });
+            li.append(info, kcal, remove);
+            return li;
+        }));
+        document.getElementById("addedFoodEmpty").hidden = addedFoods.length > 0;
+    }
+
+    document.querySelectorAll(".add-food-button").forEach(button => button.addEventListener("click", () => {
+        const prefix = button.dataset.prefix;
+        const entry = readMealEntry(prefix);
+        if (!entry || entry.error) {
+            alert(entry?.error || "추가할 음식을 검색하고 먹은 양을 입력해 주세요.");
+            return;
+        }
+        addedFoods.push(entry);
+        renderAddedFoods();
+        clearMealEntry(Object.keys(mealPrefixes).find(meal => mealPrefixes[meal] === prefix));
+        document.getElementById(prefix + "Name").focus();
+    }));
+
+    // 끼니별 추가 화면: 담아 둔 음식(+ 입력칸에 남아 있는 음식)을 저장합니다.
+    async function saveSingleMeal() {
+        const meal = dialogMealMode;
+        const pending = readMealEntry(mealPrefixes[meal]);
+        if (pending?.error) { alert(pending.error); return; }
+        if (pending) {
+            addedFoods.push(pending);
+            clearMealEntry(meal);
+            renderAddedFoods();
+        }
+        if (addedFoods.length === 0) {
+            alert("저장할 음식을 추가해 주세요.");
+            return;
+        }
+
+        const date = document.getElementById("foodDate").value;
+        const submitButton = document.querySelector("#foodForm button[type=submit]");
+        submitButton.disabled = true;
+        try {
+            // 저장된 음식은 목록에서 빼서, 일부만 실패해 다시 저장해도 중복 저장되지 않게 합니다.
+            while (addedFoods.length) {
+                const item = addedFoods[0];
+                await appData.addMeal({ date, meal, foodId: item.foodId, grams: item.grams });
+                addedFoods.shift();
+                renderAddedFoods();
+            }
+            selectedDate = date;
+            document.getElementById("foodDialog").close();
+        } catch (error) {
+            api.handleError(error, "식단을 저장하지 못했습니다.");
+        } finally {
+            submitButton.disabled = false;
+        }
+        await reload();
+    }
+
+    document.getElementById("foodForm").addEventListener("submit", async event => {
         event.preventDefault();
+        if (dialogMealMode !== "all") return saveSingleMeal();
 
         const entries = ["아침", "점심", "저녁"].map((meal, index) => {
             const prefix = ["breakfast", "lunch", "dinner"][index];
@@ -864,24 +1283,23 @@
             return;
         }
 
-        const records = loadMeals();
         const date = document.getElementById("foodDate").value;
-        filled.forEach(item => records.push({
-            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-            date,
-            meal: item.meal,
-            name: item.name,
-            calories: item.calories,
-            amount: item.amount,
-            amountMode: item.amountMode,
-            grams: item.grams,
-            foodId: item.foodId
-        }));
-
-        saveMeals(records);
-        selectedDate = date;
-        document.getElementById("foodDialog").close();
-        render();
+        const submitButton = document.querySelector("#foodForm button[type=submit]");
+        submitButton.disabled = true;  // 저장 중 중복 제출 방지
+        try {
+            // 서버(DB)에 한 끼씩 저장합니다. 저장된 끼니는 입력칸을 비워, 일부만 실패해 다시 저장해도 중복 저장되지 않게 합니다.
+            for (const item of filled) {
+                await appData.addMeal({ date, meal: item.meal, foodId: item.foodId, grams: item.grams });
+                clearMealEntry(item.meal);
+            }
+            selectedDate = date;
+            document.getElementById("foodDialog").close();
+        } catch (error) {
+            api.handleError(error, "식단을 저장하지 못했습니다.");
+        } finally {
+            submitButton.disabled = false;
+        }
+        await reload();
     });
 
     document.getElementById("cancelFood").addEventListener("click", () => {
@@ -893,12 +1311,268 @@
         date.setDate(date.getDate() + amount * 7);
         selectedDate = localDateString(date);
         weekOffset = 0;
-        render();
+        reload();
     }
 
     document.getElementById("previousWeek").addEventListener("click", () => moveWeek(-1));
     document.getElementById("nextWeek").addEventListener("click", () => moveWeek(1));
-    document.getElementById("openFoodEntry").addEventListener("click", () => openFoodDialog());
+    // ---------- 오늘의 식단 입력 (끼니별 등록 현황) ----------
+    // '음식 추가하기' -> 끼니별 추가 화면(foodDialog) -> 저장/취소하면 이 화면으로 돌아옵니다.
+    const overviewDialog = document.getElementById("mealOverviewDialog");
+    let returnToOverview = false;
+    let overviewSeq = 0;
+
+    async function refreshOverview() {
+        const seq = ++overviewSeq;
+        const date = document.getElementById("overviewDate").value;
+        let records = [];
+        try {
+            records = await appData.getMeals(date);
+        } catch (error) {
+            api.handleError(error, "식단 기록을 불러오지 못했습니다.");
+        }
+        if (seq !== overviewSeq) return;  // 날짜를 빠르게 바꾼 경우 이전 응답은 버립니다.
+
+        overviewDialog.querySelectorAll(".overview-column").forEach(column => {
+            const mealRecords = records.filter(record => record.meal === column.dataset.meal);
+            const list = column.querySelector(".added-food-list");
+            if (mealRecords.length === 0) {
+                const empty = document.createElement("li");
+                empty.className = "overview-empty";
+                empty.textContent = "등록된 음식이 없습니다.";
+                list.replaceChildren(empty);
+            } else {
+                list.replaceChildren(...mealRecords.map(record => {
+                    const li = document.createElement("li");
+                    const info = document.createElement("div");
+                    info.className = "added-food-info";
+                    const name = document.createElement("strong"); name.textContent = record.name;
+                    const detail = document.createElement("small");
+                    detail.textContent = `${Math.round(record.quantity * 100)}g`;  // quantity = 섭취 g / 100
+                    info.append(name, detail);
+                    const kcal = document.createElement("span");
+                    kcal.className = "added-food-kcal";
+                    kcal.textContent = `${Math.round(record.calories)} kcal`;
+                    const remove = document.createElement("button");
+                    remove.type = "button";
+                    remove.className = "added-food-remove";
+                    remove.setAttribute("aria-label", `${record.name} 삭제`);
+                    remove.textContent = "×";
+                    remove.addEventListener("click", async () => {
+                        remove.disabled = true;
+                        try {
+                            await appData.deleteMeal(record.id);
+                        } catch (error) {
+                            api.handleError(error, "식단을 삭제하지 못했습니다.");
+                        }
+                        await refreshOverview();
+                        reload();
+                    });
+                    li.append(info, kcal, remove);
+                    return li;
+                }));
+            }
+            const total = mealRecords.reduce((sum, record) => sum + (Number(record.calories) || 0), 0);
+            column.querySelector(".overview-meal-total").textContent = `합계 ${Math.round(total)} kcal`;
+        });
+    }
+
+    async function openMealOverview(date = selectedDate) {
+        document.getElementById("overviewDate").value = date;
+        if (!overviewDialog.open) overviewDialog.showModal();
+        await refreshOverview();
+    }
+
+    overviewDialog.querySelectorAll(".overview-add-button").forEach(button => button.addEventListener("click", () => {
+        const date = document.getElementById("overviewDate").value;
+        returnToOverview = true;
+        overviewDialog.close();
+        openFoodDialog(button.closest(".overview-column").dataset.meal, date);
+    }));
+    document.getElementById("overviewDate").addEventListener("change", refreshOverview);
+    document.getElementById("closeMealOverview").addEventListener("click", () => overviewDialog.close());
+    overviewDialog.addEventListener("close", () => {
+        if (returnToOverview) return;  // 끼니별 추가 화면으로 넘어가는 중
+        const date = document.getElementById("overviewDate").value;
+        if (date && date !== selectedDate) {
+            selectedDate = date;
+            weekOffset = 0;
+            reload();
+        }
+    });
+    // 끼니별 추가 화면이 닫히면(저장/취소/Esc) 등록 현황 화면으로 돌아갑니다.
+    document.getElementById("foodDialog").addEventListener("close", () => {
+        if (!returnToOverview) return;
+        returnToOverview = false;
+        openMealOverview(document.getElementById("foodDate").value);
+    });
+
+    document.getElementById("openFoodEntry").addEventListener("click", () => openMealOverview());
+
+    // ---------- 전체 기록 (월별 달력 / 년별 12개월) ----------
+    // 한 해 단위로 날짜별 총 섭취 열량을 한 번에 불러와(diets/stats) 두 보기에서 함께 씁니다.
+    const historyDialog = document.getElementById("historyDialog");
+    const historyState = { view: "month", year: 0, month: 0 };
+    const historyYearCache = new Map();  // year -> { "YYYY-MM-DD": kcal }
+    let historySeq = 0;
+    const formatKcal = value => Math.round(value).toLocaleString("ko-KR");
+
+    async function loadHistoryYear(year) {
+        if (!historyYearCache.has(year)) {
+            historyYearCache.set(year, await appData.getDailyCalories(`${year}-01-01`, `${year}-12-31`));
+        }
+        return historyYearCache.get(year);
+    }
+
+    function summarize(entries) {
+        const values = entries.filter(value => value > 0);
+        const total = values.reduce((sum, value) => sum + value, 0);
+        return { days: values.length, total, average: values.length ? total / values.length : 0 };
+    }
+
+    function setHistoryStats({ days, total, average }) {
+        document.getElementById("historyDays").textContent = `${days}일`;
+        document.getElementById("historyTotal").textContent = `${formatKcal(total)} kcal`;
+        document.getElementById("historyAverage").textContent = `${formatKcal(average)} kcal`;
+    }
+
+    function renderHistoryMonth(daily) {
+        const { year, month } = historyState;
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        const leadingBlanks = (new Date(year, month, 1).getDay() + 6) % 7;  // 월요일 시작
+        const today = localDateString(new Date());
+        const monthValues = [];
+
+        const cells = [];
+        for (let i = 0; i < leadingBlanks; i++) {
+            const blank = document.createElement("div");
+            blank.className = "history-blank";
+            cells.push(blank);
+        }
+        for (let day = 1; day <= lastDay; day++) {
+            const dateString = localDateString(new Date(year, month, day));
+            const kcal = Number(daily[dateString]) || 0;
+            monthValues.push(kcal);
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "history-day";
+            button.classList.toggle("has-record", kcal > 0);
+            button.classList.toggle("is-today", dateString === today);
+            button.classList.toggle("is-selected", dateString === selectedDate);
+            const number = document.createElement("span");
+            number.className = "history-day-number";
+            number.textContent = day;
+            button.appendChild(number);
+            if (kcal > 0) {
+                const value = document.createElement("span");
+                value.className = "history-kcal";
+                value.textContent = formatKcal(kcal);
+                button.appendChild(value);
+            }
+            button.setAttribute("aria-label", `${month + 1}월 ${day}일 ${kcal > 0 ? formatKcal(kcal) + " kcal" : "기록 없음"}`);
+            button.addEventListener("click", () => {
+                selectedDate = dateString;
+                weekOffset = 0;
+                historyDialog.close();
+                reload();
+            });
+            cells.push(button);
+        }
+        document.getElementById("historyCalendar").replaceChildren(...cells);
+        document.getElementById("historyTitle").textContent = `${year}년 ${month + 1}월`;
+        setHistoryStats(summarize(monthValues));
+    }
+
+    function renderHistoryYear(daily) {
+        const { year } = historyState;
+        const months = Array.from({ length: 12 }, (_, month) => {
+            const prefix = `${year}-${String(month + 1).padStart(2, "0")}-`;
+            return summarize(Object.keys(daily).filter(date => date.startsWith(prefix)).map(date => Number(daily[date]) || 0));
+        });
+        const maxAverage = Math.max(1, ...months.map(item => item.average));
+
+        document.getElementById("historyMonths").replaceChildren(...months.map((item, month) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "history-month";
+            button.classList.toggle("is-empty", item.days === 0);
+            const name = document.createElement("strong");
+            name.className = "history-month-name";
+            name.textContent = `${month + 1}월`;
+            const meta = document.createElement("span");
+            meta.className = "history-month-meta";
+            meta.textContent = item.days ? `${item.days}일 기록 · 총 ${formatKcal(item.total)} kcal` : "기록 없음";
+            const average = document.createElement("strong");
+            average.className = "history-month-avg";
+            average.textContent = item.days ? `평균 ${formatKcal(item.average)} kcal` : "-";
+            const bar = document.createElement("div");
+            bar.className = "history-bar";
+            const fill = document.createElement("i");
+            fill.style.width = `${Math.round(item.average / maxAverage * 100)}%`;
+            bar.appendChild(fill);
+            button.append(name, meta, average, bar);
+            button.addEventListener("click", () => {
+                historyState.view = "month";
+                historyState.month = month;
+                renderHistory();
+            });
+            return button;
+        }));
+        document.getElementById("historyTitle").textContent = `${year}년`;
+        setHistoryStats(summarize(Object.values(daily).map(Number)));
+    }
+
+    async function renderHistory() {
+        const isMonth = historyState.view === "month";
+        historyDialog.querySelectorAll(".history-tab").forEach(tab => {
+            tab.setAttribute("aria-selected", String(tab.dataset.view === historyState.view));
+        });
+        document.getElementById("historyMonthView").hidden = !isMonth;
+        document.getElementById("historyYearView").hidden = isMonth;
+        document.getElementById("historyPrev").setAttribute("aria-label", isMonth ? "이전 달" : "이전 해");
+        document.getElementById("historyNext").setAttribute("aria-label", isMonth ? "다음 달" : "다음 해");
+
+        const seq = ++historySeq;
+        let daily;
+        try {
+            daily = await loadHistoryYear(historyState.year);
+        } catch (error) {
+            api.handleError(error, "전체 기록을 불러오지 못했습니다.");
+            return;
+        }
+        if (seq !== historySeq) return;  // 빠르게 넘긴 경우 이전 응답은 버립니다.
+        if (isMonth) renderHistoryMonth(daily);
+        else renderHistoryYear(daily);
+    }
+
+    function moveHistory(amount) {
+        if (historyState.view === "month") {
+            const date = new Date(historyState.year, historyState.month + amount, 1);
+            historyState.year = date.getFullYear();
+            historyState.month = date.getMonth();
+        } else {
+            historyState.year += amount;
+        }
+        renderHistory();
+    }
+
+    document.getElementById("openHistory").addEventListener("click", () => {
+        const date = dateFromString(selectedDate);
+        historyState.view = "month";
+        historyState.year = date.getFullYear();
+        historyState.month = date.getMonth();
+        historyYearCache.clear();  // 열 때마다 최신 기록으로
+        historyDialog.showModal();
+        renderHistory();
+    });
+    historyDialog.querySelectorAll(".history-tab").forEach(tab => tab.addEventListener("click", () => {
+        historyState.view = tab.dataset.view;
+        renderHistory();
+    }));
+    document.getElementById("historyPrev").addEventListener("click", () => moveHistory(-1));
+    document.getElementById("historyNext").addEventListener("click", () => moveHistory(1));
+    document.getElementById("closeHistory").addEventListener("click", () => historyDialog.close());
 
     function drawLineChart(canvasId, points, color, unit, emptyText) {
         const canvas = document.getElementById(canvasId);
@@ -997,13 +1671,10 @@
 
     function renderCalorieChart() {
         const dates = getWeekDates();
-        const allRecords = loadMeals();
 
         const points = dates.map(date => {
             const dateString = localDateString(date);
-            const calories = allRecords
-                .filter(record => record.date === dateString)
-                .reduce((sum, record) => sum + (Number(record.calories) || 0), 0);
+            const calories = weekCalories[dateString] || 0;
 
             return {
                 label: `${date.getMonth() + 1}/${date.getDate()}`,
@@ -1021,22 +1692,13 @@
     }
 
     function renderWeightChart() {
-        let records = [];
-
-        try {
-            const saved = JSON.parse(localStorage.getItem(BODY_STORAGE_KEY) || "[]");
-            if (Array.isArray(saved)) {
-                records = saved
-                    .filter(record => record && Number.isFinite(Number(record.weight)))
-                    .sort((a, b) => a.date.localeCompare(b.date))
-                    .map(record => ({
-                        label: record.date.slice(5),
-                        value: Number(record.weight)
-                    }));
-            }
-        } catch (error) {
-            console.error("체중 기록을 읽지 못했습니다.", error);
-        }
+        const records = bodyRecords
+            .filter(record => record.weight !== null && Number.isFinite(record.weight))
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .map(record => ({
+                label: record.date.slice(5),
+                value: record.weight
+            }));
 
         drawLineChart(
             "weightChart",
@@ -1047,21 +1709,47 @@
         );
     }
 
-    // Preview mode: do not require a server session while building the UI.
-    // Replace this handler with the confirmed backend logout API during integration.
-    document.getElementById("logoutButton").addEventListener("click", () => {
-        localStorage.removeItem("foodAdvisor.demo.session.v1");
-        window.location.href = "login.html";
-    });
+    // 서버 세션을 종료하고 로그인 화면으로 이동합니다.
+    document.getElementById("logoutButton").addEventListener("click", () => api.logout());
 
+    // 캐시된 데이터로 화면만 다시 그립니다. (서버 호출 없음)
     function render() {
         renderWeek();
         renderMeals();
         renderWeightChart();
     }
 
+    // 선택한 날짜/주의 데이터를 서버(DB)에서 다시 불러온 뒤 화면을 그립니다.
+    async function reload() {
+        const seq = ++loadSeq;
+        const dates = getWeekDates();
+        try {
+            const [records, calories] = await Promise.all([
+                appData.getMeals(selectedDate),
+                appData.getDailyCalories(localDateString(dates[0]), localDateString(dates[6]))
+            ]);
+            if (seq !== loadSeq) return;  // 그 사이 더 최신 요청이 있었다면 이 응답은 버립니다.
+            dayRecords = records;
+            weekCalories = calories;
+        } catch (error) {
+            if (seq === loadSeq) api.handleError(error, "식단 기록을 불러오지 못했습니다.");
+            return;
+        }
+        render();
+    }
+
     window.addEventListener("resize", render);
-    render();
+
+    // 시작: 로그인 확인 -> 신체 기록(체중 그래프) -> 식단 기록 불러오기
+    (async () => {
+        if (!await api.requireLogin()) return;
+        try {
+            bodyRecords = await appData.getBodyMetrics();
+        } catch (error) {
+            console.error("신체 기록을 불러오지 못했습니다.", error);  // 체중 그래프만 비어 보이고 식단은 계속 동작합니다.
+        }
+        await reload();
+    })();
 </script>
     <script src="js/ui-effects.js" defer></script>
 </body>
