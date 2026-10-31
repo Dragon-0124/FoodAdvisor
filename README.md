@@ -13,7 +13,8 @@ Spring 없이 순수 Servlet(Jakarta EE) + MySQL 로 만들었습니다.
 | 회원가입 | `signup.html` | 신체 정보·평소 활동 강도·목표 입력 → 목표 칼로리 자동 계산. 골격근량·체지방률은 **선택 입력**이며, 입력한 체중과 함께 신체 기록의 첫 기록으로 저장 |
 | 로그인 / 아이디 찾기 | `login.html`, `find-id.html` | 세션 로그인, 본인 확인 질문으로 이메일 찾기(일부 가림) |
 | 비밀번호 재설정 | `reset-password.html` | 이메일 인증 코드 발송 → **코드 확인** → 새 비밀번호 저장 (확인 전에는 입력칸 잠금) |
-| 대시보드 | `dashboard.html` | 주간 날짜 선택, 끼니별 식단, 하루 총 섭취 열량, 주간 칼로리·체중 그래프<br>**오늘의 식단 입력**: 끼니별 등록 현황 → 끼니별 음식 추가(여러 음식 담기, 탄·단·지·당·칼로리 합계)<br>**전체 기록**: 월별 달력 / 년별 12개월 요약 |
+| 대시보드 | `dashboard.html` | 주간 날짜 선택, 끼니별 식단, 하루 총 섭취 열량, 주간 칼로리·체중 그래프<br>**오늘의 식단 입력**: 끼니별 등록 현황 → 끼니별 음식 추가(여러 음식 담기, 탄·단·지·당·칼로리 합계)<br>**전체 기록**: 월별 달력 / 년별 12개월 요약<br>**영양정보 카드**: 선택한 날짜의 탄·단·지 섭취량, 목표 범위, 섭취 비율 → 누르면 상세 화면 |
+| 영양정보 상세 | `nutrition-detail.html` | 선택한 날짜의 탄수화물·단백질·지방·당류 섭취량과 부족/적정/과잉 막대. 음식 DB 에 값이 없는 영양소(식이섬유·나트륨·비타민 등)는 '준비 중'으로 표시 |
 | 신체 변화 기록 | `weight-tracker.html` | 체중·골격근량·체지방률 기록과 그래프<br>**앞으로의 변화 예측**: 30/60/90일 예측을 그래프에 **점선**으로 이어서 표시 (체중은 오차 범위 음영) |
 | 운동 기록 | `exercise.html` | 운동 종류·강도·시간 입력 → 소모 열량 자동 계산(MET), 최근 7일 요약, 최근 60일 기록 |
 
@@ -79,6 +80,7 @@ src/main/webapp
    ├─ data-adapter.js  API 응답 ↔ 화면 데이터 변환
    ├─ auth.js          로그인/회원가입/아이디 찾기/비밀번호 재설정
    ├─ food-service.js  음식 자동완성 검색
+   ├─ nutrition.js     영양소 적정 범위·섭취 상태·탄단지 비율 계산 (대시보드 카드, 영양정보 상세 공통)
    └─ ui-effects.js    화면 효과
 ```
 
@@ -97,6 +99,8 @@ src/main/webapp
 | 목표: 근육량 증가 | 유지 열량 (초과 열량 없음) | 적정 초과 열량을 제시한 신뢰도 높은 근거가 없어 유지 열량으로 둠. 근육 증가 근거가 확실한 것은 **근력 운동 + 단백질 1.6 g/kg/일** [5][6] |
 | 최소 섭취 열량 | 여성 1,200 · 남성 1,500 kcal | 가이드라인의 감량 식단 하한 (여성 1,200~1,500 / 남성 1,500~1,800 kcal) [2] |
 | 음식 열량 | 섭취 g × (100g당 kcal) ÷ 100 | DB 의 100g 기준 영양 성분 |
+| 영양소 적정 범위 | 목표 칼로리 × 에너지적정비율 ÷ (탄·단·당 4 / 지방 9 kcal/g)<br>탄수화물 50~65% · 단백질 10~20% · 지방 15~30% · 총당류 20% 이내 | 2025 한국인 영양소 섭취기준 (성인) [7] |
+| 탄단지 섭취 비율 | 각 영양소 열량 ÷ (탄·단·지 열량 합) | 위와 같은 kcal/g 환산 |
 | 운동 소모 열량 | MET × 체중(kg) × 시간(h) | 2024 Adult Compendium 측정값 [3] (종류·강도별 코드는 `ExerciseDAO` 주석) |
 | 동적 체중 변화 | 하루 단위 (섭취 − 소비), 체중이 변하면 소비도 재계산, 활동 열량은 체중에 비례 | Hall KD et al. (2011) [4] |
 | 지방·근육 분배 | 제지방 비율 p = 10.4 / (10.4 + 체지방량kg) (Forbes 관계식) | Hall 2011 모델이 사용하는 관계식 [4] |
@@ -123,7 +127,7 @@ src/main/webapp
 | POST | `/api/auth/find-id` | 이름 + 본인 확인 질문/답변 → 가린 이메일 |
 | POST | `/api/auth/password/code` → `/password/verify` → `/password/reset` | 인증 코드 발송 → 코드 확인(세션에 10분 기록) → 새 비밀번호 저장 |
 | GET | `/api/foods?keyword=` | 음식 검색 |
-| GET | `/api/diets/records?date=` · `/daily?date=` · `/stats?startDate=&endDate=` | 날짜별 기록 / 일일 요약 / 기간별 날짜 합계 |
+| GET | `/api/diets/records?date=` · `/daily?date=` · `/stats?startDate=&endDate=` | 날짜별 기록 / 일일 요약(목표 칼로리, 섭취 열량·탄·단·지·당 g) / 기간별 날짜 합계 |
 | POST | `/api/diets/record` · `/update` · `/delete` | 식단 등록 / 수정 / 삭제 |
 | GET | `/api/body-metrics` | 신체 기록 전체 |
 | GET | `/api/body-metrics/forecast?days=60` | 변화 예측 (7~180일) |
@@ -176,7 +180,7 @@ src/main/webapp
 
 ## 출처
 
-모든 서지 정보와 주소는 PubMed 기록으로 확인했습니다. "전문"은 누구나 무료로 읽을 수 있는 원문(PubMed Central) 주소입니다.
+1~6번의 서지 정보와 주소는 PubMed 기록으로 확인했습니다. 7번은 국가 영양 기준(「국민영양관리법」에 따라 5년마다 개정)입니다. "전문"은 누구나 무료로 읽을 수 있는 원문(PubMed Central) 주소입니다.
 
 1. Mifflin MD, St Jeor ST, Hill LA, et al. A new predictive equation for resting energy expenditure in healthy individuals. *Am J Clin Nutr*. 1990;51(2):241-247.
    - 사용한 곳: 기초대사량 (`CalBMR.restingKcal`)
@@ -209,3 +213,8 @@ src/main/webapp
    - PubMed: <https://pubmed.ncbi.nlm.nih.gov/35187864/>
    - DOI: <https://doi.org/10.1002/jcsm.12922>
    - 전문: <https://pmc.ncbi.nlm.nih.gov/articles/PMC8978023/>
+7. 보건복지부, 한국영양학회. 2025 한국인 영양소 섭취기준 (Dietary Reference Intakes for Koreans 2025). 2025년 12월 31일 발표.
+   - 사용한 곳: 영양소 적정 범위 (`js/nutrition.js`, 대시보드 영양정보 카드, `nutrition-detail.html`)
+   - 한국영양학회 (원문 자료실): <https://www.kns.or.kr/>
+   - 보건복지부: <https://www.mohw.go.kr/>
+   - 개정 내용 보도 (2025-12-31): <https://www.ddaily.co.kr/page/view/2025123111291718936>

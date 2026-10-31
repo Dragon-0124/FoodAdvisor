@@ -57,6 +57,19 @@
     return result;
   }
 
+  // 하루 영양 합계 -> { targetCalories, currentCalories, carbs, protein, fat, sugar } (g)
+  async function getDailyNutrition(date) {
+    const row = await api.get('diets/daily?date=' + encodeURIComponent(date)) || {};
+    return {
+      targetCalories: Number(row.targetCalories) || 0,
+      currentCalories: Number(row.currentCalories) || 0,
+      carbs: Number(row.carbs) || 0,
+      protein: Number(row.protein) || 0,
+      fat: Number(row.fat) || 0,
+      sugar: Number(row.sugar) || 0
+    };
+  }
+
   // ---------- 신체 기록 ----------
   // -> [{ date, weight, muscle, bodyFat }] (없는 항목은 null, 날짜 오름차순)
   async function getBodyMetrics() {
@@ -124,7 +137,7 @@
 
   window.FoodAdvisorData = {
     mode: 'api',
-    getMeals, addMeal, deleteMeal, getDailyCalories,
+    getMeals, addMeal, deleteMeal, getDailyCalories, getDailyNutrition,
     getBodyMetrics, saveBodyMetric, deleteBodyMetric, clearBodyMetrics,
     getExercises, getExerciseTypes, addExercise, deleteExercise,
     getBodyForecast

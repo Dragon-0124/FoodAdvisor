@@ -636,6 +636,67 @@
         .nutrient-total { padding:8px 2px; }
         .nutrient-total strong { font-size:15px; }
       }
+
+        /* 대시보드 영양정보 요약 카드 */
+        .nutrition-summary-card {
+            display: block;
+            margin-top: 20px;
+            padding: 24px;
+            border: 1px solid #eee8f7;
+            border-radius: 18px;
+            background: #fff;
+            color: inherit;
+            text-decoration: none;
+            box-shadow: 0 3px 12px rgba(30, 50, 70, 0.05);
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        }
+        .nutrition-summary-card:hover,
+        .nutrition-summary-card:focus-visible {
+            transform: translateY(-2px);
+            border-color: #d9c9f2;
+            box-shadow: 0 8px 22px rgba(90, 55, 140, .10);
+            outline: none;
+        }
+        .nutrition-summary-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px; }
+        .nutrition-summary-head h2 { margin:0; font-size:22px; color:#17151b; }
+        .nutrition-summary-arrow { font-size:34px; line-height:1; color:#4b2a75; }
+        .nutrition-macro-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+        .nutrition-macro { min-width:0; padding:20px 12px; text-align:center; border:1px solid #e9e5ee; border-radius:24px; }
+        .nutrition-macro-name { display:block; margin-bottom:16px; font-size:19px; font-weight:700; }
+        .nutrition-macro-name.carbs { color:#8650b5; }
+        .nutrition-macro-name.fat { color:#d87570; }
+        .nutrition-macro-name.protein { color:#c6a43d; }
+        .nutrition-macro-value { display:block; font-size:32px; line-height:1.2; font-weight:700; color:#242126; }
+        .nutrition-macro-value small { font-size:16px; font-weight:600; }
+        .nutrition-macro-target { display:block; margin-top:14px; padding-top:12px; border-top:1px solid #e8e5ea; color:#89858d; font-size:15px; }
+        .nutrition-intake-label { margin:20px 0 8px; color:#77717f; font-size:14px; font-weight:700; }
+        .nutrition-percent-row { display:flex; justify-content:space-between; gap:8px; margin-bottom:8px; font-size:16px; font-weight:700; }
+        .nutrition-percent-row .carbs { color:#8650b5; }
+        .nutrition-percent-row .fat { color:#d87570; }
+        .nutrition-percent-row .protein { color:#c6a43d; }
+        .nutrition-ratio-track { display:flex; gap:5px; height:12px; overflow:hidden; border-radius:999px; background:#f0eef2; }
+        .nutrition-ratio-track span { flex:1; border-radius:999px; background:#e7e3eb; }
+        .nutrition-target-row { display:flex; justify-content:space-between; gap:8px; margin-top:8px; font-size:15px; font-weight:700; }
+        .nutrition-target-row .carbs { color:#8650b5; }
+        .nutrition-target-row .fat { color:#d87570; }
+        .nutrition-target-row .protein { color:#c6a43d; }
+        .nutrition-ratio-track span.carbs { background:#8650b5; }
+        .nutrition-ratio-track span.fat { background:#d87570; }
+        .nutrition-ratio-track span.protein { background:#c6a43d; }
+        .nutrition-macro-target.is-low { color:#6f6a76; }
+        .nutrition-macro-target.is-ok { color:#20b978; }
+        .nutrition-macro-target.is-high { color:#ef8952; }
+        .nutrition-card-note { margin:16px 0 0; color:#817b87; font-size:13px; }
+        @media (max-width: 640px) {
+            .nutrition-summary-card { padding:18px 14px; }
+            .nutrition-summary-head h2 { font-size:20px; }
+            .nutrition-macro-grid { gap:7px; }
+            .nutrition-macro { padding:16px 6px; border-radius:18px; }
+            .nutrition-macro-name { font-size:15px; margin-bottom:12px; }
+            .nutrition-macro-value { font-size:25px; }
+            .nutrition-macro-value small, .nutrition-macro-target { font-size:13px; }
+            .nutrition-percent-row, .nutrition-target-row { font-size:13px; }
+        }
     </style>
 
 </head>
@@ -685,6 +746,40 @@
             <span id="dailyCalories">0 kcal</span>
         </div>
     </section>
+
+    <a class="nutrition-summary-card" id="nutritionCard" href="nutrition-detail.html" aria-label="상세 영양정보 보기">
+        <div class="nutrition-summary-head">
+            <h2>영양정보</h2>
+            <span class="nutrition-summary-arrow" aria-hidden="true">›</span>
+        </div>
+        <div class="nutrition-macro-grid">
+            <div class="nutrition-macro">
+                <span class="nutrition-macro-name carbs">탄수화물</span>
+                <span class="nutrition-macro-value"><span id="nutriCarbs">--</span> <small>g</small></span>
+                <span class="nutrition-macro-target" id="nutriCarbsTarget">목표 -- g</span>
+            </div>
+            <div class="nutrition-macro">
+                <span class="nutrition-macro-name fat">지방</span>
+                <span class="nutrition-macro-value"><span id="nutriFat">--</span> <small>g</small></span>
+                <span class="nutrition-macro-target" id="nutriFatTarget">목표 -- g</span>
+            </div>
+            <div class="nutrition-macro">
+                <span class="nutrition-macro-name protein">단백질</span>
+                <span class="nutrition-macro-value"><span id="nutriProtein">--</span> <small>g</small></span>
+                <span class="nutrition-macro-target" id="nutriProteinTarget">목표 -- g</span>
+            </div>
+        </div>
+        <p class="nutrition-intake-label">현재 섭취 비율</p>
+        <div class="nutrition-percent-row" id="nutriShareRow">
+            <span class="carbs">--%</span><span class="fat">--%</span><span class="protein">--%</span>
+        </div>
+        <div class="nutrition-ratio-track" id="nutriShareTrack" aria-hidden="true"><span></span><span></span><span></span></div>
+        <p class="nutrition-intake-label">권장 비율</p>
+        <div class="nutrition-target-row">
+            <span class="carbs">50~65%</span><span class="fat">15~30%</span><span class="protein">10~20%</span>
+        </div>
+        <p class="nutrition-card-note" id="nutriNote">목표량은 하루 목표 칼로리에 2025 한국인 영양소 섭취기준의 에너지적정비율을 적용한 범위입니다.</p>
+    </a>
 
     <section class="charts">
         <article class="chart-card">
@@ -823,6 +918,7 @@
 <script src="js/api.js"></script>
 <script src="js/data-adapter.js"></script>
 <script src="js/food-service.js"></script>
+<script src="js/nutrition.js"></script>
 <script>
     const api = window.FoodAdvisorApi;
     const appData = window.FoodAdvisorData;
@@ -830,11 +926,14 @@
     // 서버(DB)에서 불러온 데이터 캐시입니다. 화면 그리기(render)는 이 캐시만 사용합니다.
     let dayRecords = [];    // 선택한 날짜의 식단 기록
     let weekCalories = {};  // 이번 주 날짜별 총 섭취 열량 { "YYYY-MM-DD": kcal }
+    let dayNutrition = null; // 선택한 날짜의 영양 합계 { targetCalories, carbs, protein, fat, sugar }
     let bodyRecords = [];   // 신체 기록 (체중 그래프용)
     let loadSeq = 0;        // 오래된 응답이 최신 화면을 덮어쓰지 않도록 구분하는 번호
 
     const mealNames = ["아침", "점심", "저녁"];
-    let selectedDate = localDateString(new Date());
+    // 영양정보 상세 화면 등에서 ?date=YYYY-MM-DD 로 돌아오면 그 날짜를 선택합니다.
+    const dateParam = new URLSearchParams(location.search).get("date");
+    let selectedDate = /^\d{4}-\d{2}-\d{2}$/.test(dateParam || "") ? dateParam : localDateString(new Date());
     let weekOffset = 0;
     let dialogMealMode = "all";
 
@@ -1712,10 +1811,45 @@
     // 서버 세션을 종료하고 로그인 화면으로 이동합니다.
     document.getElementById("logoutButton").addEventListener("click", () => api.logout());
 
+    // 영양정보 카드: 선택한 날짜의 탄·단·지 섭취량과 목표 범위(2025 한국인 영양소 섭취기준)
+    function renderNutrition() {
+        const nutri = window.FoodAdvisorNutrition;
+        const summary = dayNutrition;
+        document.getElementById("nutritionCard").href = `nutrition-detail.html?date=${encodeURIComponent(selectedDate)}`;
+
+        ["carbs", "fat", "protein"].forEach(key => {
+            const name = key[0].toUpperCase() + key.slice(1);
+            const target = document.getElementById(`nutri${name}Target`);
+            document.getElementById(`nutri${name}`).textContent = summary ? round1(summary[key]) : "--";
+            target.classList.remove("is-low", "is-ok", "is-high");
+            if (!summary || !summary.targetCalories) {
+                target.textContent = "목표 -- g";
+                return;
+            }
+            const range = nutri.rangeGrams(key, summary.targetCalories);
+            target.textContent = `목표 ${Math.round(range.min)}~${Math.round(range.max)}g`;
+            const state = nutri.status(key, summary[key], summary.targetCalories);
+            if (state) target.classList.add(`is-${state}`);
+        });
+
+        const shares = summary ? nutri.macroShares(summary) : null;
+        const row = document.getElementById("nutriShareRow").children;
+        const track = document.getElementById("nutriShareTrack").children;
+        ["carbs", "fat", "protein"].forEach((key, index) => {
+            row[index].textContent = shares ? `${Math.round(shares[key])}%` : "--%";
+            track[index].className = shares ? key : "";
+            track[index].style.flex = shares ? `${Math.max(shares[key], 0.5)} 1 0` : "";
+        });
+        document.getElementById("nutriNote").textContent = shares
+            ? "목표량은 하루 목표 칼로리에 2025 한국인 영양소 섭취기준의 에너지적정비율을 적용한 범위입니다. 눌러서 자세히 보기"
+            : "이 날짜에 기록한 식단이 없습니다. 식단을 기록하면 영양소 섭취량이 표시됩니다.";
+    }
+
     // 캐시된 데이터로 화면만 다시 그립니다. (서버 호출 없음)
     function render() {
         renderWeek();
         renderMeals();
+        renderNutrition();
         renderWeightChart();
     }
 
@@ -1724,13 +1858,15 @@
         const seq = ++loadSeq;
         const dates = getWeekDates();
         try {
-            const [records, calories] = await Promise.all([
+            const [records, calories, nutrition] = await Promise.all([
                 appData.getMeals(selectedDate),
-                appData.getDailyCalories(localDateString(dates[0]), localDateString(dates[6]))
+                appData.getDailyCalories(localDateString(dates[0]), localDateString(dates[6])),
+                appData.getDailyNutrition(selectedDate)
             ]);
             if (seq !== loadSeq) return;  // 그 사이 더 최신 요청이 있었다면 이 응답은 버립니다.
             dayRecords = records;
             weekCalories = calories;
+            dayNutrition = nutrition;
         } catch (error) {
             if (seq === loadSeq) api.handleError(error, "식단 기록을 불러오지 못했습니다.");
             return;
@@ -1753,4 +1889,4 @@
 </script>
     <script src="js/ui-effects.js" defer></script>
 </body>
-</html>
+</html>

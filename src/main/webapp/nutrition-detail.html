@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영양정보 | FoodAdvisor</title>
+    <style>
+        :root { color-scheme: light; --purple:#8650b5; --green:#20b978; --orange:#ef8952; --text:#17151b; --muted:#85818a; --line:#e9e7eb; --track:#f0eff2; }
+        * { box-sizing:border-box; }
+        body { margin:0; background:#f3f3f5; color:var(--text); font-family:"Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+        .page { width:min(760px,100%); min-height:100vh; margin:0 auto; padding:24px 22px 48px; background:#fff; }
+        .page-header { display:flex; align-items:center; gap:14px; margin-bottom:24px; }
+        .back-link { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; color:#222; text-decoration:none; font-size:30px; line-height:1; }
+        .back-link:focus-visible { outline:2px solid #bba0df; outline-offset:2px; }
+        .page-header h1 { margin:0; font-size:23px; }
+        .illustration { display:flex; align-items:center; justify-content:center; min-height:180px; margin-bottom:28px; overflow:hidden; border-radius:24px; background:#f0f0f2; }
+        .illustration svg { display:block; width:100%; max-height:210px; }
+        .intro h2 { margin:0 0 14px; font-size:19px; }
+        .intro p { margin:0 0 12px; font-size:14px; line-height:1.8; }
+        .legend { display:grid; gap:9px; margin:14px 0 22px; color:#77737c; font-size:13px; }
+        .legend-item { display:flex; align-items:center; gap:9px; }
+        .legend-dot { width:11px; height:11px; border-radius:50%; background:#c8e9d1; }
+        .legend-dot.normal { background:var(--green); }
+        .legend-dot.high { background:var(--orange); }
+        .guidance { color:#3d3941; }
+        .nutrient-list { margin-top:28px; border-top:1px solid var(--line); }
+        .nutrient-item { padding:25px 0 22px; }
+        .nutrient-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:17px; }
+        .nutrient-heading h3 { margin:0; font-size:17px; }
+        .nutrient-value { flex-shrink:0; font-size:18px; font-weight:700; }
+        .nutrient-value small { font-size:14px; font-weight:600; }
+        .bar { position:relative; height:13px; overflow:hidden; border-radius:999px; background:var(--track); }
+        .bar-fill { position:absolute; left:0; top:0; bottom:0; width:0; border-radius:999px; background:#c8e9d1; transition:width .3s ease; }
+        .bar-fill.ok { background:var(--green); }
+        .bar-fill.high { background:var(--orange); }
+        .bar::after { content:""; position:absolute; inset:0; background:linear-gradient(to right, transparent 33.1%, #fff 33.1%, #fff 33.5%, transparent 33.5%, transparent 66.3%, #fff 66.3%, #fff 66.7%, transparent 66.7%); }
+        .bar-labels { display:flex; justify-content:space-between; min-height:18px; padding:7px 3px 0; color:#aaa6ad; font-size:12px; }
+        .bar-labels span:empty { display:none; }
+        .nutrient-state { margin-left:8px; font-size:13px; font-weight:700; color:var(--muted); }
+        .nutrient-state.ok { color:var(--green); }
+        .nutrient-state.high { color:var(--orange); }
+        .nutrient-item.is-pending h3, .nutrient-item.is-pending .nutrient-value { color:#b3afb7; }
+        .pending-tag { margin-left:8px; padding:2px 8px; border-radius:999px; background:#f0eff2; color:var(--muted); font-size:12px; font-weight:600; }
+        .page-date { margin:-14px 0 20px 48px; color:var(--muted); font-size:14px; }
+        .empty-note { margin:18px 0 0; color:var(--muted); font-size:12px; line-height:1.7; }
+        /* PC: 화면을 넓게 쓰고 영양소를 한 줄에 두 개씩 */
+        @media (min-width:1025px) {
+            .page { width:min(1200px,100%); padding:32px 48px 56px; }
+            .illustration svg { max-height:240px; }
+            .nutrient-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:56px; }
+            .nutrient-item { border-bottom:1px solid var(--line); }
+        }
+        @media (max-width:640px) { .page { padding:20px 18px 36px; } .illustration { min-height:150px; } .page-header h1 { font-size:21px; } .nutrient-item { padding:22px 0 18px; } }
+    </style>
+</head>
+<body>
+<main class="page">
+    <header class="page-header">
+        <a class="back-link" id="backLink" href="dashboard.html" aria-label="대시보드로 돌아가기">‹</a>
+        <h1>영양정보</h1>
+    </header>
+    <p class="page-date" id="pageDate"></p>
+
+    <div class="illustration" role="img" aria-label="채소와 포크를 표현한 영양 안내 일러스트">
+        <svg viewBox="0 0 620 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="0" y="0" width="620" height="250" rx="28" fill="#e9e9eb"/>
+            <path d="M0 183 C95 130 180 226 290 176 S460 90 620 115" fill="none" stroke="#f0a23c" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="65" cy="70" r="16" fill="#20a35a"/>
+            <circle cx="360" cy="208" r="15" fill="#198d50"/>
+            <circle cx="420" cy="180" r="16" fill="#24a55d"/>
+            <path d="M112 145 C115 108 142 89 175 91 C211 96 233 126 224 158 C214 191 178 207 147 190 C123 178 111 164 112 145Z" fill="#58b878"/>
+            <path d="M126 145 C130 115 149 104 175 105 C199 108 216 130 209 155 C202 177 177 191 154 179 C137 170 126 158 126 145Z" fill="#b9e5b8"/>
+            <g fill="none" stroke="#8ccf8e" stroke-width="3"><circle cx="153" cy="135" r="5"/><circle cx="177" cy="126" r="5"/><circle cx="190" cy="150" r="5"/><circle cx="164" cy="161" r="5"/><circle cx="185" cy="171" r="4"/><circle cx="145" cy="151" r="4"/></g>
+            <path d="M235 142 C235 116 258 102 280 111 C304 120 309 148 293 170 C281 188 257 190 243 171 C238 162 235 152 235 142Z" fill="#ef573e"/>
+            <path d="M263 112 L253 94 M267 112 L274 92 M270 113 L290 101" stroke="#33995a" stroke-width="6" stroke-linecap="round"/>
+            <g transform="translate(405 40) rotate(18)">
+                <path d="M95 28 L205 28 Q216 28 216 39 L216 48 Q216 59 205 59 L95 59Z" fill="#2d39bd"/>
+                <path d="M0 26 L100 26 L100 62 L0 62" fill="#3544d4"/>
+                <path d="M9 31 L98 31 M9 42 L98 42 M9 53 L98 53" stroke="#f5f5f7" stroke-width="4"/>
+                <path d="M91 18 C75 43 71 73 89 103 C97 117 109 113 109 99 L109 41 C109 20 102 12 91 18Z" fill="#f59b30"/>
+                <path d="M112 13 C96 41 92 73 111 103 C120 117 131 112 130 98 L130 34 C129 14 121 7 112 13Z" fill="#f07d2c"/>
+                <path d="M134 9 C119 36 115 66 133 94 C142 108 153 104 152 90 L152 29 C151 11 143 4 134 9Z" fill="#f4ae34"/>
+                <path d="M155 12 C143 35 139 61 155 85 C164 99 175 94 174 81 L174 30 C174 13 164 6 155 12Z" fill="#f18a2d"/>
+            </g>
+        </svg>
+    </div>
+
+    <section class="intro" aria-labelledby="intakeTitle">
+        <h2 id="intakeTitle">섭취량 확인하기</h2>
+        <p>영양소 섭취량에 따라 상태를 색상으로 구분할 수 있습니다.</p>
+        <div class="legend" aria-label="섭취 상태 범례">
+            <div class="legend-item"><span class="legend-dot"></span><span>섭취 부족</span></div>
+            <div class="legend-item"><span class="legend-dot normal"></span><span>적정 섭취(권장)</span></div>
+            <div class="legend-item"><span class="legend-dot high"></span><span>과잉 섭취</span></div>
+        </div>
+        <p class="guidance">균형 잡힌 식습관을 위해 각 영양소의 섭취량을 확인하세요. 적정 범위는 하루 목표 칼로리에 <strong>2025 한국인 영양소 섭취기준</strong>의 에너지적정비율(탄수화물 50~65%, 단백질 10~20%, 지방 15~30%, 총당류 20% 이내)을 적용해 계산합니다.</p>
+        <p class="guidance" id="summaryText">선택한 날짜의 식단 기록을 불러오는 중입니다.</p>
+    </section>
+
+    <section class="nutrient-list" id="nutrientList" aria-label="영양소별 섭취 현황"></section>
+    <p class="empty-note">'준비 중' 영양소는 음식 DB 에 아직 해당 성분 값이 없어 표시하지 않습니다. 이 화면은 대략적인 참고용이며 의학적 진단이 아닙니다.</p>
+</main>
+<script src="js/api.js"></script>
+<script src="js/data-adapter.js"></script>
+<script src="js/nutrition.js"></script>
+<script>
+(() => {
+    const api = window.FoodAdvisorApi;
+    const nutri = window.FoodAdvisorNutrition;
+
+    // key 가 있는 영양소는 음식 DB 에 값이 있고, 없는 영양소는 '준비 중'으로 표시합니다.
+    const ITEMS = [
+        { key: "carbs", name: "탄수화물", unit: "g" },
+        { key: "protein", name: "단백질", unit: "g" },
+        { key: "fat", name: "지방", unit: "g" },
+        { key: "sugar", name: "당류", unit: "g" },
+        { name: "식이섬유", unit: "g" },
+        { name: "포화 지방", unit: "g" },
+        { name: "나트륨", unit: "mg" },
+        { name: "칼륨", unit: "mg" },
+        { name: "칼슘", unit: "mg" },
+        { name: "철분", unit: "mg" },
+        { name: "비타민 A", unit: "mcg" },
+        { name: "비타민 C", unit: "mg" }
+    ];
+    const STATE_TEXT = { low: "부족", ok: "적정", high: "과잉" };
+
+    const pad = n => String(n).padStart(2, "0");
+    const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+    const param = new URLSearchParams(location.search).get("date");
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(param || "") ? param : today();
+    const round1 = value => Math.round(value * 10) / 10;
+
+    // 막대: 0~33% 부족, 33~67% 적정, 67~100% 과잉 구간 (경계는 적정 범위의 최소/최대 g)
+    //  당류처럼 하한이 없으면 0 부터 적정 구간으로 그립니다.
+    function barPercent(grams, range) {
+        const third = 100 / 3;
+        if (range.min > 0 && grams < range.min) return grams / range.min * third;
+        const start = range.min > 0 ? third : 0;
+        if (grams <= range.max) return start + (grams - range.min) / (range.max - range.min) * (2 * third - start);
+        return Math.min(100, 2 * third + (grams - range.max) / range.max * third);
+    }
+
+    function buildItem(item, summary) {
+        const article = document.createElement("article");
+        article.className = "nutrient-item";
+        const heading = document.createElement("div");
+        heading.className = "nutrient-heading";
+        const title = document.createElement("h3");
+        title.textContent = item.name;
+        const value = document.createElement("div");
+        value.className = "nutrient-value";
+        const unit = document.createElement("small");
+        unit.textContent = item.unit;
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        const labels = document.createElement("div");
+        labels.className = "bar-labels";
+
+        if (!item.key) {
+            article.classList.add("is-pending");
+            const tag = document.createElement("span");
+            tag.className = "pending-tag";
+            tag.textContent = "준비 중";
+            title.appendChild(tag);
+            value.append("-- ", unit);
+            bar.setAttribute("aria-label", "음식 DB 에 성분 값이 없어 표시하지 않습니다.");
+        } else {
+            const grams = summary[item.key];
+            const range = nutri.rangeGrams(item.key, summary.targetCalories);
+            const state = nutri.status(item.key, grams, summary.targetCalories);
+            value.append(`${round1(grams)} `, unit);
+            if (state) {
+                const badge = document.createElement("span");
+                badge.className = `nutrient-state ${state}`;
+                badge.textContent = STATE_TEXT[state];
+                title.appendChild(badge);
+            }
+            const fill = document.createElement("span");
+            fill.className = `bar-fill ${state || ""}`;
+            fill.style.width = summary.targetCalories ? `${barPercent(grams, range)}%` : "0%";
+            bar.appendChild(fill);
+            bar.setAttribute("aria-label", `${item.name} ${round1(grams)}${item.unit}, 적정 범위 ${Math.round(range.min)}~${Math.round(range.max)}${item.unit}`);
+            const min = document.createElement("span");
+            const max = document.createElement("span");
+            min.textContent = range.min > 0 ? `최소 ${Math.round(range.min)}${item.unit}` : "";
+            max.textContent = `적정 ${nutri.pctText(item.key)} · 최대 ${Math.round(range.max)}${item.unit}`;
+            labels.append(min, max);
+        }
+        heading.append(title, value);
+        article.append(heading, bar, labels);
+        return article;
+    }
+
+    (async () => {
+        if (!await api.requireLogin()) return;
+        const [y, m, d] = date.split("-").map(Number);
+        document.getElementById("pageDate").textContent = `${y}년 ${m}월 ${d}일 섭취 기준`;
+        document.getElementById("backLink").href = `dashboard.html?date=${encodeURIComponent(date)}`;
+
+        let summary;
+        try {
+            summary = await window.FoodAdvisorData.getDailyNutrition(date);
+        } catch (error) {
+            api.handleError(error, "영양 정보를 불러오지 못했습니다.");
+            return;
+        }
+
+        document.getElementById("nutrientList").replaceChildren(...ITEMS.map(item => buildItem(item, summary)));
+
+        const summaryText = document.getElementById("summaryText");
+        if (summary.currentCalories <= 0) {
+            summaryText.textContent = "이 날짜에 기록한 식단이 없습니다. 대시보드에서 식단을 기록하면 섭취량이 표시됩니다.";
+            return;
+        }
+        const offRange = ["carbs", "protein", "fat", "sugar"]
+            .map(key => ({ key, state: nutri.status(key, summary[key], summary.targetCalories) }))
+            .filter(entry => entry.state && entry.state !== "ok")
+            .map(entry => `${nutri.NUTRIENTS[entry.key].label} ${STATE_TEXT[entry.state]}`);
+        summaryText.textContent = `이 날 섭취 ${summary.currentCalories} kcal / 목표 ${summary.targetCalories} kcal. `
+            + (offRange.length ? `적정 범위를 벗어난 영양소: ${offRange.join(", ")}` : "기록된 영양소가 모두 적정 범위입니다.");
+    })();
+})();
+</script>
+</body>
+</html>
