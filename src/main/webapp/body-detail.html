@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>신체 변화 자세히 | FoodAdvisor</title>
+    <style>
+        :root { color-scheme: light; --purple:#4b2a75; --text:#17151b; --muted:#85818a; --line:#e9e7eb; --soft:#f1eef6; }
+        * { box-sizing:border-box; }
+        body { margin:0; background:#f3f3f5; color:var(--text); font-family:"Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+        .page { width:min(760px,100%); min-height:100vh; margin:0 auto; padding:24px 22px 48px; background:#fff; }
+        .page-header { display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+        .back-link { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; color:#222; text-decoration:none; font-size:30px; line-height:1; }
+        .back-link:focus-visible { outline:2px solid #bba0df; outline-offset:2px; }
+        .page-header h1 { margin:0; font-size:23px; }
+
+        /* 항목(체중/골격근량/체지방률) · 기간(월/년) 탭 */
+        .seg { display:inline-flex; padding:4px; gap:4px; border-radius:999px; background:var(--soft); }
+        .seg button { min-width:52px; padding:8px 16px; border:0; border-radius:999px; background:transparent; color:#6c6476; font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
+        .seg button[aria-selected="true"] { background:#fff; color:var(--purple); box-shadow:0 1px 4px rgba(75,42,117,.15); }
+        .seg button:focus-visible, .period-nav button:focus-visible { outline:2px solid #bba0df; outline-offset:2px; }
+        .metric-tabs { margin-bottom:14px; }
+        .period-bar { position:relative; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:22px; }
+        .period-nav { display:flex; align-items:center; gap:8px; }
+        .period-nav > button { width:34px; height:34px; border:1px solid var(--line); border-radius:50%; background:#fff; color:var(--purple); font-size:20px; line-height:1; cursor:pointer; }
+        .period-nav > button:disabled { color:#cfcbd4; cursor:default; }
+        .period-nav .period-label { width:auto; min-width:130px; height:34px; padding:0 12px; border:0; border-radius:10px; background:transparent; color:var(--text); font:inherit; font-size:15px; font-weight:700; }
+        .period-nav .period-label::after { content:"▾"; margin-left:6px; color:#8a8590; font-size:12px; }
+        .period-nav .period-label:hover, .period-nav .period-label[aria-expanded="true"] { background:var(--soft); }
+
+        /* 월·년 선택 팝업 (영양정보 화면과 같은 모양) */
+        .picker { position:absolute; top:calc(100% + 8px); right:0; z-index:20; width:320px; padding:14px; border:1px solid var(--line); border-radius:16px; background:#fff; box-shadow:0 12px 32px rgba(40,20,70,.16); }
+        .picker-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; font-size:15px; font-weight:700; }
+        .picker-head button { width:30px; height:30px; border:1px solid var(--line); border-radius:50%; background:#fff; color:var(--purple); font-size:18px; line-height:1; cursor:pointer; }
+        .picker-head button:disabled { color:#cfcbd4; cursor:default; }
+        .box-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+        .box-grid button { position:relative; height:48px; border:1px solid var(--line); border-radius:12px; background:#fff; color:var(--text); font:inherit; font-size:14px; font-weight:600; cursor:pointer; }
+        .box-grid button:hover:not(:disabled) { border-color:#bba0df; background:#faf8fd; }
+        .box-grid button.selected { border-color:var(--purple); background:var(--purple); color:#fff; }
+        .box-grid button:disabled { background:#fafafa; color:#d0ccd5; cursor:default; }
+        .box-grid button.has-record::after { content:""; position:absolute; bottom:6px; left:50%; width:5px; height:5px; margin-left:-2.5px; border-radius:50%; background:#20b978; }
+        .box-grid button.selected.has-record::after { background:#fff; }
+        .picker-note { margin:10px 2px 0; color:var(--muted); font-size:12px; }
+
+        .chart-card { padding:20px 18px 14px; border:1px solid var(--line); border-radius:18px; }
+        .chart-card h2 { margin:0 0 4px; font-size:16px; }
+        .chart-desc { margin:0 0 10px; color:var(--muted); font-size:12px; }
+        #detailChart { display:block; width:100%; height:280px; }
+
+        .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:18px 0 0; }
+        .stats div { display:flex; flex-direction:column; gap:3px; padding:14px 16px; border-radius:14px; background:#f7f4fd; }
+        .stats span { color:#746b82; font-size:13px; }
+        .stats strong { color:#2f2445; font-size:18px; font-variant-numeric:tabular-nums; }
+        .stats small { color:#827790; font-size:12px; }
+        .stats .is-down { color:#2f7a57; }
+        .stats .is-up { color:#b8532c; }
+
+        .records { margin-top:26px; }
+        .records h2 { margin:0 0 10px; font-size:17px; }
+        .table-wrap { max-height:420px; overflow:auto; border:1px solid var(--line); border-radius:14px; }
+        table { width:100%; border-collapse:collapse; font-size:14px; }
+        th, td { padding:10px 14px; border-bottom:1px solid var(--line); text-align:left; }
+        th { position:sticky; top:0; background:#faf9fc; color:#6c6476; font-size:13px; }
+        td.num { font-variant-numeric:tabular-nums; }
+        .empty { padding:24px; color:var(--muted); text-align:center; font-size:14px; }
+
+        @media (min-width:1025px) {
+            .page { width:min(1200px,100%); padding:32px 48px 56px; }
+            #detailChart { height:340px; }
+        }
+        @media (max-width:640px) {
+            .page { padding:20px 18px 36px; }
+            .page-header h1 { font-size:21px; }
+            .picker { left:0; right:0; width:auto; }
+            .stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+            .stats div { padding:10px 12px; }
+            .stats strong { font-size:16px; }
+            #detailChart { height:240px; }
+        }
+    </style>
+</head>
+<body>
+<main class="page">
+    <header class="page-header">
+        <a class="back-link" href="weight-tracker.html" aria-label="신체 변화 기록으로 돌아가기">‹</a>
+        <h1>신체 변화 자세히 보기</h1>
+    </header>
+
+    <div class="seg metric-tabs" role="tablist" aria-label="항목 선택">
+        <button type="button" role="tab" data-metric="weight">체중</button>
+        <button type="button" role="tab" data-metric="muscle">골격근량</button>
+        <button type="button" role="tab" data-metric="bodyFat">체지방률</button>
+    </div>
+
+    <div class="period-bar">
+        <div class="seg" role="tablist" aria-label="기간 선택">
+            <button type="button" class="period-tab" role="tab" data-period="month">월</button>
+            <button type="button" class="period-tab" role="tab" data-period="year">년</button>
+        </div>
+        <div class="period-nav">
+            <button type="button" id="prevPeriod" aria-label="이전 기간">‹</button>
+            <button type="button" class="period-label" id="periodLabel" aria-haspopup="dialog" aria-expanded="false" aria-controls="picker"></button>
+            <button type="button" id="nextPeriod" aria-label="다음 기간">›</button>
+        </div>
+        <div class="picker" id="picker" role="dialog" aria-label="기간 선택" hidden></div>
+    </div>
+
+    <section class="chart-card">
+        <h2 id="chartTitle">체중 변화</h2>
+        <p class="chart-desc" id="chartDesc"></p>
+        <canvas id="detailChart" role="img" aria-label="기간별 신체 변화 그래프"></canvas>
+        <div class="stats" id="stats"></div>
+    </section>
+
+    <section class="records">
+        <h2 id="recordsTitle">측정 기록</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>날짜</th><th id="valueHead">체중 (kg)</th><th>이전 측정 대비</th></tr></thead>
+                <tbody id="recordBody"></tbody>
+            </table>
+            <div class="empty" id="emptyMessage" hidden>이 기간에 측정 기록이 없습니다.</div>
+        </div>
+    </section>
+</main>
+<script src="js/api.js"></script>
+<script src="js/data-adapter.js"></script>
+<script src="js/chart-tooltip.js"></script>
+<script>
+(() => {
+    const api = window.FoodAdvisorApi;
+    const appData = window.FoodAdvisorData;
+
+    const METRICS = {
+        weight: { label: "체중", unit: "kg", color: "#7856d8" },
+        muscle: { label: "골격근량", unit: "kg", color: "#9a82e8" },
+        bodyFat: { label: "체지방률", unit: "%", color: "#e27845" }
+    };
+
+    const pad2 = n => String(n).padStart(2, "0");
+    const toDateString = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    const today = toDateString(new Date());
+    const thisYear = new Date().getFullYear();
+    const thisMonth = new Date().getMonth();
+
+    const params = new URLSearchParams(location.search);
+    let metric = METRICS[params.get("metric")] ? params.get("metric") : "weight";
+    let period = params.get("period") === "year" ? "year" : "month";
+    // 보고 있는 달/해: year, month(0~11). 날짜가 없으면 이 항목의 가장 최근 측정이 있는 달 (불러온 뒤 정함)
+    const dateParam = /^\d{4}-\d{2}-\d{2}$/.test(params.get("date") || "") ? params.get("date") : null;
+    let viewYear = Number((dateParam || today).slice(0, 4));
+    let viewMonth = Number((dateParam || today).slice(5, 7)) - 1;
+
+    let records = [];  // [{ date, weight, muscle, bodyFat }] 날짜 오름차순
+
+    const getRange = () => period === "month"
+        ? [toDateString(new Date(viewYear, viewMonth, 1)), toDateString(new Date(viewYear, viewMonth + 1, 0))]
+        : [`${viewYear}-01-01`, `${viewYear}-12-31`];
+    const rangeLabel = () => period === "month" ? `${viewYear}년 ${viewMonth + 1}월` : `${viewYear}년`;
+    const fmt = value => value.toFixed(1);
+
+    function periodRecords() {
+        const [start, end] = getRange();
+        return records.filter(record => record.date >= start && record.date <= end && record[metric] != null);
+    }
+
+    // 날짜 → 그래프 x 위치용 숫자 (일 단위)
+    const dayNumber = date => {
+        const [y, m, d] = date.split("-").map(Number);
+        return Date.UTC(y, m - 1, d) / 86400000;
+    };
+
+    function drawChart(rows) {
+        const canvas = document.getElementById("detailChart");
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const ratio = window.devicePixelRatio || 1;
+        canvas.width = width * ratio;
+        canvas.height = height * ratio;
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+
+        const { color, unit } = METRICS[metric];
+        if (rows.length === 0) {
+            ctx.fillStyle = "#85818a";
+            ctx.font = "14px 'Malgun Gothic', sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("이 기간에 측정 기록이 없습니다.", width / 2, height / 2);
+            window.FoodAdvisorTooltip.set(canvas, []);
+            return;
+        }
+
+        const pad = { top: 20, right: 16, bottom: 44, left: 50 };
+        const plotW = width - pad.left - pad.right;
+        const plotH = height - pad.top - pad.bottom;
+        const [start, end] = getRange();
+        const minDay = dayNumber(start);
+        const maxDay = dayNumber(end);
+        const values = rows.map(row => row[metric]);
+        let minV = Math.min(...values);
+        let maxV = Math.max(...values);
+        if (maxV - minV < 1) { const mid = (maxV + minV) / 2; minV = mid - 1; maxV = mid + 1; }
+        else { const margin = (maxV - minV) * 0.15; minV -= margin; maxV += margin; }
+        const x = day => pad.left + (day - minDay) / Math.max(maxDay - minDay, 1) * plotW;
+        const y = value => pad.top + (maxV - value) / (maxV - minV) * plotH;
+
+        // 가로 눈금
+        ctx.font = "11px 'Malgun Gothic', sans-serif";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        for (let i = 0; i <= 4; i++) {
+            const value = maxV - (maxV - minV) * i / 4;
+            const lineY = pad.top + plotH * i / 4;
+            ctx.strokeStyle = "#eeecf0";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(pad.left, lineY);
+            ctx.lineTo(width - pad.right, lineY);
+            ctx.stroke();
+            ctx.fillStyle = "#9b97a0";
+            ctx.fillText(`${value.toFixed(1)}${unit === "%" ? "%" : ""}`, pad.left - 6, lineY);
+        }
+
+        // 아래 날짜: 월=1·8·15·22·29일(좁으면 1·15·29일), 년=매월(좁으면 3개월마다). 연도는 왼쪽 끝에 한 번만 (기간이 한 해 안이라 연도 경계 없음)
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillStyle = "#8a8590";
+        if (period === "month") {
+            const lastDay = Number(end.slice(8, 10));
+            const step = width < 500 ? 14 : 7;
+            for (let d = 1; d <= lastDay; d += step) {
+                ctx.fillText(`${viewMonth + 1}/${d}`, x(dayNumber(`${viewYear}-${pad2(viewMonth + 1)}-${pad2(d)}`)), height - pad.bottom + 8);
+            }
+        } else {
+            for (let m = 0; m < 12; m++) {
+                const day = dayNumber(`${viewYear}-${pad2(m + 1)}-01`);
+                ctx.strokeStyle = "#f4f2f6";
+                ctx.beginPath();
+                ctx.moveTo(x(day), pad.top);
+                ctx.lineTo(x(day), height - pad.bottom);
+                ctx.stroke();
+                if (width >= 500 || m % 3 === 0) ctx.fillText(`${m + 1}월`, x(day + 15), height - pad.bottom + 8);
+            }
+        }
+        ctx.fillStyle = "#a39eaa";
+        ctx.font = "10px 'Malgun Gothic', sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText(`${viewYear}년`, pad.left - 8, height - pad.bottom + 23);
+
+        // 측정값 선
+        ctx.strokeStyle = color;
+        ctx.lineWidth = period === "month" ? 3 : 2.5;
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        rows.forEach((row, index) => {
+            const px = x(dayNumber(row.date));
+            const py = y(row[metric]);
+            index === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+
+        // 점: 월 보기에서만 (년 보기는 점이 많아 선만)
+        if (period === "month" || rows.length <= 40) {
+            rows.forEach(row => {
+                ctx.beginPath();
+                ctx.fillStyle = "#fff";
+                ctx.arc(x(dayNumber(row.date)), y(row[metric]), 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = color;
+                ctx.stroke();
+            });
+        }
+
+        // 점에 마우스를 올리면 날짜·값·이전 측정 대비 변화
+        window.FoodAdvisorTooltip.set(canvas, rows.map((row, index) => {
+            const lines = [`${METRICS[metric].label} ${fmt(row[metric])} ${unit}`];
+            if (index > 0) {
+                const diff = row[metric] - rows[index - 1][metric];
+                lines.push(`이전 측정 대비 ${diff > 0 ? "+" : ""}${fmt(diff)} ${unit}`);
+            }
+            return { x: x(dayNumber(row.date)), y: y(row[metric]), title: window.FoodAdvisorTooltip.longDate(row.date), lines };
+        }));
+
+        // 최저·최고 표시
+        const minRow = rows.reduce((a, b) => (b[metric] < a[metric] ? b : a));
+        const maxRow = rows.reduce((a, b) => (b[metric] > a[metric] ? b : a));
+        ctx.font = "bold 11px 'Malgun Gothic', sans-serif";
+        ctx.fillStyle = color;
+        ctx.textAlign = "center";
+        [[maxRow, -10, "bottom"], [minRow, 10, "top"]].forEach(([row, offset, baseline]) => {
+            ctx.textBaseline = baseline;
+            const px = Math.min(Math.max(x(dayNumber(row.date)), pad.left + 20), width - pad.right - 20);
+            ctx.fillText(`${fmt(row[metric])}${unit}`, px, y(row[metric]) + offset);
+        });
+    }
+
+    function renderStats(rows) {
+        const { unit } = METRICS[metric];
+        const stats = document.getElementById("stats");
+        if (rows.length === 0) {
+            stats.replaceChildren();
+            return;
+        }
+        const values = rows.map(row => row[metric]);
+        const first = rows[0];
+        const last = rows[rows.length - 1];
+        const change = last[metric] - first[metric];
+        const avg = values.reduce((a, b) => a + b, 0) / values.length;
+        const minRow = rows.reduce((a, b) => (b[metric] < a[metric] ? b : a));
+        const maxRow = rows.reduce((a, b) => (b[metric] > a[metric] ? b : a));
+        const shortDate = date => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
+        const items = [
+            ["변화", `${change > 0 ? "+" : ""}${fmt(change)}${unit}`, `${shortDate(first.date)} ${fmt(first[metric])} → ${shortDate(last.date)} ${fmt(last[metric])}`,
+                Math.abs(change) < 0.05 ? "" : change < 0 ? "is-down" : "is-up"],
+            ["평균", `${fmt(avg)}${unit}`, `측정 ${rows.length}회`, ""],
+            ["최저", `${fmt(minRow[metric])}${unit}`, shortDate(minRow.date), ""],
+            ["최고", `${fmt(maxRow[metric])}${unit}`, shortDate(maxRow.date), ""]
+        ];
+        stats.replaceChildren(...items.map(([label, value, note, cls]) => {
+            const box = document.createElement("div");
+            const l = document.createElement("span");
+            l.textContent = label;
+            const v = document.createElement("strong");
+            v.textContent = value;
+            if (cls) v.className = cls;
+            const n = document.createElement("small");
+            n.textContent = note;
+            box.append(l, v, n);
+            return box;
+        }));
+    }
+
+    function renderTable(rows) {
+        const { label, unit } = METRICS[metric];
+        document.getElementById("valueHead").textContent = `${label} (${unit})`;
+        document.getElementById("recordsTitle").textContent = `측정 기록 (${rows.length}회)`;
+        document.getElementById("emptyMessage").hidden = rows.length > 0;
+        const body = document.getElementById("recordBody");
+        body.replaceChildren(...[...rows].reverse().map((row, index, list) => {
+            const tr = document.createElement("tr");
+            const prev = list[index + 1];
+            const diff = prev ? row[metric] - prev[metric] : null;
+            [row.date, fmt(row[metric]), diff == null ? "-" : `${diff > 0 ? "+" : ""}${fmt(diff)}`].forEach((text, i) => {
+                const td = document.createElement("td");
+                td.textContent = text;
+                if (i > 0) td.className = "num";
+                tr.appendChild(td);
+            });
+            return tr;
+        }));
+    }
+
+    function render() {
+        const { label, unit } = METRICS[metric];
+        // 골격근량·체지방률은 측정이 드물어(월 1회 정도) 연 단위로만 봅니다.
+        const yearOnly = metric !== "weight";
+        if (yearOnly) period = "year";
+        document.querySelector('.period-tab[data-period="month"]').hidden = yearOnly;
+        document.querySelectorAll("[data-metric]").forEach(tab => tab.setAttribute("aria-selected", String(tab.dataset.metric === metric)));
+        document.querySelectorAll(".period-tab").forEach(tab => tab.setAttribute("aria-selected", String(tab.dataset.period === period)));
+        document.getElementById("periodLabel").textContent = rangeLabel();
+        document.getElementById("nextPeriod").disabled = period === "month"
+            ? viewYear > thisYear || (viewYear === thisYear && viewMonth >= thisMonth)
+            : viewYear >= thisYear;
+        document.getElementById("chartTitle").textContent = `${label} 변화`;
+        document.getElementById("chartDesc").textContent = period === "month"
+            ? `단위: ${unit} · ${viewMonth + 1}월 측정 기록`
+            : `단위: ${unit} · ${viewYear}년 전체 측정 기록`;
+        history.replaceState(null, "", `?metric=${metric}&period=${period}&date=${viewYear}-${pad2(viewMonth + 1)}-01`);
+
+        const rows = periodRecords();
+        drawChart(rows);
+        renderStats(rows);
+        renderTable(rows);
+    }
+
+    function shift(direction) {
+        if (period === "month") {
+            const d = new Date(viewYear, viewMonth + direction, 1);
+            viewYear = d.getFullYear();
+            viewMonth = d.getMonth();
+        } else {
+            viewYear += direction;
+        }
+        render();
+    }
+
+    // ---------- 월·년 선택 팝업: 월=12개월, 년=12년 (측정 기록이 있으면 초록 점) ----------
+    const picker = document.getElementById("picker");
+    const labelButton = document.getElementById("periodLabel");
+    let cursor;
+
+    const hasRecord = prefix => records.some(record => record.date.startsWith(prefix) && record[metric] != null);
+
+    function openPicker() {
+        cursor = period === "month" ? viewYear : viewYear - (viewYear % 12);
+        renderPicker();
+        picker.hidden = false;
+        labelButton.setAttribute("aria-expanded", "true");
+    }
+    function closePicker() {
+        picker.hidden = true;
+        labelButton.setAttribute("aria-expanded", "false");
+    }
+
+    function renderPicker() {
+        const head = document.createElement("div");
+        head.className = "picker-head";
+        const prev = document.createElement("button");
+        prev.type = "button";
+        prev.textContent = "‹";
+        const title = document.createElement("span");
+        const next = document.createElement("button");
+        next.type = "button";
+        next.textContent = "›";
+        head.append(prev, title, next);
+        const grid = document.createElement("div");
+        grid.className = "box-grid";
+
+        if (period === "month") {
+            title.textContent = `${cursor}년`;
+            prev.setAttribute("aria-label", "이전 해");
+            next.setAttribute("aria-label", "다음 해");
+            next.disabled = cursor >= thisYear;
+            prev.addEventListener("click", () => { cursor -= 1; renderPicker(); });
+            next.addEventListener("click", () => { cursor += 1; renderPicker(); });
+            for (let m = 0; m < 12; m++) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.textContent = `${m + 1}월`;
+                button.disabled = cursor > thisYear || (cursor === thisYear && m > thisMonth);
+                button.classList.toggle("selected", cursor === viewYear && m === viewMonth);
+                button.classList.toggle("has-record", hasRecord(`${cursor}-${pad2(m + 1)}`));
+                const year = cursor;
+                button.addEventListener("click", () => { viewYear = year; viewMonth = m; closePicker(); render(); });
+                grid.appendChild(button);
+            }
+        } else {
+            title.textContent = `${cursor}년 ~ ${cursor + 11}년`;
+            prev.setAttribute("aria-label", "이전 12년");
+            next.setAttribute("aria-label", "다음 12년");
+            next.disabled = cursor + 11 >= thisYear;
+            prev.addEventListener("click", () => { cursor -= 12; renderPicker(); });
+            next.addEventListener("click", () => { cursor += 12; renderPicker(); });
+            for (let year = cursor; year < cursor + 12; year++) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.textContent = `${year}년`;
+                button.disabled = year > thisYear;
+                button.classList.toggle("selected", year === viewYear);
+                button.classList.toggle("has-record", hasRecord(`${year}-`));
+                button.addEventListener("click", () => { viewYear = year; closePicker(); render(); });
+                grid.appendChild(button);
+            }
+        }
+        const note = document.createElement("p");
+        note.className = "picker-note";
+        note.textContent = "초록 점: 측정 기록이 있는 기간";
+        picker.replaceChildren(head, grid, note);
+    }
+
+    labelButton.addEventListener("click", () => (picker.hidden ? openPicker() : closePicker()));
+    // 팝업 안 클릭은 바깥 클릭으로 보지 않음 (‹ › 를 누르면 내용이 다시 그려지기 때문)
+    picker.addEventListener("click", event => event.stopPropagation());
+    document.addEventListener("click", event => {
+        if (!picker.hidden && event.target !== labelButton) closePicker();
+    });
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && !picker.hidden) {
+            closePicker();
+            labelButton.focus();
+        }
+    });
+
+    document.querySelectorAll("[data-metric]").forEach(tab => tab.addEventListener("click", () => {
+        metric = tab.dataset.metric;
+        closePicker();
+        render();
+    }));
+    document.querySelectorAll(".period-tab").forEach(tab => tab.addEventListener("click", () => {
+        period = tab.dataset.period;
+        closePicker();
+        render();
+    }));
+    document.getElementById("prevPeriod").addEventListener("click", () => { closePicker(); shift(-1); });
+    document.getElementById("nextPeriod").addEventListener("click", () => { closePicker(); shift(1); });
+    window.addEventListener("resize", () => render());
+
+    (async () => {
+        if (!await api.requireLogin()) return;
+        try {
+            records = (await appData.getBodyMetrics()).sort((a, b) => a.date.localeCompare(b.date));
+            const latest = [...records].reverse().find(record => record[metric] != null);
+            if (!dateParam && latest) {
+                viewYear = Number(latest.date.slice(0, 4));
+                viewMonth = Number(latest.date.slice(5, 7)) - 1;
+            }
+        } catch (error) {
+            api.handleError(error, "신체 기록을 불러오지 못했습니다.");
+            return;
+        }
+        render();
+    })();
+})();
+</script>
+</body>
+</html>

@@ -242,6 +242,9 @@
       canvas { height:220px; }
 
       /* 예측 카드 */
+      .chart-link { cursor:pointer; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+      .chart-link:hover, .chart-link:focus-visible { transform:translateY(-2px); border-color:#d9c9f2!important; box-shadow:0 8px 22px rgba(90,55,140,.10)!important; outline:none; }
+      .chart-link-arrow { margin-left:4px; color:#4b2a75; font-size:22px; line-height:1; vertical-align:-1px; }
       .forecast-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
       .forecast-head h2 { margin:0!important; }
       .forecast-range { display:inline-flex; padding:4px; border-radius:12px; background:#f1edfa; }
@@ -264,6 +267,10 @@
       th { font-size:13px; }
       td { font-size:14px; }
       .clear-button { margin-top:14px; }
+      .records-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+      .records-head h2 { margin:0!important; }
+      .records-link { padding:6px 12px; border-radius:10px; background:#f1edfa; color:#5d3aa8; font-size:14px; font-weight:700; text-decoration:none; }
+      .records-link:hover, .records-link:focus-visible { background:#e6defa; outline:none; }
 
       /* ---------- 태블릿 ---------- */
       @media (max-width:1024px) {
@@ -369,27 +376,30 @@
     </section>
 
     <section class="charts">
-        <article class="card chart-card">
-            <h2>체중 변화</h2>
-            <p class="chart-description">단위: kg · 실선 실제 · 점선 예측</p>
+        <article class="card chart-card chart-link" data-metric="weight" role="link" tabindex="0" aria-label="체중 변화 자세히 보기">
+            <h2>체중 변화 <span class="chart-link-arrow" aria-hidden="true">›</span></h2>
+            <p class="chart-description">최근 4주 · 주 평균</p>
             <canvas id="weightChart" aria-label="날짜별 체중 그래프"></canvas>
         </article>
 
-        <article class="card chart-card">
-            <h2>골격근량 변화</h2>
-            <p class="chart-description">단위: kg · 실선 실제 · 점선 예측</p>
+        <article class="card chart-card chart-link" data-metric="muscle" role="link" tabindex="0" aria-label="골격근량 변화 자세히 보기">
+            <h2>골격근량 변화 <span class="chart-link-arrow" aria-hidden="true">›</span></h2>
+            <p class="chart-description">최근 1년 · 월 평균</p>
             <canvas id="muscleChart" aria-label="날짜별 골격근량 그래프"></canvas>
         </article>
 
-        <article class="card chart-card">
-            <h2>체지방률 변화</h2>
-            <p class="chart-description">단위: % · 실선 실제 · 점선 예측</p>
+        <article class="card chart-card chart-link" data-metric="bodyFat" role="link" tabindex="0" aria-label="체지방률 변화 자세히 보기">
+            <h2>체지방률 변화 <span class="chart-link-arrow" aria-hidden="true">›</span></h2>
+            <p class="chart-description">최근 1년 · 월 평균</p>
             <canvas id="bodyFatChart" aria-label="날짜별 체지방률 그래프"></canvas>
         </article>
     </section>
 
     <section class="card">
-        <h2>측정 기록</h2>
+        <div class="records-head">
+            <h2>측정 기록</h2>
+            <a class="records-link" id="allRecordsLink" href="body-records.html">전체 기록 보기 ›</a>
+        </div>
         <div class="table-wrap">
             <table>
                 <thead>
@@ -415,6 +425,7 @@
 
 <script src="js/api.js"></script>
 <script src="js/data-adapter.js"></script>
+<script src="js/chart-tooltip.js"></script>
 <script>
     const api = window.FoodAdvisorApi;
     const appData = window.FoodAdvisorData;
@@ -476,7 +487,7 @@
 
         const actual = records
             .filter(record => record[field] !== null)
-            .map(record => ({ day: dayNumber(record.date), date: record.date, value: record[field] }));
+            .map(record => ({ day: dayNumber(record.date), date: record.date, value: record[field], record }));
         const predicted = forecast && forecast.available
             ? forecast.points
                 .filter(point => point[field] !== null && point[field] !== undefined)
@@ -492,6 +503,7 @@
             ctx.font = "14px Malgun Gothic, sans-serif";
             ctx.textAlign = "center";
             ctx.fillText("기록을 입력하면 그래프가 표시됩니다.", width / 2, height / 2);
+            window.FoodAdvisorTooltip.set(canvas, []);
             return;
         }
 
@@ -518,9 +530,16 @@
             maxValue += margin;
         }
 
-        const x = day => maxDay === minDay
-            ? padding.left + plotWidth / 2
-            : padding.left + ((day - minDay) / (maxDay - minDay)) * plotWidth;
+        // 예측이 있으면 x축을 실제 기록 80% · 예측 20% 로 나눠 그립니다. (예측 기간이 길어도 실제 기록이 잘 보이게)
+        const splitDay = predicted.length ? predicted[0].day : maxDay;
+        const actualWidth = predicted.length && splitDay > minDay ? plotWidth * 0.8 : predicted.length ? 0 : plotWidth;
+        const x = day => {
+            if (maxDay === minDay) return padding.left + plotWidth / 2;
+            if (day <= splitDay) {
+                return splitDay === minDay ? padding.left : padding.left + (day - minDay) / (splitDay - minDay) * actualWidth;
+            }
+            return padding.left + actualWidth + (day - splitDay) / (maxDay - splitDay) * (plotWidth - actualWidth);
+        };
         const y = value => padding.top + ((maxValue - value) / (maxValue - minValue)) * plotHeight;
 
         // 눈금
@@ -541,6 +560,17 @@
         }
 
         if (predicted.length) {
+            // 예측 구간 배경: '오늘'부터 오른쪽 끝까지 옅게 칠하고 위에 '예측' 표시
+            const regionX = x(predicted[0].day);
+            ctx.fillStyle = "#f6f2fd";
+            ctx.fillRect(regionX, padding.top, width - padding.right - regionX, plotHeight);
+            ctx.fillStyle = "#8a7fa3";
+            ctx.font = "bold 11px Malgun Gothic, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.fillText("예측", (regionX + width - padding.right) / 2, padding.top + 4);
+            ctx.font = "11px Malgun Gothic, sans-serif";
+
             // 오차 범위 음영 (체중: 음식 기록 ±10%)
             const band = predicted.filter(point => point.low !== null && point.high !== null);
             if (band.length > 1) {
@@ -581,9 +611,9 @@
         if (predicted.length) {
             const start = actual.length ? actual[actual.length - 1] : predicted[0];
             ctx.beginPath();
-            ctx.setLineDash([7, 6]);
+            ctx.setLineDash([5, 4]);
             ctx.strokeStyle = color;
-            ctx.lineWidth = 2.5;
+            ctx.lineWidth = 3;
             ctx.moveTo(x(start.day), y(start.value));
             predicted.forEach(point => ctx.lineTo(x(point.day), y(point.value)));
             ctx.stroke();
@@ -591,17 +621,32 @@
 
             const end = predicted[predicted.length - 1];
             ctx.beginPath();
-            ctx.fillStyle = "#fff";
-            ctx.arc(x(end.day), y(end.value), 4, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.arc(x(end.day), y(end.value), 5, 0, Math.PI * 2);
             ctx.fill();
             ctx.lineWidth = 2;
+            ctx.strokeStyle = "#fff";
+            ctx.stroke();
+
+            // 끝값: 선과 겹치지 않게 흰 바탕 상자로, 점 위(자리가 없으면 아래)에 오른쪽 끝을 맞춰 표시
+            const endText = `${end.value.toFixed(1)}${unit.trim() === "%" ? "%" : unit}`;
+            ctx.font = "bold 12px Malgun Gothic, sans-serif";
+            const boxW = ctx.measureText(endText).width + 12;
+            const boxH = 20;
+            const boxX = Math.min(x(end.day) - boxW / 2, width - padding.right - boxW + 4);
+            let boxY = y(end.value) - boxH - 9;
+            if (boxY < padding.top + 16) boxY = y(end.value) + 9;
+            ctx.beginPath();
+            ctx.roundRect(boxX, boxY, boxW, boxH, 6);
+            ctx.fillStyle = "#fff";
+            ctx.fill();
+            ctx.lineWidth = 1.5;
             ctx.strokeStyle = color;
             ctx.stroke();
             ctx.fillStyle = color;
-            ctx.font = "bold 12px Malgun Gothic, sans-serif";
-            ctx.textAlign = "right";
-            ctx.textBaseline = "bottom";
-            ctx.fillText(`${end.value.toFixed(1)}${unit}`, x(end.day) - 6, y(end.value) - 6);
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(endText, boxX + boxW / 2, boxY + boxH / 2 + 1);
             ctx.font = "11px Malgun Gothic, sans-serif";
         }
 
@@ -618,22 +663,72 @@
             });
         }
 
-        // 날짜 라벨: 처음 · (오늘) · 끝, 서로 겹치면 생략
-        const labels = [minDay];
-        if (predicted.length) labels.push(predicted[0].day);
-        labels.push(maxDay);
+        // 날짜 라벨: 처음 · 끝은 항상, 오늘은 자리가 있을 때만 (월-일)
+        //  연도는 왼쪽 끝에 한 번만 적고, 연도가 바뀌면 1월 1일 자리를 점선으로 나눠 오른쪽에 새 연도를 한 번 적습니다.
+        const dayText = labelDay => {
+            const date = new Date(labelDay * 86400000);
+            return `${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+        };
+        const yearOf = labelDay => new Date(labelDay * 86400000).getUTCFullYear();
+        ctx.font = "11px Malgun Gothic, sans-serif";
         ctx.fillStyle = "#71808a";
         ctx.textBaseline = "top";
-        let lastX = -Infinity;
-        labels.forEach((labelDay, index) => {
-            const labelX = x(labelDay);
-            if (labelX - lastX < 46) return;
-            const date = new Date(labelDay * 86400000);
-            const text = `${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
-            ctx.textAlign = index === 0 ? "left" : index === labels.length - 1 ? "right" : "center";
-            ctx.fillText(text, index === 0 ? labelX - 14 : labelX, height - padding.bottom + 12);
-            lastX = labelX;
+        const labelY = height - padding.bottom + 10;
+        const yearY = height - padding.bottom + 25;
+        const textWidth = ctx.measureText("00-00").width;
+        const startLeft = Math.max(4, x(minDay) - 14);
+        ctx.textAlign = "left";
+        ctx.fillText(dayText(minDay), startLeft, labelY);
+        const endRight = x(maxDay);
+        if (maxDay !== minDay) {
+            ctx.textAlign = "right";
+            ctx.fillText(dayText(maxDay), endRight, labelY);
+        }
+        if (predicted.length && predicted[0].day !== minDay && predicted[0].day !== maxDay) {
+            const todayX = x(predicted[0].day);
+            if (todayX - textWidth / 2 > startLeft + textWidth + 6 && todayX + textWidth / 2 < endRight - textWidth - 6) {
+                ctx.textAlign = "center";
+                ctx.fillText(dayText(predicted[0].day), todayX, labelY);
+            }
+        }
+        ctx.font = "10px Malgun Gothic, sans-serif";
+        ctx.fillStyle = "#a39eaa";
+        ctx.textAlign = "left";
+        // 첫 연도 구간이 너무 짧아 다음 연도 글자와 겹치면 첫 연도는 생략
+        const firstBoundaryX = yearOf(maxDay) > yearOf(minDay) ? x(Date.UTC(yearOf(minDay) + 1, 0, 1) / 86400000) : Infinity;
+        if (firstBoundaryX - startLeft > ctx.measureText("2026년").width + 8) {
+            ctx.fillText(`${yearOf(minDay)}년`, startLeft, yearY);
+        }
+        for (let year = yearOf(minDay) + 1; year <= yearOf(maxDay); year++) {
+            const boundaryX = x(Date.UTC(year, 0, 1) / 86400000);
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = "#c9bfe0";
+            ctx.lineWidth = 1;
+            ctx.moveTo(boundaryX, padding.top - 6);
+            ctx.lineTo(boundaryX, height - padding.bottom + 36);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = "#a39eaa";
+            const yearText = `${year}년`;
+            // 오른쪽 끝에 가까우면 잘리지 않게 안쪽으로
+            ctx.fillText(yearText, Math.min(boundaryX + 4, width - ctx.measureText(yearText).width - 2), yearY);
+        }
+
+        // 점에 마우스를 올리면 보여줄 정보: 실제 기록 · 예측
+        const label = { weight: "체중", muscle: "골격근량", bodyFat: "체지방률" }[field];
+        const unitText = unit.trim();
+        const hits = actual.map(point => point.record && point.record.periodTitle
+            ? { x: x(point.day), y: y(point.value), title: point.record.periodTitle,
+                lines: [`${point.record.periodName} ${label} ${point.value.toFixed(1)} ${unitText}`, `측정 ${point.record.count}회`] }
+            : { x: x(point.day), y: y(point.value), title: window.FoodAdvisorTooltip.longDate(point.date),
+                lines: [`${label} ${point.value.toFixed(1)} ${unitText}`] });
+        predicted.forEach(point => {
+            const lines = [`${label} ${point.value.toFixed(1)} ${unitText}`];
+            if (point.low !== null && point.high !== null) lines.push(`범위 ${point.low.toFixed(1)} ~ ${point.high.toFixed(1)} ${unitText}`);
+            hits.push({ x: x(point.day), y: y(point.value), title: `예측 · ${window.FoodAdvisorTooltip.longDate(point.date)}`, lines });
         });
+        window.FoodAdvisorTooltip.set(canvas, hits);
     }
 
     // ---------- 예측 ----------
@@ -720,13 +815,53 @@
         loadForecast();
     }));
 
+    // 체중: 오늘까지 최근 4주를 1주씩 묶은 평균 4점 (각 주의 가운데 날짜에 표시, 기록 없는 주는 생략)
+    function weeklyWeights(records) {
+        const toDate = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const shifted = days => {
+            const d = new Date();
+            d.setDate(d.getDate() + days);
+            return toDate(d);
+        };
+        const weeks = [];
+        for (let week = 3; week >= 0; week--) {
+            const start = shifted(-week * 7 - 6);
+            const end = shifted(-week * 7);
+            const values = records.filter(r => r.date >= start && r.date <= end && r.weight !== null).map(r => r.weight);
+            if (values.length) {
+                const shortDate = date => `${Number(date.slice(5, 7))}월 ${Number(date.slice(8, 10))}일`;
+                weeks.push({ date: shifted(-week * 7 - 3), weight: values.reduce((a, b) => a + b, 0) / values.length,
+                             periodTitle: `${start.slice(0, 4)}년 ${shortDate(start)} ~ ${shortDate(end)}`, periodName: "1주 평균", count: values.length });
+            }
+        }
+        return weeks;
+    }
+
+    // 골격근량·체지방률: 최근 12개월을 달마다 평균 1점 (그 달 가운데에 표시, 기록 없는 달은 생략)
+    function monthlyAverages(records, field) {
+        const now = new Date();
+        const months = [];
+        for (let back = 11; back >= 0; back--) {
+            const first = new Date(now.getFullYear(), now.getMonth() - back, 1);
+            const prefix = `${first.getFullYear()}-${String(first.getMonth() + 1).padStart(2, "0")}`;
+            const values = records.filter(r => r.date.startsWith(prefix) && r[field] !== null).map(r => r[field]);
+            if (values.length) {
+                months.push({ date: `${prefix}-15`, [field]: values.reduce((a, b) => a + b, 0) / values.length,
+                              periodTitle: `${first.getFullYear()}년 ${first.getMonth() + 1}월`, periodName: "월 평균", count: values.length });
+            }
+        }
+        return months;
+    }
+
     function render() {
         const records = bodyRecords;
 
         tableBody.replaceChildren();
         emptyMessage.hidden = records.length !== 0;
 
-        [...records].reverse().forEach(record => {
+        // 측정 기록 표는 최근 4개만 (전체는 연도별 기록 화면에서)
+        document.getElementById("allRecordsLink").textContent = `전체 ${records.length.toLocaleString()}회 연도별로 보기 ›`;
+        [...records].reverse().slice(0, 4).forEach(record => {
             const row = document.createElement("tr");
 
             const dateCell = document.createElement("td");
@@ -755,9 +890,15 @@
             tableBody.appendChild(row);
         });
 
-        drawChart("weightChart", records, "weight", "#7856d8", " kg");
-        drawChart("muscleChart", records, "muscle", "#9a82e8", " kg");
-        drawChart("bodyFatChart", records, "bodyFat", "#e27845", "%");
+        // 그래프는 최근 기록만 (전체 기간은 그래프를 눌러 자세히 보기에서). 체중은 최근 4주를 1주 평균으로
+        drawChart("weightChart", weeklyWeights(records), "weight", "#7856d8", " kg");
+        // 골격근량·체지방률은 측정이 드물어(월 1회 정도) 최근 1년을 보여줍니다.
+        const yearAgo = new Date();
+        yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+        const sinceYear = `${yearAgo.getFullYear()}-${String(yearAgo.getMonth() + 1).padStart(2, "0")}-${String(yearAgo.getDate()).padStart(2, "0")}`;
+        const lastYear = records.filter(record => record.date >= sinceYear);
+        drawChart("muscleChart", monthlyAverages(lastYear, "muscle"), "muscle", "#9a82e8", " kg");
+        drawChart("bodyFatChart", monthlyAverages(lastYear, "bodyFat"), "bodyFat", "#e27845", "%");
     }
 
     async function deleteRecord(date) {
@@ -841,6 +982,18 @@
     });
 
     window.addEventListener("resize", render);
+
+    // 그래프를 누르면 해당 항목의 월/년 자세히 보기로 이동
+    document.querySelectorAll(".chart-link").forEach(card => {
+        const open = () => { location.href = `body-detail.html?metric=${card.dataset.metric}&period=${card.dataset.metric === "weight" ? "month" : "year"}`; };
+        card.addEventListener("click", open);
+        card.addEventListener("keydown", event => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                open();
+            }
+        });
+    });
 
     dateInput.value = getLocalDateString();
 

@@ -13,6 +13,7 @@
         .back-link { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; color:#222; text-decoration:none; font-size:30px; line-height:1; }
         .back-link:focus-visible { outline:2px solid #bba0df; outline-offset:2px; }
         .page-header h1 { margin:0; font-size:23px; }
+        .intro-bottom { margin-top:30px; }
         .intro h2 { margin:0 0 14px; font-size:19px; }
         .intro p { margin:0 0 12px; font-size:14px; line-height:1.8; }
         .legend { display:grid; gap:9px; margin:14px 0 22px; color:#77737c; font-size:13px; }
@@ -32,7 +33,6 @@
         .bar-fill.ok { background:var(--green); }
         .bar-fill.high { background:var(--orange); }
         .bar-mark { position:absolute; top:0; bottom:0; width:2px; margin-left:-1px; background:#fff; }
-        .dummy-tag { margin-left:8px; padding:2px 8px; border-radius:999px; background:#fff1e6; color:#c4671f; font-size:12px; font-weight:600; }
         .bar-labels { display:flex; justify-content:space-between; min-height:18px; padding:7px 3px 0; color:#aaa6ad; font-size:12px; }
         .bar-labels span:empty { display:none; }
         .nutrient-state { margin-left:8px; font-size:13px; font-weight:700; color:var(--muted); }
@@ -77,8 +77,65 @@
         .split-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
         .split-cell { min-width:0; }
         .split-cell + .split-cell { margin-left:24px; padding-left:24px; border-left:1px solid var(--line); }
+        /* 오른쪽 칸: 추천 영양제 */
+        .supp-panel h2 { margin:0 0 4px; }
+        .supp-desc { margin:0 0 12px; color:var(--muted); font-size:12px; }
+        .supp-list { display:grid; gap:10px; }
+        .supp-card { padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:#fcfbfe; }
+        .supp-head { display:flex; flex-direction:column; gap:2px; margin-bottom:4px; }
+        .supp-nutrient { color:#c4671f; font-size:12px; font-weight:700; }
+        .supp-product { font-size:15px; }
+        .supp-why { margin:0 0 6px; color:#4d4856; font-size:13px; line-height:1.5; }
+        .supp-caution { margin:0 0 8px; padding:6px 9px; border-radius:8px; background:#fff4ec; color:#a3561f; font-size:12px; line-height:1.5; }
+        .supp-link { display:inline-block; padding:6px 12px; border-radius:9px; background:#4b2a75; color:#fff; font-size:13px; font-weight:700; text-decoration:none; }
+        .supp-link:hover, .supp-link:focus-visible { background:#5d3a8f; outline:none; }
+        .supp-empty { margin:0; padding:16px; border:1px dashed var(--line); border-radius:12px; color:var(--muted); font-size:13px; text-align:center; }
+        .supp-chips { display:flex; flex-wrap:wrap; gap:6px; }
+        .supp-chip { padding:4px 10px; border-radius:999px; background:#fff1e6; color:#b25a1c; font-size:12px; font-weight:700; }
+        .supp-food .supp-nutrient { color:#2f7a57; }
+        .supp-food-list { display:grid; gap:6px; margin:6px 0 0; padding:0; list-style:none; color:#4d4856; font-size:13px; line-height:1.5; }
+        .supp-food-list b { color:var(--text); }
+        .compare-meals { margin:-4px 0 10px; color:#6c6476; font-size:12px; line-height:1.5; }
+        .compare-meals strong { color:var(--purple); }
+        .compare-summary { display:flex; gap:8px; margin-bottom:10px; }
+        .compare-summary span { padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700; }
+        .compare-summary .better { background:#e6f6ee; color:#1f8a5a; }
+        .compare-summary .worse { background:#fff1e6; color:#b25a1c; }
+        .compare-table { width:100%; border-collapse:collapse; font-size:13px; }
+        .compare-table th { padding:6px 8px; border-bottom:1px solid var(--line); color:#9b97a0; font-size:11px; font-weight:600; text-align:right; }
+        .compare-table td { padding:6px 8px; border-bottom:1px solid #f3f1f5; text-align:right; white-space:nowrap; }
+        .compare-table th:first-child, .compare-table td:first-child { text-align:left; padding-left:0; }
+        .compare-name { font-weight:700; }
+        .compare-name small { margin-left:4px; color:#9b97a0; font-size:10px; font-weight:400; }
+        .compare-table td.num { font-variant-numeric:tabular-nums; }
+        .compare-table td.muted { color:#9b97a0; }
+        .compare-diff { font-weight:700; }
+        .compare-diff.better { color:#1f8a5a; }
+        .compare-diff.worse { color:#c0612f; }
+        .compare-diff.same { color:#9b97a0; font-weight:600; }
+        .supp-note { margin:12px 0 0; color:#9b97a0; font-size:11px; line-height:1.6; }
         .ratio-view { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:28px 32px; padding:8px 0 10px; }
         #ratioChart { display:block; width:210px; height:210px; }
+        /* 오른쪽 칸(추천 영양제)이 길면: 원 그래프를 위에 크게, 설명을 아래로 */
+        .ratio-view.stacked { flex-direction:column; align-items:stretch; }
+        .ratio-view.stacked #ratioChart { width:260px; height:260px; margin:0 auto; }
+        .ratio-view.stacked .ratio-legend { max-width:none; flex:none; }
+        /* 열량이 없는 나머지 영양소: 기준 대비 비율 */
+        .ratio-others[hidden] { display:none; }
+        .ratio-others { flex:1 1 100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 18px; padding-top:14px; border-top:1px dashed var(--line); }
+        .ratio-others h3 { grid-column:1 / -1; margin:0; color:#6c6476; font-size:13px; }
+        .other-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:3px 8px; font-size:12px; }
+        .other-name { font-weight:700; }
+        .other-name b { margin-left:4px; font-size:11px; }
+        .other-name b.low { color:var(--muted); }
+        .other-name b.ok { color:var(--green); }
+        .other-name b.high { color:var(--orange); }
+        .other-value { color:#4d4856; font-variant-numeric:tabular-nums; }
+        .other-bar { grid-column:1 / -1; position:relative; height:6px; border-radius:999px; background:var(--track); overflow:hidden; }
+        .other-bar span { position:absolute; left:0; top:0; bottom:0; border-radius:999px; background:#c8e9d1; }
+        .other-bar span.ok { background:var(--green); }
+        .other-bar span.high { background:var(--orange); }
+        .other-ref { grid-column:1 / -1; color:#9b97a0; font-size:11px; }
         .ratio-legend { flex:1 1 240px; max-width:320px; display:grid; gap:14px; margin:0; padding:0; list-style:none; }
         .ratio-legend li { display:grid; grid-template-columns:12px 1fr auto; gap:3px 10px; align-items:center; }
         .ratio-legend .dot { width:12px; height:12px; border-radius:50%; }
@@ -90,7 +147,6 @@
         .ratio-legend .sub b.ok { color:var(--green); }
         .ratio-legend .sub b.high { color:var(--orange); }
         .ratio-legend .pct-extra { margin-left:4px; color:var(--muted); font-size:13px; font-weight:600; }
-        .ratio-legend .ratio-note { display:block; color:#9b97a0; font-size:11px; line-height:1.6; }
         .chart-card { margin:0 0 28px; padding:20px 18px 14px; border:1px solid var(--line); border-radius:18px; }
         .chart-card h2 { margin:0 0 10px; font-size:16px; }
         .bar-view { margin-top:22px; padding-top:20px; border-top:1px solid var(--line); }
@@ -107,7 +163,7 @@
             .nutrient-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:56px; }
             .nutrient-item { border-bottom:1px solid var(--line); }
         }
-        @media (max-width:640px) { .page { padding:20px 18px 36px; } .page-header h1 { font-size:21px; } .nutrient-item { padding:22px 0 18px; } .picker { left:0; right:0; width:auto; } .split-row { grid-template-columns:1fr; } .split-empty { display:none; } }
+        @media (max-width:640px) { .page { padding:20px 18px 36px; } .page-header h1 { font-size:21px; } .nutrient-item { padding:22px 0 18px; } .picker { left:0; right:0; width:auto; } .split-row { grid-template-columns:1fr; } .split-empty { display:none; } .split-cell + .split-cell { margin:20px 0 0; padding:20px 0 0; border-left:0; border-top:1px solid var(--line); } .ratio-others { grid-template-columns:1fr; } }
     </style>
 </head>
 <body>
@@ -138,9 +194,10 @@
                 <div class="ratio-view" id="ratioView">
                     <canvas id="ratioChart" role="img" aria-label="탄수화물(당류 포함)·단백질·지방 열량 비율 원 그래프"></canvas>
                     <ul class="ratio-legend" id="ratioLegend"></ul>
+                    <div class="ratio-others" id="ratioOthers"></div>
                 </div>
             </div>
-            <div class="split-cell split-empty" id="splitRight" aria-hidden="true"></div>
+            <div class="split-cell split-empty supp-panel" id="splitRight" aria-hidden="true"></div>
         </div>
         <div class="bar-view" id="barView" hidden>
             <h2 id="chartTitle">날짜별 탄·단·지 섭취 (kcal)</h2>
@@ -151,7 +208,10 @@
         </div>
     </section>
 
-    <section class="intro" aria-labelledby="intakeTitle">
+    <h2 class="list-title" id="listTitle">섭취량</h2>
+
+    <section class="nutrient-list" id="nutrientList" aria-label="영양소별 섭취 현황"></section>
+    <section class="intro intro-bottom" aria-labelledby="intakeTitle">
         <h2 id="intakeTitle">섭취량 확인하기</h2>
         <p>영양소 섭취량에 따라 상태를 색상으로 구분할 수 있습니다.</p>
         <div class="legend" aria-label="섭취 상태 범례">
@@ -162,15 +222,12 @@
         <p class="guidance">균형 잡힌 식습관을 위해 각 영양소의 섭취량을 확인하세요. 적정 범위는 하루 목표 칼로리에 <strong>2025 한국인 영양소 섭취기준</strong>의 에너지적정비율(탄수화물 50~65%, 단백질 10~20%, 지방 15~30%, 총당류 20% 이내)을 적용해 계산합니다. 식이섬유·나트륨·칼륨·칼슘·철분·비타민 A·C는 같은 기준의 성별·나이별 권장/충분섭취량과 상한섭취량(나트륨은 만성질환위험감소섭취량), 포화 지방은 에너지 7% 미만을 기준으로 합니다.</p>
         <p class="guidance" id="summaryText">식단 기록을 불러오는 중입니다.</p>
     </section>
-
-    <h2 class="list-title" id="listTitle">섭취량</h2>
-
-    <section class="nutrient-list" id="nutrientList" aria-label="영양소별 섭취 현황"></section>
-    <p class="empty-note">'임시 데이터' 표시가 있는 영양소는 실제 성분표가 아니라 화면 확인용 임시 값으로 계산한 결과입니다. 이 화면은 대략적인 참고용이며 의학적 진단이 아닙니다.</p>
+    <p class="empty-note">이 화면은 기록한 식단을 바탕으로 한 대략적인 참고용이며 의학적 진단이 아닙니다.</p>
 </main>
 <script src="js/api.js"></script>
 <script src="js/data-adapter.js"></script>
 <script src="js/nutrition.js"></script>
+<script src="js/supplements.js"></script>
 <script>
 (() => {
     const api = window.FoodAdvisorApi;
@@ -183,7 +240,7 @@
         { key: "protein", name: "단백질", unit: "g" },
         { key: "fat", name: "지방", unit: "g" },
         { key: "sugar", name: "당류", unit: "g" },
-        ...Object.entries(nutri.MICROS).map(([key, micro]) => ({ key, name: micro.label, unit: micro.unit, micro: true }))
+        ...Object.entries(nutri.MICROS).map(([key, micro]) => ({ key, name: micro.label, unit: micro.unit, note: micro.note, micro: true }))
     ];
     const MICRO_KEYS = Object.keys(nutri.MICROS);
     let profile = null;  // 로그인 사용자 { gender, age } - 미량 영양소 기준이 성별·나이별로 다름
@@ -332,12 +389,6 @@
             badge.textContent = state === "ok" && range.max == null ? "충분" : STATE_TEXT[state];
             title.appendChild(badge);
         }
-        if (item.micro && summary.microDummy) {
-            const tag = document.createElement("span");
-            tag.className = "dummy-tag";
-            tag.textContent = "임시 데이터";
-            title.appendChild(tag);
-        }
         heading.append(title, value);
         article.append(heading, bar, labels);
 
@@ -348,6 +399,12 @@
             daysNote.className = "days-note";
             daysNote.textContent = `${range.max == null ? "충분했던" : "적정 범위인"} 날 ${okDays}일 / 기록 ${days.length}일`;
             article.appendChild(daysNote);
+        }
+        if (item.note) {
+            const note = document.createElement("p");
+            note.className = "days-note";
+            note.textContent = item.note;
+            article.appendChild(note);
         }
         if (item.micro && summary.microMissing && amount != null) {
             const missing = document.createElement("p");
@@ -365,7 +422,6 @@
             ? rows.reduce((acc, row) => acc + (row[key] || 0), 0) : null;
         const result = { calories: sum("calories"), carbs: sum("carbs"), protein: sum("protein"), fat: sum("fat"), sugar: sum("sugar") };
         MICRO_KEYS.forEach(key => { result[key] = microSum(key); });
-        result.microDummy = rows.some(row => row.microDummy);
         result.microMissing = rows.some(row => row.microMissing);
         return result;
     };
@@ -571,10 +627,262 @@
             li.append(dot, name, value, sub);
             return li;
         }));
-        const note = document.createElement("li");
-        note.className = "ratio-note";
-        note.textContent = "식이섬유·나트륨·비타민 등은 열량이 없거나 열량 비율로 보지 않는 영양소라 아래 영양소 목록에서 확인할 수 있습니다.";
-        legend.appendChild(note);
+        renderOtherNutrients();
+    }
+
+    // 원 그래프 아래: 열량이 없어 조각으로 넣을 수 없는 나머지 영양소를 기준 대비 비율 막대로 함께 표시
+    function renderOtherNutrients() {
+        const box = document.getElementById("ratioOthers");
+        // 일 보기는 원 그래프(탄·단·지)만 보여줍니다.
+        box.hidden = period === "day";
+        if (box.hidden) return;
+        const s = ratioSummary;
+        const heading = document.createElement("h3");
+        heading.textContent = "그 밖의 영양소 (기준 대비)";
+        if (!s) {
+            box.replaceChildren(heading);
+            return;
+        }
+        const rows = ITEMS.filter(item => item.micro || item.key === "sugar").map(item => {
+            const amount = s[item.key];
+            const range = itemRange(item, s);
+            const state = nutri.microStatus(amount, range);
+            const base = range.min != null ? range.min : range.max;   // 하한이 있으면 하한, 없으면 상한 기준
+            const percent = amount != null && base ? amount / base * 100 : null;
+            const row = document.createElement("div");
+            row.className = "other-row";
+            const name = document.createElement("span");
+            name.className = "other-name";
+            name.textContent = item.name;
+            if (state) {
+                const badge = document.createElement("b");
+                badge.className = state;
+                badge.textContent = state === "ok" && range.max == null ? "충분" : STATE_TEXT[state];
+                name.appendChild(badge);
+            }
+            const value = document.createElement("span");
+            value.className = "other-value";
+            value.textContent = amount == null ? "-" : `${(item.unit === "g" ? round1(amount) : Math.round(amount)).toLocaleString()}${item.unit}`;
+            const bar = document.createElement("div");
+            bar.className = "other-bar";
+            const fill = document.createElement("span");
+            fill.className = state || "";
+            fill.style.width = percent == null ? "0%" : `${Math.min(100, percent / (range.min != null ? 1.5 : 1.3))}%`;
+            bar.appendChild(fill);
+            const ref = document.createElement("span");
+            ref.className = "other-ref";
+            ref.textContent = percent == null ? "" : `${range.min != null ? "기준" : "상한"}의 ${Math.round(percent)}%`;
+            row.append(name, value, bar, ref);
+            return row;
+        });
+        box.replaceChildren(heading, ...rows);
+    }
+
+    // 오른쪽 칸(추천 영양제)이 왼쪽보다 많이 길면 원 그래프를 위에 크게, 설명을 아래로 배치해 빈 공간을 채움
+    function fitRatioLayout() {
+        const view = document.getElementById("ratioView");
+        const right = document.getElementById("splitRight");
+        const left = view.closest(".split-cell");
+        view.classList.remove("stacked");
+        drawRatio();  // 나란히 놓인 상태로 먼저 그려서 높이를 잽니다
+        const sideBySide = getComputedStyle(document.querySelector(".split-row")).gridTemplateColumns.split(" ").length > 1;
+        // 칸은 같은 줄 높이로 늘어나므로 안에 든 내용의 실제 높이로 비교
+        const contentHeight = cell => [...cell.children].reduce((sum, child) => sum + child.offsetHeight, 0);
+        if (sideBySide && !right.classList.contains("split-empty") && contentHeight(right) > contentHeight(left) + 40) {
+            view.classList.add("stacked");
+            drawRatio();
+        }
+    }
+
+    // 오른쪽 칸: 주·월·년에 부족했던 영양소에 맞는 영양제 추천 (일 보기는 비워 둠)
+    // 일 보기 오른쪽 칸: 전날과 비교 (열량·영양소별 어제 → 오늘, 적정 범위에 가까워졌으면 초록, 멀어졌으면 주황)
+    async function renderDayCompare(summary, seq) {
+        const panel = document.getElementById("splitRight");
+        const make = (tag, className, text) => {
+            const node = document.createElement(tag);
+            if (className) node.className = className;
+            if (text !== undefined) node.textContent = text;
+            return node;
+        };
+        const prevDate = new Date(fromDateString(anchor));
+        prevDate.setDate(prevDate.getDate() - 1);
+        const prev = toDateString(prevDate);
+
+        // 두 날 모두 기록한 끼니만 골라 합계를 냅니다. (예: 어제 아·점·저, 오늘 아·점 → 아침·점심끼리 비교)
+        let byMeal = {};
+        try {
+            byMeal = await appData.getMealNutrition(prev, anchor);
+        } catch (error) {
+            byMeal = {};
+        }
+        if (seq !== loadSeq) return;  // 그 사이 다른 날짜를 골랐다면 버림
+        const MEAL_ORDER = ["아침", "점심", "저녁"];
+        const sortMeals = meals => [...meals].sort((a, b) => (MEAL_ORDER.indexOf(a) + 1 || 9) - (MEAL_ORDER.indexOf(b) + 1 || 9));
+        const todayMeals = Object.keys(byMeal[anchor] || {});
+        const prevMeals = Object.keys(byMeal[prev] || {});
+        const common = sortMeals(todayMeals.filter(meal => prevMeals.includes(meal)));
+        const skipped = sortMeals([...new Set([...todayMeals, ...prevMeals])].filter(meal => !common.includes(meal)));
+        const sumMeals = (dayMeals, meals) => {
+            const parts = meals.map(meal => dayMeals[meal]);
+            const total = key => parts.reduce((acc, part) => acc + (part[key] || 0), 0);
+            const totalOrNull = key => parts.some(part => part[key] != null) ? total(key) : null;
+            const result = { calories: total("calories") };
+            ["carbs", "protein", "fat", "sugar"].forEach(key => { result[key] = total(key); });
+            MICRO_KEYS.forEach(key => { result[key] = totalOrNull(key); });
+            return result;
+        };
+        const yesterday = common.length ? sumMeals(byMeal[prev], common) : null;
+        const today = common.length ? sumMeals(byMeal[anchor], common) : null;
+
+        const shortDay = date => `${date.getMonth() + 1}월 ${date.getDate()}일 (${WEEKDAYS[date.getDay()]})`;
+        const title = make("h2", "", "전날과 비교");
+        const desc = make("p", "supp-desc", `${shortDay(prevDate)} → ${shortDay(fromDateString(anchor))}`);
+        if (!summary.recorded || !prevMeals.length || !common.length) {
+            const message = !summary.recorded ? "이 날짜에 기록한 식단이 없어 비교할 수 없어요."
+                : !prevMeals.length ? "전날 기록한 식단이 없어 비교할 수 없어요."
+                : "두 날에 같이 기록한 끼니가 없어 비교할 수 없어요.";
+            panel.replaceChildren(title, desc, make("p", "supp-empty", message));
+            fitRatioLayout();
+            return;
+        }
+
+        // 적정 범위에서 벗어난 정도 (0 이면 범위 안)
+        const distance = (value, range) => {
+            if (value == null) return null;
+            if (range.min != null && value < range.min) return (range.min - value) / range.min;
+            if (range.max != null && value > range.max) return (value - range.max) / range.max;
+            return 0;
+        };
+        const yesterdaySummary = { ...yesterday, targetCalories, dayCount: 1 };
+        const rows = [{ name: "열량", unit: "kcal", today: Math.round(today.calories), before: Math.round(yesterday.calories),
+                        range: { min: targetCalories * 0.9, max: targetCalories * 1.1 } }]
+            .concat(ITEMS.map(item => ({ name: item.name, unit: item.unit, today: today[item.key], before: yesterday[item.key],
+                                         range: itemRange(item, { ...summary, dayCount: 1 }), item })));
+
+        let closer = 0;
+        let farther = 0;
+        const table = make("table", "compare-table");
+        const head = make("tr");
+        ["", "어제", "오늘", "변화"].forEach(text => head.append(make("th", "", text)));
+        table.append(make("thead"));
+        table.tHead.append(head);
+        const body = make("tbody");
+        const fmtValue = (value, unit) => value == null ? "-" : (unit === "g" ? round1(value) : Math.round(value)).toLocaleString();
+        rows.forEach(row => {
+            const tr = make("tr");
+            const nameCell = make("td", "compare-name", row.name);
+            nameCell.append(make("small", "", row.unit));
+            tr.append(nameCell, make("td", "num muted", fmtValue(row.before, row.unit)), make("td", "num", fmtValue(row.today, row.unit)));
+            const diffCell = make("td", "num compare-diff");
+            if (row.today != null && row.before != null) {
+                const diff = row.today - row.before;
+                const before = distance(row.before, row.item ? itemRange(row.item, yesterdaySummary) : row.range);
+                const after = distance(row.today, row.range);
+                const better = after < before - 0.001;
+                const worse = after > before + 0.001;
+                if (better) closer++;
+                if (worse) farther++;
+                diffCell.classList.add(better ? "better" : worse ? "worse" : "same");
+                const shown = row.unit === "g" ? round1(Math.abs(diff)) : Math.round(Math.abs(diff));
+                diffCell.textContent = shown === 0 ? "-" : `${diff > 0 ? "▲" : "▼"} ${shown.toLocaleString()}`;
+            } else {
+                diffCell.textContent = "-";
+            }
+            tr.append(diffCell);
+            body.append(tr);
+        });
+        table.append(body);
+
+        // 비교한 끼니 안내
+        const mealsLine = make("p", "compare-meals");
+        mealsLine.append("비교한 끼니 ", make("strong", "", common.join(" · ")));
+        if (skipped.length) mealsLine.append(` (${skipped.join(" · ")} 제외: 한쪽 날에만 기록)`);
+        const summaryLine = make("div", "compare-summary");
+        summaryLine.append(make("span", "better", `좋아진 항목 ${closer}개`), make("span", "worse", `나빠진 항목 ${farther}개`));
+        const note = make("p", "supp-note", "초록: 적정 범위에 더 가까워짐 · 주황: 더 멀어짐 (열량은 하루 목표 ±10%를 기준으로 봅니다)");
+        panel.replaceChildren(title, desc, mealsLine, summaryLine, table, note);
+        fitRatioLayout();
+    }
+
+    function renderSupplements(multi, summary, seq) {
+        const panel = document.getElementById("splitRight");
+        panel.classList.remove("split-empty");
+        panel.setAttribute("aria-hidden", "false");
+        if (!multi) {
+            // 일 보기: 전날과 비교
+            panel.replaceChildren();
+            renderDayCompare(summary, seq);
+            return;
+        }
+        const make = (tag, className, text) => {
+            const node = document.createElement(tag);
+            if (className) node.className = className;
+            if (text !== undefined) node.textContent = text;
+            return node;
+        };
+        const title = make("h2", "", "이 기간 추천 영양제");
+        const desc = make("p", "supp-desc", "기간 동안 부족했던 영양소를 한 번에 채울 수 있는 종합영양제를 찾아보세요.");
+
+        const shortages = ITEMS
+            .map(item => {
+                const range = itemRange(item, summary);
+                const amount = summary[item.key];
+                return { key: item.key, name: item.name, unit: item.unit, amount, min: range.min,
+                         state: nutri.microStatus(amount, range) };
+            })
+            .filter(item => item.state === "low" && item.min)
+            .map(item => ({ ...item, ratio: item.amount / item.min }));
+        const result = window.FoodAdvisorSupplements.plan(shortages);
+
+        const list = make("div", "supp-list");
+        if (!summary.recorded) {
+            list.append(make("p", "supp-empty", "이 기간에 기록한 식단이 없어 추천할 수 없어요."));
+        } else if (result.shortages.length === 0) {
+            list.append(make("p", "supp-empty", "이 기간에는 부족한 영양소가 없어요. 지금처럼 골고루 드세요!"));
+        } else {
+            // 부족한 영양소 한눈에 보기
+            const chips = make("div", "supp-chips");
+            result.shortages.forEach(item => chips.append(make("span", "supp-chip", `${item.name} ${Math.round(item.ratio * 100)}%`)));
+            list.append(chips);
+
+            // 종합영양제 하나로 채울 수 있는 영양소 → 검색 링크 하나
+            if (result.multi) {
+                const card = make("article", "supp-card");
+                const head = make("div", "supp-head");
+                head.append(make("span", "supp-nutrient", "추천"));
+                head.append(make("strong", "supp-product", "종합영양제 (멀티비타민)"));
+                card.append(head);
+                card.append(make("p", "supp-why", `${result.multi.names.join(" · ")} 성분이 함께 들어 있는 제품을 고르세요.`));
+                result.multi.cautions.forEach(text => card.append(make("p", "supp-caution", text)));
+                result.multi.links.forEach(link => {
+                    const a = make("a", "supp-link", `${link.title} ↗`);
+                    a.href = link.url;
+                    a.target = "_blank";
+                    a.rel = "noopener noreferrer";
+                    card.append(a);
+                });
+                list.append(card);
+            }
+
+            // 종합영양제로 채우기 어려운 영양소 → 음식 안내
+            if (result.foods.length) {
+                const card = make("article", "supp-card supp-food");
+                const head = make("div", "supp-head");
+                head.append(make("span", "supp-nutrient", "식단으로"));
+                head.append(make("strong", "supp-product", "음식으로 채우면 좋은 영양소"));
+                card.append(head);
+                const ul = make("ul", "supp-food-list");
+                result.foods.forEach(food => {
+                    const li = make("li");
+                    li.append(make("b", "", food.name), ` ${food.tip}`);
+                    ul.append(li);
+                });
+                card.append(ul);
+                list.append(card);
+            }
+        }
+        const note = make("p", "supp-note", "섭취 기록을 바탕으로 한 참고용이에요. 복용 중인 약이나 질환이 있으면 의사·약사와 먼저 상담하세요.");
+        panel.replaceChildren(title, desc, list, note);
     }
 
     async function load() {
@@ -619,7 +927,8 @@
             ? `기간 총 영양소 비율 (${dayText} · 섭취 열량 기준)`
             : "하루 영양소 비율 (섭취 열량 기준)";
         ratioSummary = days.length ? summary : null;
-        drawRatio();
+        renderSupplements(multi, summary, seq);
+        fitRatioLayout();
 
         document.getElementById("barView").hidden = !multi;
         if (multi) {
@@ -661,7 +970,7 @@
     document.getElementById("prevPeriod").addEventListener("click", () => { closePicker(); shift(-1); });
     document.getElementById("nextPeriod").addEventListener("click", () => { closePicker(); shift(1); });
     window.addEventListener("resize", () => {
-        drawRatio();
+        fitRatioLayout();
         if (period !== "day") drawChart();
     });
 

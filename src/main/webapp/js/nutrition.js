@@ -72,7 +72,7 @@
   };
   const SAT_FAT_MAX_PCT = 7;  // 19세 이상 포화지방산 에너지 7% 미만
 
-  // 미량 영양소 정의: unit, 기준 종류 이름
+  // 미량 영양소 정의: unit, 기준 종류 이름, note(일반인용 단위 설명, 있으면 화면에 표시)
   const MICROS = {
     fiber:     { label: '식이섬유', unit: 'g',   basis: '충분섭취량' },
     satFat:    { label: '포화 지방', unit: 'g',  basis: '에너지 7% 미만' },
@@ -80,7 +80,9 @@
     potassium: { label: '칼륨',     unit: 'mg',  basis: '충분섭취량' },
     calcium:   { label: '칼슘',     unit: 'mg',  basis: '권장섭취량 · 상한섭취량' },
     iron:      { label: '철분',     unit: 'mg',  basis: '권장섭취량 · 상한섭취량' },
-    vitaminA:  { label: '비타민 A', unit: 'μg RAE', basis: '권장섭취량 · 상한섭취량' },
+    // 기준값 단위는 μg RAE(레티놀 활성당량)지만, 화면에는 쉬운 말로 μg 과 짧은 설명만 보여줍니다.
+    vitaminA:  { label: '비타민 A', unit: 'μg', basis: '권장섭취량 · 상한섭취량',
+                 note: 'μg(마이크로그램)은 1g의 100만분의 1이에요.' },
     vitaminC:  { label: '비타민 C', unit: 'mg',  basis: '권장섭취량 · 상한섭취량' }
   };
 

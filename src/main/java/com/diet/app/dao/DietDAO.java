@@ -376,9 +376,14 @@ public class DietDAO {
 
     // ===================== 기간별 주간/월간 통계 =====================
     public List<Map<String, Object>> getPeriodStats(String email, String startDate, String endDate) {
+        return getPeriodStats(email, startDate, endDate, false);
+    }
+
+    // byMeal = true 이면 날짜·끼니(meal_type)별로 나눠 합계를 냅니다. (전날과 같은 끼니끼리 비교할 때 사용)
+    public List<Map<String, Object>> getPeriodStats(String email, String startDate, String endDate, boolean byMeal) {
         List<Map<String, Object>> list = new ArrayList<>();
         final String sql = """
-            SELECT l.intake_date,
+            SELECT l.intake_date, %s AS meal_type,
                    SUM(i.quantity * f.avg_calories) AS daily_cal,
                    SUM(i.quantity * f.carbs_g)      AS carbs,
                    SUM(i.quantity * f.protein_g)    AS protein,
@@ -392,16 +397,15 @@ public class DietDAO {
                    SUM(i.quantity * f.iron_mg)      AS iron,
                    SUM(i.quantity * f.vitamin_a_ug) AS vitamin_a,
                    SUM(i.quantity * f.vitamin_c_mg) AS vitamin_c,
-                   SUM(f.fiber_g IS NULL)           AS micro_missing,
-                   MAX(f.micronutrient_source = 'DUMMY') AS micro_dummy
+                   SUM(f.fiber_g IS NULL)           AS micro_missing
             FROM intake_logs l
             JOIN users u        ON u.user_id = l.user_id
             JOIN intake_items i ON i.intake_log_id = l.intake_log_id
             JOIN foods f        ON f.food_id = i.food_id
             WHERE u.email = ? AND l.intake_date BETWEEN ? AND ?
-            GROUP BY l.intake_date
+            GROUP BY l.intake_date%s
             ORDER BY l.intake_date
-            """;
+            """.formatted(byMeal ? "l.meal_type" : "NULL", byMeal ? ", l.meal_type" : "");
 
         try (Connection conn = DBConnection.getConnection()) {
             if (conn == null) return list;
@@ -415,6 +419,7 @@ public class DietDAO {
                     while (rs.next()) {
                         Map<String, Object> data = new HashMap<>();
                         data.put("date", rs.getString("intake_date"));
+                        if (byMeal) data.put("mealType", rs.getString("meal_type"));
                         data.put("calories", (int) Math.round(rs.getDouble("daily_cal")));
 
                         double c = rs.getDouble("carbs");
@@ -438,7 +443,6 @@ public class DietDAO {
                             data.put(col[1], rs.wasNull() ? null : Math.round(value * 10) / 10.0);
                         }
                         data.put("microMissing", rs.getInt("micro_missing") > 0);
-                        data.put("microDummy", rs.getInt("micro_dummy") > 0);
                         list.add(data);
                     }
                 }

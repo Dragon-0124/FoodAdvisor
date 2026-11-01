@@ -71,28 +71,39 @@
   }
 
   // 기간별 날짜 영양 합계 -> { 'YYYY-MM-DD': { calories, carbs, protein, fat, sugar } } (기록한 날만)
+  // 통계 한 줄 -> 화면용 영양 합계
+  const toNutrition = row => ({
+    calories: Number(row.calories) || 0,
+    carbs: Number(row.carbs) || 0,
+    protein: Number(row.protein) || 0,
+    fat: Number(row.fat) || 0,
+    sugar: Number(row.sugar) || 0,
+    // 미량 영양소 (음식 DB 에 값이 없으면 null)
+    fiber: numberOrNull(row.fiber),
+    satFat: numberOrNull(row.satFat),
+    sodium: numberOrNull(row.sodium),
+    potassium: numberOrNull(row.potassium),
+    calcium: numberOrNull(row.calcium),
+    iron: numberOrNull(row.iron),
+    vitaminA: numberOrNull(row.vitaminA),
+    vitaminC: numberOrNull(row.vitaminC),
+    microMissing: Boolean(row.microMissing)
+  });
+
   async function getPeriodNutrition(startDate, endDate) {
     const rows = await api.get('diets/stats?startDate=' + encodeURIComponent(startDate) + '&endDate=' + encodeURIComponent(endDate));
     const result = {};
+    (Array.isArray(rows) ? rows : []).forEach(row => { result[dateOnly(row.date)] = toNutrition(row); });
+    return result;
+  }
+
+  // 날짜·끼니별 영양 합계 -> { 'YYYY-MM-DD': { '아침': {...}, '점심': {...} } }
+  async function getMealNutrition(startDate, endDate) {
+    const rows = await api.get('diets/stats?startDate=' + encodeURIComponent(startDate) + '&endDate=' + encodeURIComponent(endDate) + '&byMeal=true');
+    const result = {};
     (Array.isArray(rows) ? rows : []).forEach(row => {
-      result[dateOnly(row.date)] = {
-        calories: Number(row.calories) || 0,
-        carbs: Number(row.carbs) || 0,
-        protein: Number(row.protein) || 0,
-        fat: Number(row.fat) || 0,
-        sugar: Number(row.sugar) || 0,
-        // 미량 영양소 (음식 DB 에 값이 없으면 null)
-        fiber: numberOrNull(row.fiber),
-        satFat: numberOrNull(row.satFat),
-        sodium: numberOrNull(row.sodium),
-        potassium: numberOrNull(row.potassium),
-        calcium: numberOrNull(row.calcium),
-        iron: numberOrNull(row.iron),
-        vitaminA: numberOrNull(row.vitaminA),
-        vitaminC: numberOrNull(row.vitaminC),
-        microMissing: Boolean(row.microMissing),
-        microDummy: Boolean(row.microDummy)
-      };
+      const date = dateOnly(row.date);
+      (result[date] = result[date] || {})[row.mealType] = toNutrition(row);
     });
     return result;
   }
@@ -164,7 +175,7 @@
 
   window.FoodAdvisorData = {
     mode: 'api',
-    getMeals, addMeal, deleteMeal, getDailyCalories, getDailyNutrition, getPeriodNutrition,
+    getMeals, addMeal, deleteMeal, getDailyCalories, getDailyNutrition, getPeriodNutrition, getMealNutrition,
     getBodyMetrics, saveBodyMetric, deleteBodyMetric, clearBodyMetrics,
     getExercises, getExerciseTypes, addExercise, deleteExercise,
     getBodyForecast

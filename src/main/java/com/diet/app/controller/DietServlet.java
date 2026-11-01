@@ -22,7 +22,7 @@ import java.util.Map;
 // 식단 CRUD 및 통계 API 컨트롤러
 //  GET  /api/diets/records?date=YYYY-MM-DD            당일 식단 기록 목록 (dietId = intake_item_id 포함)
 //  GET  /api/diets/daily?date=YYYY-MM-DD              일일 섭취량/목표 달성률
-//  GET  /api/diets/stats?startDate=...&endDate=...    기간별 통계
+//  GET  /api/diets/stats?startDate=...&endDate=...    기간별 통계 (&byMeal=true 이면 날짜·끼니별)
 //  POST /api/diets/record | /update | /delete         식단 등록 / 수정 / 삭제
 //  (기존 호환: POST 로도 /records, /daily, /stats 조회 가능)
 @SuppressWarnings("serial")
@@ -98,7 +98,8 @@ public class DietServlet extends HttpServlet {
                         "시작일과 종료일을 YYYY-MM-DD 형식으로 입력해 주세요.");
                 return;
             }
-            resp.getWriter().write(gson.toJson(dietDAO.getPeriodStats(email, startDate, endDate)));
+            boolean byMeal = "true".equals(req.getParameter("byMeal"));
+            resp.getWriter().write(gson.toJson(dietDAO.getPeriodStats(email, startDate, endDate, byMeal)));
             return;
         }
 

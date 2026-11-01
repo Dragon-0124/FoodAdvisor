@@ -637,6 +637,11 @@
         .nutrient-total strong { font-size:15px; }
       }
 
+        /* 누르면 다른 화면으로 이동하는 그래프 카드 */
+        .chart-link { cursor:pointer; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+        .chart-link:hover, .chart-link:focus-visible { transform:translateY(-2px); border-color:#d9c9f2!important; box-shadow:0 8px 22px rgba(90,55,140,.10)!important; outline:none; }
+        .chart-link-arrow { margin-left:4px; color:#4b2a75; font-size:22px; line-height:1; vertical-align:-1px; }
+
         /* 대시보드 영양정보 요약 카드 */
         .nutrition-summary-card {
             display: block;
@@ -788,9 +793,9 @@
             <canvas id="calorieChart"></canvas>
         </article>
 
-        <article class="chart-card">
-            <h2>체중 변화 그래프</h2>
-            <p class="chart-description">저장한 측정 기록 (kg)</p>
+        <article class="chart-card chart-link" id="weightChartCard" role="link" tabindex="0" aria-label="신체 변화 기록으로 이동">
+            <h2>체중 변화 그래프 <span class="chart-link-arrow" aria-hidden="true">›</span></h2>
+            <p class="chart-description">최근 1주</p>
             <canvas id="weightChart"></canvas>
             <p class="note">
                 체중 기록은 서버에 저장된 신체 기록을 불러옵니다.
@@ -919,6 +924,7 @@
 <script src="js/data-adapter.js"></script>
 <script src="js/food-service.js"></script>
 <script src="js/nutrition.js"></script>
+<script src="js/chart-tooltip.js"></script>
 <script>
     const api = window.FoodAdvisorApi;
     const appData = window.FoodAdvisorData;
@@ -1673,7 +1679,10 @@
     document.getElementById("historyNext").addEventListener("click", () => moveHistory(1));
     document.getElementById("closeHistory").addEventListener("click", () => historyDialog.close());
 
-    function drawLineChart(canvasId, points, color, unit, emptyText) {
+    // options.tooltip(point): 점에 마우스를 올렸을 때 보여줄 { title, lines } (없으면 툴팁 없음)
+    // options.dateAxis: point.date 가 있는 날짜 그래프 - 기록이 있는 날만 날짜를 적고,
+    //   연도는 왼쪽 끝에 한 번만, 연도가 바뀌면 그 자리를 점선으로 나누고 오른쪽에 새 연도를 한 번 적습니다.
+    function drawLineChart(canvasId, points, color, unit, emptyText, options = {}) {
         const canvas = document.getElementById(canvasId);
         const ctx = canvas.getContext("2d");
         const rect = canvas.getBoundingClientRect();
@@ -1687,7 +1696,9 @@
         const height = rect.height;
         ctx.clearRect(0, 0, width, height);
 
-        if (points.length === 0) {
+        // value 가 null 인 칸은 날짜 칸만 두고 점을 찍지 않습니다. (선은 앞뒤 기록을 이어서 그림)
+        const filled = points.filter(point => point.value !== null && point.value !== undefined);
+        if (filled.length === 0) {
             ctx.fillStyle = "#71808a";
             ctx.font = "14px Malgun Gothic, sans-serif";
             ctx.textAlign = "center";
@@ -1698,7 +1709,7 @@
         const padding = { top: 20, right: 18, bottom: 42, left: 55 };
         const plotWidth = width - padding.left - padding.right;
         const plotHeight = height - padding.top - padding.bottom;
-        const values = points.map(point => point.value);
+        const values = filled.map(point => point.value);
 
         let minValue = Math.min(...values);
         let maxValue = Math.max(...values);
@@ -1734,16 +1745,19 @@
             ctx.stroke();
 
             ctx.fillStyle = "#71808a";
-            ctx.fillText(`${value.toFixed(0)}${unit}`, padding.left - 7, lineY);
+            ctx.fillText(`${value.toFixed(maxValue - minValue < 5 ? 1 : 0)}${unit}`, padding.left - 7, lineY);
         }
 
         ctx.beginPath();
         ctx.strokeStyle = color;
         ctx.lineWidth = 3;
 
+        let started = false;
         points.forEach((point, index) => {
-            if (index === 0) {
+            if (point.value === null || point.value === undefined) return;
+            if (!started) {
                 ctx.moveTo(x(index), y(point.value));
+                started = true;
             } else {
                 ctx.lineTo(x(index), y(point.value));
             }
@@ -1751,21 +1765,56 @@
 
         ctx.stroke();
 
+        // 칸이 많으면 날짜 라벨을 하나 걸러 표시
+        const labelEvery = points.length > 7 && plotWidth / points.length < 44 ? 2 : 1;
+        const hits = [];
         points.forEach((point, index) => {
-            ctx.beginPath();
-            ctx.fillStyle = "#fff";
-            ctx.arc(x(index), y(point.value), 5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = color;
-            ctx.stroke();
+            if (point.value !== null && point.value !== undefined) {
+                ctx.beginPath();
+                ctx.fillStyle = "#fff";
+                ctx.arc(x(index), y(point.value), 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = color;
+                ctx.stroke();
+                if (options.tooltip) hits.push({ x: x(index), y: y(point.value), ...options.tooltip(point) });
+            }
 
+            if (options.dateAxis && (point.value === null || point.value === undefined)) return;
+            if (!options.dateAxis && (points.length - 1 - index) % labelEvery !== 0) return;
             ctx.fillStyle = "#71808a";
             ctx.font = "11px Malgun Gothic, sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "top";
-            ctx.fillText(point.label, x(index), height - padding.bottom + 12);
+            ctx.fillText(point.label, x(index), height - padding.bottom + 10);
         });
+
+        if (options.dateAxis) {
+            const yearY = height - padding.bottom + 25;
+            const drawYear = (text, left) => {
+                ctx.fillStyle = "#a39eaa";
+                ctx.font = "10px Malgun Gothic, sans-serif";
+                ctx.textAlign = "left";
+                ctx.textBaseline = "top";
+                ctx.fillText(text, Math.min(left, width - ctx.measureText(text).width - 2), yearY);
+            };
+            drawYear(`${points[0].date.slice(0, 4)}년`, Math.max(2, x(0) - 14));
+            points.forEach((point, index) => {
+                if (index === 0 || point.date.slice(0, 4) === points[index - 1].date.slice(0, 4)) return;
+                // 연도가 바뀌는 자리: 두 칸 사이에 세로 점선, 오른쪽에 새 연도
+                const lineX = (x(index - 1) + x(index)) / 2;
+                ctx.beginPath();
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = "#c9bfe0";
+                ctx.lineWidth = 1;
+                ctx.moveTo(lineX, padding.top - 6);
+                ctx.lineTo(lineX, height - padding.bottom + 36);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                drawYear(`${point.date.slice(0, 4)}년`, lineX + 4);
+            });
+        }
+        if (options.tooltip) window.FoodAdvisorTooltip.set(canvas, hits);
     }
 
     function renderCalorieChart() {
@@ -1790,23 +1839,40 @@
         );
     }
 
+    // 체중 그래프: 오늘까지 최근 1주, 하루 1칸씩 7칸 (기록이 없는 날은 점 없이 비워 둠, 점은 그 날짜 글자 바로 위)
     function renderWeightChart() {
-        const records = bodyRecords
+        const byDate = {};
+        bodyRecords
             .filter(record => record.weight !== null && Number.isFinite(record.weight))
-            .sort((a, b) => a.date.localeCompare(b.date))
-            .map(record => ({
-                label: record.date.slice(5),
-                value: record.weight
-            }));
-
+            .forEach(record => { byDate[record.date] = record.weight; });
+        const days = Array.from({ length: 7 }, (_, index) => {
+            const day = new Date();
+            day.setDate(day.getDate() - 6 + index);
+            return day;
+        });
+        const records = days.map(day => {
+            const date = localDateString(day);
+            return { date, label: `${day.getMonth() + 1}/${day.getDate()}`, value: byDate[date] ?? null };
+        });
         drawLineChart(
             "weightChart",
             records,
             "#9a82e8",
             " kg",
-            "체중 기록이 없습니다."
+            "체중 기록이 없습니다.",
+            { dateAxis: true, tooltip: point => ({ title: window.FoodAdvisorTooltip.longDate(point.date), lines: [`체중 ${point.value.toFixed(1)} kg`] }) }
         );
     }
+
+    // 체중 그래프를 누르면 신체 변화 기록 화면으로 이동
+    const weightChartCard = document.getElementById("weightChartCard");
+    weightChartCard.addEventListener("click", () => { location.href = "weight-tracker.html"; });
+    weightChartCard.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            location.href = "weight-tracker.html";
+        }
+    });
 
     // 서버 세션을 종료하고 로그인 화면으로 이동합니다.
     document.getElementById("logoutButton").addEventListener("click", () => api.logout());
