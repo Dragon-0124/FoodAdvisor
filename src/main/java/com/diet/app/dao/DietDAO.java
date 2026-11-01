@@ -382,7 +382,18 @@ public class DietDAO {
                    SUM(i.quantity * f.avg_calories) AS daily_cal,
                    SUM(i.quantity * f.carbs_g)      AS carbs,
                    SUM(i.quantity * f.protein_g)    AS protein,
-                   SUM(i.quantity * f.fat_g)        AS fat
+                   SUM(i.quantity * f.fat_g)        AS fat,
+                   SUM(i.quantity * f.sugar_g)      AS sugar,
+                   SUM(i.quantity * f.fiber_g)      AS fiber,
+                   SUM(i.quantity * f.sat_fat_g)    AS sat_fat,
+                   SUM(i.quantity * f.sodium_mg)    AS sodium,
+                   SUM(i.quantity * f.potassium_mg) AS potassium,
+                   SUM(i.quantity * f.calcium_mg)   AS calcium,
+                   SUM(i.quantity * f.iron_mg)      AS iron,
+                   SUM(i.quantity * f.vitamin_a_ug) AS vitamin_a,
+                   SUM(i.quantity * f.vitamin_c_mg) AS vitamin_c,
+                   SUM(f.fiber_g IS NULL)           AS micro_missing,
+                   MAX(f.micronutrient_source = 'DUMMY') AS micro_dummy
             FROM intake_logs l
             JOIN users u        ON u.user_id = l.user_id
             JOIN intake_items i ON i.intake_log_id = l.intake_log_id
@@ -414,6 +425,20 @@ public class DietDAO {
                         data.put("carbRatio", totalMacro > 0 ? Math.round((c / totalMacro) * 100) : 0L);
                         data.put("proteinRatio", totalMacro > 0 ? Math.round((p / totalMacro) * 100) : 0L);
                         data.put("fatRatio", totalMacro > 0 ? Math.round((f / totalMacro) * 100) : 0L);
+                        // 영양정보 기간별 보기용 g 합계
+                        data.put("carbs", Math.round(c * 10) / 10.0);
+                        data.put("protein", Math.round(p * 10) / 10.0);
+                        data.put("fat", Math.round(f * 10) / 10.0);
+                        data.put("sugar", Math.round(rs.getDouble("sugar") * 10) / 10.0);
+                        // 미량 영양소 합계 (값이 없는 음식은 합계에서 빠짐 → microMissing 으로 알림)
+                        for (String[] col : new String[][]{{"fiber", "fiber"}, {"sat_fat", "satFat"}, {"sodium", "sodium"},
+                                {"potassium", "potassium"}, {"calcium", "calcium"}, {"iron", "iron"},
+                                {"vitamin_a", "vitaminA"}, {"vitamin_c", "vitaminC"}}) {
+                            double value = rs.getDouble(col[0]);
+                            data.put(col[1], rs.wasNull() ? null : Math.round(value * 10) / 10.0);
+                        }
+                        data.put("microMissing", rs.getInt("micro_missing") > 0);
+                        data.put("microDummy", rs.getInt("micro_dummy") > 0);
                         list.add(data);
                     }
                 }

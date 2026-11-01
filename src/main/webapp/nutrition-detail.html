@@ -13,8 +13,6 @@
         .back-link { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; color:#222; text-decoration:none; font-size:30px; line-height:1; }
         .back-link:focus-visible { outline:2px solid #bba0df; outline-offset:2px; }
         .page-header h1 { margin:0; font-size:23px; }
-        .illustration { display:flex; align-items:center; justify-content:center; min-height:180px; margin-bottom:28px; overflow:hidden; border-radius:24px; background:#f0f0f2; }
-        .illustration svg { display:block; width:100%; max-height:210px; }
         .intro h2 { margin:0 0 14px; font-size:19px; }
         .intro p { margin:0 0 12px; font-size:14px; line-height:1.8; }
         .legend { display:grid; gap:9px; margin:14px 0 22px; color:#77737c; font-size:13px; }
@@ -23,7 +21,7 @@
         .legend-dot.normal { background:var(--green); }
         .legend-dot.high { background:var(--orange); }
         .guidance { color:#3d3941; }
-        .nutrient-list { margin-top:28px; border-top:1px solid var(--line); }
+        .nutrient-list { margin-top:14px; border-top:1px solid var(--line); }
         .nutrient-item { padding:25px 0 22px; }
         .nutrient-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:17px; }
         .nutrient-heading h3 { margin:0; font-size:17px; }
@@ -33,24 +31,83 @@
         .bar-fill { position:absolute; left:0; top:0; bottom:0; width:0; border-radius:999px; background:#c8e9d1; transition:width .3s ease; }
         .bar-fill.ok { background:var(--green); }
         .bar-fill.high { background:var(--orange); }
-        .bar::after { content:""; position:absolute; inset:0; background:linear-gradient(to right, transparent 33.1%, #fff 33.1%, #fff 33.5%, transparent 33.5%, transparent 66.3%, #fff 66.3%, #fff 66.7%, transparent 66.7%); }
+        .bar-mark { position:absolute; top:0; bottom:0; width:2px; margin-left:-1px; background:#fff; }
+        .dummy-tag { margin-left:8px; padding:2px 8px; border-radius:999px; background:#fff1e6; color:#c4671f; font-size:12px; font-weight:600; }
         .bar-labels { display:flex; justify-content:space-between; min-height:18px; padding:7px 3px 0; color:#aaa6ad; font-size:12px; }
         .bar-labels span:empty { display:none; }
         .nutrient-state { margin-left:8px; font-size:13px; font-weight:700; color:var(--muted); }
         .nutrient-state.ok { color:var(--green); }
         .nutrient-state.high { color:var(--orange); }
-        .nutrient-item.is-pending h3, .nutrient-item.is-pending .nutrient-value { color:#b3afb7; }
-        .pending-tag { margin-left:8px; padding:2px 8px; border-radius:999px; background:#f0eff2; color:var(--muted); font-size:12px; font-weight:600; }
-        .page-date { margin:-14px 0 20px 48px; color:var(--muted); font-size:14px; }
+        .period-bar { position:relative; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin:-6px 0 24px; }
+        .period-tabs { display:inline-flex; padding:4px; gap:4px; border-radius:999px; background:#f1eef6; }
+        .period-tab { min-width:52px; padding:8px 16px; border:0; border-radius:999px; background:transparent; color:#6c6476; font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
+        .period-tab[aria-selected="true"] { background:#fff; color:#4b2a75; box-shadow:0 1px 4px rgba(75,42,117,.15); }
+        .period-tab:focus-visible, .period-nav button:focus-visible { outline:2px solid #bba0df; outline-offset:2px; }
+        .period-nav { display:flex; align-items:center; gap:8px; }
+        .period-nav button { width:34px; height:34px; border:1px solid var(--line); border-radius:50%; background:#fff; color:#4b2a75; font-size:20px; line-height:1; cursor:pointer; }
+        .period-nav button:disabled { color:#cfcbd4; cursor:default; }
+        .period-nav .period-label { width:auto; min-width:150px; height:34px; padding:0 12px; border:0; border-radius:10px; background:transparent; color:var(--text); font:inherit; font-size:15px; font-weight:700; }
+        .period-nav .period-label::after { content:"▾"; margin-left:6px; color:#8a8590; font-size:12px; }
+        .period-nav .period-label:hover, .period-nav .period-label[aria-expanded="true"] { background:#f1eef6; }
+        /* 날짜 선택 팝업 */
+        .picker { position:absolute; top:calc(100% + 8px); right:0; z-index:20; width:320px; padding:14px; border:1px solid var(--line); border-radius:16px; background:#fff; box-shadow:0 12px 32px rgba(40,20,70,.16); }
+        .picker-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; font-size:15px; font-weight:700; }
+        .picker-head button { width:30px; height:30px; border:1px solid var(--line); border-radius:50%; background:#fff; color:#4b2a75; font-size:18px; line-height:1; cursor:pointer; }
+        .picker-head button:disabled { color:#cfcbd4; cursor:default; }
+        .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+        .cal-dow { padding:4px 0; color:var(--muted); font-size:12px; text-align:center; }
+        .cal-day, .cal-week span { position:relative; display:flex; align-items:center; justify-content:center; height:36px; font-size:14px; }
+        .cal-day { border:0; border-radius:10px; background:transparent; color:var(--text); font-family:inherit; cursor:pointer; }
+        .cal-week { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; width:100%; padding:0; border:0; border-radius:10px; background:transparent; color:var(--text); font-family:inherit; cursor:pointer; }
+        .cal-day:hover:not(:disabled), .cal-week:hover:not(:disabled) { background:#f1eef6; }
+        .cal-day.outside, .cal-week span.outside { color:#bdb8c3; }
+        .cal-day:disabled, .cal-week:disabled, .cal-week:disabled span { color:#d6d3da; cursor:default; }
+        .cal-day.selected, .cal-week.selected, .cal-week.selected span { background:#4b2a75; color:#fff; }
+        .cal-day.has-record::after, .cal-week span.has-record::after { content:""; position:absolute; bottom:4px; left:50%; width:4px; height:4px; margin-left:-2px; border-radius:50%; background:var(--green); }
+        .cal-day.selected.has-record::after, .cal-week.selected span.has-record::after { background:#fff; }
+        .cal-weeks { display:grid; gap:2px; }
+        .box-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+        .box-grid button { height:48px; border:1px solid var(--line); border-radius:12px; background:#fff; color:var(--text); font:inherit; font-size:14px; font-weight:600; cursor:pointer; }
+        .box-grid button:hover:not(:disabled) { border-color:#bba0df; background:#faf8fd; }
+        .box-grid button.selected { border-color:#4b2a75; background:#4b2a75; color:#fff; }
+        .box-grid button:disabled { background:#fafafa; color:#d0ccd5; cursor:default; }
+        .picker-note { margin:10px 2px 0; color:var(--muted); font-size:12px; }
+        /* 일 보기: 탄·단·지 열량 비율 원 그래프 */
+        /* 그래프 칸 2개: 왼쪽 총량(원 그래프), 오른쪽은 비워 둠 */
+        .split-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+        .split-cell { min-width:0; }
+        .split-cell + .split-cell { margin-left:24px; padding-left:24px; border-left:1px solid var(--line); }
+        .ratio-view { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:28px 32px; padding:8px 0 10px; }
+        #ratioChart { display:block; width:210px; height:210px; }
+        .ratio-legend { flex:1 1 240px; max-width:320px; display:grid; gap:14px; margin:0; padding:0; list-style:none; }
+        .ratio-legend li { display:grid; grid-template-columns:12px 1fr auto; gap:3px 10px; align-items:center; }
+        .ratio-legend .dot { width:12px; height:12px; border-radius:50%; }
+        .ratio-legend .name { font-size:15px; font-weight:700; }
+        .ratio-legend .pct { font-size:20px; font-weight:700; text-align:right; }
+        .ratio-legend .sub { grid-column:2 / 4; color:var(--muted); font-size:12px; }
+        .ratio-legend .sub b { margin-left:6px; font-weight:700; }
+        .ratio-legend .sub b.low { color:var(--muted); }
+        .ratio-legend .sub b.ok { color:var(--green); }
+        .ratio-legend .sub b.high { color:var(--orange); }
+        .ratio-legend .pct-extra { margin-left:4px; color:var(--muted); font-size:13px; font-weight:600; }
+        .ratio-legend .ratio-note { display:block; color:#9b97a0; font-size:11px; line-height:1.6; }
+        .chart-card { margin:0 0 28px; padding:20px 18px 14px; border:1px solid var(--line); border-radius:18px; }
+        .chart-card h2 { margin:0 0 10px; font-size:16px; }
+        .bar-view { margin-top:22px; padding-top:20px; border-top:1px solid var(--line); }
+        .chart-legend { display:flex; flex-wrap:wrap; gap:14px; margin-bottom:10px; color:#77737c; font-size:12px; }
+        .chart-legend span::before { content:""; display:inline-block; width:10px; height:10px; margin-right:6px; border-radius:3px; background:var(--c); vertical-align:-1px; }
+        .chart-legend .target::before { height:0; border-top:2px dashed #20b978; border-radius:0; background:none; vertical-align:3px; }
+        #periodChart { display:block; width:100%; height:240px; }
+        .list-title { margin:30px 0 0; font-size:17px; }
+        .days-note { margin:4px 3px 0; color:#77737c; font-size:12px; }
         .empty-note { margin:18px 0 0; color:var(--muted); font-size:12px; line-height:1.7; }
         /* PC: 화면을 넓게 쓰고 영양소를 한 줄에 두 개씩 */
         @media (min-width:1025px) {
             .page { width:min(1200px,100%); padding:32px 48px 56px; }
-            .illustration svg { max-height:240px; }
             .nutrient-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:56px; }
             .nutrient-item { border-bottom:1px solid var(--line); }
         }
-        @media (max-width:640px) { .page { padding:20px 18px 36px; } .illustration { min-height:150px; } .page-header h1 { font-size:21px; } .nutrient-item { padding:22px 0 18px; } }
+        @media (max-width:640px) { .page { padding:20px 18px 36px; } .page-header h1 { font-size:21px; } .nutrient-item { padding:22px 0 18px; } .picker { left:0; right:0; width:auto; } .split-row { grid-template-columns:1fr; } .split-empty { display:none; } }
     </style>
 </head>
 <body>
@@ -59,31 +116,40 @@
         <a class="back-link" id="backLink" href="dashboard.html" aria-label="대시보드로 돌아가기">‹</a>
         <h1>영양정보</h1>
     </header>
-    <p class="page-date" id="pageDate"></p>
-
-    <div class="illustration" role="img" aria-label="채소와 포크를 표현한 영양 안내 일러스트">
-        <svg viewBox="0 0 620 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect x="0" y="0" width="620" height="250" rx="28" fill="#e9e9eb"/>
-            <path d="M0 183 C95 130 180 226 290 176 S460 90 620 115" fill="none" stroke="#f0a23c" stroke-width="10" stroke-linecap="round"/>
-            <circle cx="65" cy="70" r="16" fill="#20a35a"/>
-            <circle cx="360" cy="208" r="15" fill="#198d50"/>
-            <circle cx="420" cy="180" r="16" fill="#24a55d"/>
-            <path d="M112 145 C115 108 142 89 175 91 C211 96 233 126 224 158 C214 191 178 207 147 190 C123 178 111 164 112 145Z" fill="#58b878"/>
-            <path d="M126 145 C130 115 149 104 175 105 C199 108 216 130 209 155 C202 177 177 191 154 179 C137 170 126 158 126 145Z" fill="#b9e5b8"/>
-            <g fill="none" stroke="#8ccf8e" stroke-width="3"><circle cx="153" cy="135" r="5"/><circle cx="177" cy="126" r="5"/><circle cx="190" cy="150" r="5"/><circle cx="164" cy="161" r="5"/><circle cx="185" cy="171" r="4"/><circle cx="145" cy="151" r="4"/></g>
-            <path d="M235 142 C235 116 258 102 280 111 C304 120 309 148 293 170 C281 188 257 190 243 171 C238 162 235 152 235 142Z" fill="#ef573e"/>
-            <path d="M263 112 L253 94 M267 112 L274 92 M270 113 L290 101" stroke="#33995a" stroke-width="6" stroke-linecap="round"/>
-            <g transform="translate(405 40) rotate(18)">
-                <path d="M95 28 L205 28 Q216 28 216 39 L216 48 Q216 59 205 59 L95 59Z" fill="#2d39bd"/>
-                <path d="M0 26 L100 26 L100 62 L0 62" fill="#3544d4"/>
-                <path d="M9 31 L98 31 M9 42 L98 42 M9 53 L98 53" stroke="#f5f5f7" stroke-width="4"/>
-                <path d="M91 18 C75 43 71 73 89 103 C97 117 109 113 109 99 L109 41 C109 20 102 12 91 18Z" fill="#f59b30"/>
-                <path d="M112 13 C96 41 92 73 111 103 C120 117 131 112 130 98 L130 34 C129 14 121 7 112 13Z" fill="#f07d2c"/>
-                <path d="M134 9 C119 36 115 66 133 94 C142 108 153 104 152 90 L152 29 C151 11 143 4 134 9Z" fill="#f4ae34"/>
-                <path d="M155 12 C143 35 139 61 155 85 C164 99 175 94 174 81 L174 30 C174 13 164 6 155 12Z" fill="#f18a2d"/>
-            </g>
-        </svg>
+    <div class="period-bar">
+        <div class="period-tabs" role="tablist" aria-label="기간 선택">
+            <button type="button" class="period-tab" role="tab" data-period="day">일</button>
+            <button type="button" class="period-tab" role="tab" data-period="week">주</button>
+            <button type="button" class="period-tab" role="tab" data-period="month">월</button>
+            <button type="button" class="period-tab" role="tab" data-period="year">년</button>
+        </div>
+        <div class="period-nav">
+            <button type="button" id="prevPeriod" aria-label="이전 기간">‹</button>
+            <button type="button" class="period-label" id="periodLabel" aria-haspopup="dialog" aria-expanded="false" aria-controls="picker"></button>
+            <button type="button" id="nextPeriod" aria-label="다음 기간">›</button>
+        </div>
+        <div class="picker" id="picker" role="dialog" aria-label="기간 선택 달력" hidden></div>
     </div>
+
+    <section class="chart-card" id="chartCard" hidden>
+        <div class="split-row">
+            <div class="split-cell">
+                <h2 id="ratioTitle">하루 영양소 비율 (섭취 열량 기준)</h2>
+                <div class="ratio-view" id="ratioView">
+                    <canvas id="ratioChart" role="img" aria-label="탄수화물(당류 포함)·단백질·지방 열량 비율 원 그래프"></canvas>
+                    <ul class="ratio-legend" id="ratioLegend"></ul>
+                </div>
+            </div>
+            <div class="split-cell split-empty" id="splitRight" aria-hidden="true"></div>
+        </div>
+        <div class="bar-view" id="barView" hidden>
+            <h2 id="chartTitle">날짜별 탄·단·지 섭취 (kcal)</h2>
+            <div class="chart-legend">
+                <span style="--c:#8650b5">탄수화물</span><span style="--c:#c6a43d">단백질</span><span style="--c:#d87570">지방</span><span class="target" id="targetLegend">목표 칼로리</span>
+            </div>
+            <canvas id="periodChart" role="img" aria-label="기간별 탄수화물·단백질·지방 섭취 열량 그래프"></canvas>
+        </div>
+    </section>
 
     <section class="intro" aria-labelledby="intakeTitle">
         <h2 id="intakeTitle">섭취량 확인하기</h2>
@@ -93,12 +159,14 @@
             <div class="legend-item"><span class="legend-dot normal"></span><span>적정 섭취(권장)</span></div>
             <div class="legend-item"><span class="legend-dot high"></span><span>과잉 섭취</span></div>
         </div>
-        <p class="guidance">균형 잡힌 식습관을 위해 각 영양소의 섭취량을 확인하세요. 적정 범위는 하루 목표 칼로리에 <strong>2025 한국인 영양소 섭취기준</strong>의 에너지적정비율(탄수화물 50~65%, 단백질 10~20%, 지방 15~30%, 총당류 20% 이내)을 적용해 계산합니다.</p>
-        <p class="guidance" id="summaryText">선택한 날짜의 식단 기록을 불러오는 중입니다.</p>
+        <p class="guidance">균형 잡힌 식습관을 위해 각 영양소의 섭취량을 확인하세요. 적정 범위는 하루 목표 칼로리에 <strong>2025 한국인 영양소 섭취기준</strong>의 에너지적정비율(탄수화물 50~65%, 단백질 10~20%, 지방 15~30%, 총당류 20% 이내)을 적용해 계산합니다. 식이섬유·나트륨·칼륨·칼슘·철분·비타민 A·C는 같은 기준의 성별·나이별 권장/충분섭취량과 상한섭취량(나트륨은 만성질환위험감소섭취량), 포화 지방은 에너지 7% 미만을 기준으로 합니다.</p>
+        <p class="guidance" id="summaryText">식단 기록을 불러오는 중입니다.</p>
     </section>
 
+    <h2 class="list-title" id="listTitle">섭취량</h2>
+
     <section class="nutrient-list" id="nutrientList" aria-label="영양소별 섭취 현황"></section>
-    <p class="empty-note">'준비 중' 영양소는 음식 DB 에 아직 해당 성분 값이 없어 표시하지 않습니다. 이 화면은 대략적인 참고용이며 의학적 진단이 아닙니다.</p>
+    <p class="empty-note">'임시 데이터' 표시가 있는 영양소는 실제 성분표가 아니라 화면 확인용 임시 값으로 계산한 결과입니다. 이 화면은 대략적인 참고용이며 의학적 진단이 아닙니다.</p>
 </main>
 <script src="js/api.js"></script>
 <script src="js/data-adapter.js"></script>
@@ -107,41 +175,105 @@
 (() => {
     const api = window.FoodAdvisorApi;
     const nutri = window.FoodAdvisorNutrition;
+    const appData = window.FoodAdvisorData;
 
-    // key 가 있는 영양소는 음식 DB 에 값이 있고, 없는 영양소는 '준비 중'으로 표시합니다.
+    // 탄·단·지·당 + 미량 영양소 (미량 영양소 기준: 2025 한국인 영양소 섭취기준, 성별·나이별)
     const ITEMS = [
         { key: "carbs", name: "탄수화물", unit: "g" },
         { key: "protein", name: "단백질", unit: "g" },
         { key: "fat", name: "지방", unit: "g" },
         { key: "sugar", name: "당류", unit: "g" },
-        { name: "식이섬유", unit: "g" },
-        { name: "포화 지방", unit: "g" },
-        { name: "나트륨", unit: "mg" },
-        { name: "칼륨", unit: "mg" },
-        { name: "칼슘", unit: "mg" },
-        { name: "철분", unit: "mg" },
-        { name: "비타민 A", unit: "mcg" },
-        { name: "비타민 C", unit: "mg" }
+        ...Object.entries(nutri.MICROS).map(([key, micro]) => ({ key, name: micro.label, unit: micro.unit, micro: true }))
     ];
+    const MICRO_KEYS = Object.keys(nutri.MICROS);
+    let profile = null;  // 로그인 사용자 { gender, age } - 미량 영양소 기준이 성별·나이별로 다름
     const STATE_TEXT = { low: "부족", ok: "적정", high: "과잉" };
+    const PERIOD_TEXT = { day: "일", week: "주", month: "월", year: "년" };
+    const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+    const MACRO_COLORS = { carbs: "#8650b5", protein: "#c6a43d", fat: "#d87570" };
+    // 원 그래프 조각 (열량 기준): 당류는 탄수화물에 포함해 괄호로 표시
+    const RATIO_PARTS = [
+        { key: "carbs", label: "탄수화물", color: "#8650b5" },
+        { key: "protein", label: "단백질", color: "#c6a43d" },
+        { key: "fat", label: "지방", color: "#d87570" }
+    ];
 
     const pad = n => String(n).padStart(2, "0");
-    const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
-    const param = new URLSearchParams(location.search).get("date");
-    const date = /^\d{4}-\d{2}-\d{2}$/.test(param || "") ? param : today();
+    const toDateString = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const fromDateString = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
     const round1 = value => Math.round(value * 10) / 10;
+    const today = toDateString(new Date());
 
-    // 막대: 0~33% 부족, 33~67% 적정, 67~100% 과잉 구간 (경계는 적정 범위의 최소/최대 g)
-    //  당류처럼 하한이 없으면 0 부터 적정 구간으로 그립니다.
-    function barPercent(grams, range) {
-        const third = 100 / 3;
-        if (range.min > 0 && grams < range.min) return grams / range.min * third;
-        const start = range.min > 0 ? third : 0;
-        if (grams <= range.max) return start + (grams - range.min) / (range.max - range.min) * (2 * third - start);
-        return Math.min(100, 2 * third + (grams - range.max) / range.max * third);
+    const params = new URLSearchParams(location.search);
+    let anchor = /^\d{4}-\d{2}-\d{2}$/.test(params.get("date") || "") ? params.get("date") : today;
+    let period = PERIOD_TEXT[params.get("period")] ? params.get("period") : "day";
+    let targetCalories = 0;
+    let chartBuckets = [];
+    let loadSeq = 0;
+
+    // 기간의 시작/끝 날짜 (주는 월요일 시작 - 대시보드와 같음)
+    function getRange() {
+        const d = fromDateString(anchor);
+        if (period === "week") {
+            const start = new Date(d);
+            start.setDate(d.getDate() - (d.getDay() + 6) % 7);
+            const end = new Date(start);
+            end.setDate(start.getDate() + 6);
+            return [start, end];
+        }
+        if (period === "month") return [new Date(d.getFullYear(), d.getMonth(), 1), new Date(d.getFullYear(), d.getMonth() + 1, 0)];
+        if (period === "year") return [new Date(d.getFullYear(), 0, 1), new Date(d.getFullYear(), 11, 31)];
+        return [d, d];
     }
 
-    function buildItem(item, summary) {
+    function rangeLabel([start, end]) {
+        if (period === "day") return `${start.getFullYear()}년 ${start.getMonth() + 1}월 ${start.getDate()}일 (${WEEKDAYS[start.getDay()]})`;
+        if (period === "week") {
+            const endText = end.getFullYear() !== start.getFullYear() ? `${end.getFullYear()}년 ` : "";
+            return `${start.getFullYear()}년 ${start.getMonth() + 1}월 ${start.getDate()}일 ~ ${endText}${end.getMonth() + 1}월 ${end.getDate()}일`;
+        }
+        if (period === "month") return `${start.getFullYear()}년 ${start.getMonth() + 1}월`;
+        return `${start.getFullYear()}년`;
+    }
+
+    function shift(direction) {
+        const d = fromDateString(anchor);
+        if (period === "day") d.setDate(d.getDate() + direction);
+        if (period === "week") d.setDate(d.getDate() + direction * 7);
+        if (period === "month") { d.setDate(1); d.setMonth(d.getMonth() + direction); }
+        if (period === "year") { d.setMonth(0, 1); d.setFullYear(d.getFullYear() + direction); }
+        anchor = toDateString(d);
+        load();
+    }
+
+    // 막대 구간 배치: 최소·최대가 모두 있으면 부족|적정|과잉 3칸, 최소만 있으면 부족|충분 2칸, 최대만 있으면 적정|과잉 2칸
+    //  marks: 구간 경계 위치(%), percent(): 값의 위치(%)
+    function barLayout(range) {
+        const { min, max } = range;
+        if (min != null && max != null) {
+            const third = 100 / 3;
+            return {
+                marks: [third, 2 * third],
+                percent: v => v < min ? v / min * third
+                    : v <= max ? third + (v - min) / (max - min) * third
+                    : Math.min(100, 2 * third + (v - max) / max * third)
+            };
+        }
+        if (min != null) return { marks: [50], percent: v => Math.min(100, v / min * 50) };
+        return { marks: [200 / 3], percent: v => v <= max ? v / max * 200 / 3 : Math.min(100, 200 / 3 + (v - max) / max * 100 / 3) };
+    }
+
+    const fmt = value => Math.round(value).toLocaleString();
+
+    // 영양소별 하루(또는 기간) 기준 범위
+    function itemRange(item, summary) {
+        if (item.micro) return nutri.microRange(item.key, profile, summary.targetCalories, summary.dayCount);
+        const range = nutri.rangeGrams(item.key, summary.targetCalories);
+        return { min: range.min > 0 ? range.min : null, max: range.max };
+    }
+
+    // days: 기록한 날들의 합계 목록 (여러 날이면 '적정 범위인 날' 수를 함께 표시)
+    function buildItem(item, summary, days) {
         const article = document.createElement("article");
         article.className = "nutrient-item";
         const heading = document.createElement("div");
@@ -157,68 +289,584 @@
         const labels = document.createElement("div");
         labels.className = "bar-labels";
 
-        if (!item.key) {
-            article.classList.add("is-pending");
-            const tag = document.createElement("span");
-            tag.className = "pending-tag";
-            tag.textContent = "준비 중";
-            title.appendChild(tag);
+        const amount = summary[item.key];
+        const range = itemRange(item, summary);
+        const state = nutri.microStatus(amount, range);
+
+        if (amount == null) {
+            // 섭취한 음식에 이 성분 값이 없음
             value.append("-- ", unit);
-            bar.setAttribute("aria-label", "음식 DB 에 성분 값이 없어 표시하지 않습니다.");
+            labels.textContent = summary.recorded ? "먹은 음식에 이 성분 값이 없습니다." : "";
         } else {
-            const grams = summary[item.key];
-            const range = nutri.rangeGrams(item.key, summary.targetCalories);
-            const state = nutri.status(item.key, grams, summary.targetCalories);
-            value.append(`${round1(grams)} `, unit);
-            if (state) {
-                const badge = document.createElement("span");
-                badge.className = `nutrient-state ${state}`;
-                badge.textContent = STATE_TEXT[state];
-                title.appendChild(badge);
-            }
+            value.append(`${(item.unit === "g" ? round1(amount) : Math.round(amount)).toLocaleString()} `, unit);
+            const layout = barLayout(range);
+            layout.marks.forEach(position => {
+                const mark = document.createElement("span");
+                mark.className = "bar-mark";
+                mark.style.left = `${position}%`;
+                bar.appendChild(mark);
+            });
             const fill = document.createElement("span");
             fill.className = `bar-fill ${state || ""}`;
-            fill.style.width = summary.targetCalories ? `${barPercent(grams, range)}%` : "0%";
-            bar.appendChild(fill);
-            bar.setAttribute("aria-label", `${item.name} ${round1(grams)}${item.unit}, 적정 범위 ${Math.round(range.min)}~${Math.round(range.max)}${item.unit}`);
-            const min = document.createElement("span");
-            const max = document.createElement("span");
-            min.textContent = range.min > 0 ? `최소 ${Math.round(range.min)}${item.unit}` : "";
-            max.textContent = `적정 ${nutri.pctText(item.key)} · 최대 ${Math.round(range.max)}${item.unit}`;
-            labels.append(min, max);
+            fill.style.width = summary.targetCalories || item.micro ? `${layout.percent(amount)}%` : "0%";
+            bar.prepend(fill);
+            bar.setAttribute("aria-label", `${item.name} ${fmt(amount)}${item.unit}`);
+
+            const left = document.createElement("span");
+            const right = document.createElement("span");
+            if (range.min != null && range.max != null) {
+                left.textContent = `최소 ${fmt(range.min)}${item.unit}`;
+                right.textContent = `${item.micro ? "" : `적정 ${nutri.pctText(item.key)} · `}최대 ${fmt(range.max)}${item.unit}`;
+            } else if (range.min != null) {
+                right.textContent = `충분 ${fmt(range.min)}${item.unit} 이상`;
+            } else {
+                right.textContent = item.micro
+                    ? `최대 ${fmt(range.max)}${item.unit} (에너지 7% 미만)`
+                    : `적정 ${nutri.pctText(item.key)} · 최대 ${fmt(range.max)}${item.unit}`;
+            }
+            labels.append(left, right);
+        }
+        if (state) {
+            const badge = document.createElement("span");
+            badge.className = `nutrient-state ${state}`;
+            badge.textContent = state === "ok" && range.max == null ? "충분" : STATE_TEXT[state];
+            title.appendChild(badge);
+        }
+        if (item.micro && summary.microDummy) {
+            const tag = document.createElement("span");
+            tag.className = "dummy-tag";
+            tag.textContent = "임시 데이터";
+            title.appendChild(tag);
         }
         heading.append(title, value);
         article.append(heading, bar, labels);
+
+        if (days.length > 1 && amount != null) {
+            const dayRange = itemRange(item, { ...summary, targetCalories: targetCalories, dayCount: 1 });
+            const okDays = days.filter(day => nutri.microStatus(day[item.key], dayRange) === "ok").length;
+            const daysNote = document.createElement("p");
+            daysNote.className = "days-note";
+            daysNote.textContent = `${range.max == null ? "충분했던" : "적정 범위인"} 날 ${okDays}일 / 기록 ${days.length}일`;
+            article.appendChild(daysNote);
+        }
+        if (item.micro && summary.microMissing && amount != null) {
+            const missing = document.createElement("p");
+            missing.className = "days-note";
+            missing.textContent = "일부 음식은 이 성분 값이 없어 합계에서 빠졌습니다.";
+            article.appendChild(missing);
+        }
         return article;
     }
 
-    (async () => {
-        if (!await api.requireLogin()) return;
-        const [y, m, d] = date.split("-").map(Number);
-        document.getElementById("pageDate").textContent = `${y}년 ${m}월 ${d}일 섭취 기준`;
-        document.getElementById("backLink").href = `dashboard.html?date=${encodeURIComponent(date)}`;
+    const total = rows => {
+        const sum = key => rows.reduce((acc, row) => acc + row[key], 0);
+        // 미량 영양소: 값이 있는 날만 더하고, 하루도 없으면 null
+        const microSum = key => rows.some(row => row[key] != null)
+            ? rows.reduce((acc, row) => acc + (row[key] || 0), 0) : null;
+        const result = { calories: sum("calories"), carbs: sum("carbs"), protein: sum("protein"), fat: sum("fat"), sugar: sum("sugar") };
+        MICRO_KEYS.forEach(key => { result[key] = microSum(key); });
+        result.microDummy = rows.some(row => row.microDummy);
+        result.microMissing = rows.some(row => row.microMissing);
+        return result;
+    };
 
-        let summary;
+    // 그래프 묶음: 주·월은 하루씩, 년은 월별 총량 (월 목표 = 하루 목표 × 그 달 기록한 날 수)
+    function buildBuckets([start, end], byDate) {
+        if (period === "year") {
+            return Array.from({ length: 12 }, (_, month) => {
+                const rows = Object.entries(byDate).filter(([date]) => Number(date.slice(5, 7)) === month + 1).map(([, row]) => row);
+                return { label: `${month + 1}월`, shortLabel: `${month + 1}`, value: rows.length ? total(rows) : null,
+                         target: rows.length ? targetCalories * rows.length : 0 };
+            });
+        }
+        const buckets = [];
+        for (const d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            const date = toDateString(d);
+            buckets.push({
+                label: period === "week" ? `${WEEKDAYS[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()}` : `${d.getDate()}`,
+                shortLabel: period === "week" ? `${d.getMonth() + 1}/${d.getDate()}` : `${d.getDate()}`,
+                value: byDate[date] || null
+            });
+        }
+        return buckets;
+    }
+
+    // 탄·단·지 열량(kcal)을 쌓은 막대 + 목표 칼로리 점선
+    function drawChart() {
+        const canvas = document.getElementById("periodChart");
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const ratio = window.devicePixelRatio || 1;
+        canvas.width = width * ratio;
+        canvas.height = height * ratio;
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+
+        const pad = { top: 18, right: 12, bottom: 28, left: 44 };
+        const plotW = width - pad.left - pad.right;
+        const plotH = height - pad.top - pad.bottom;
+        const kcalOf = v => v.carbs * 4 + v.protein * 4 + v.fat * 9;
+        const yearly = period === "year";
+        const maxValue = Math.max(yearly ? 0 : targetCalories, ...chartBuckets.map(b => b.target || 0),
+            ...chartBuckets.filter(b => b.value).map(b => kcalOf(b.value)), 1) * 1.1;
+        const y = value => pad.top + plotH - value / maxValue * plotH;
+
+        ctx.font = "11px 'Malgun Gothic', sans-serif";
+        ctx.fillStyle = "#9b97a0";
+        ctx.strokeStyle = "#eeecf0";
+        ctx.lineWidth = 1;
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        const rough = maxValue / 5;
+        const magnitude = Math.pow(10, Math.floor(Math.log10(rough)));
+        const step = [1, 2, 5, 10].map(m => m * magnitude).find(v => v >= rough);
+        for (let v = 0; v <= maxValue; v += step) {
+            ctx.beginPath();
+            ctx.moveTo(pad.left, y(v));
+            ctx.lineTo(width - pad.right, y(v));
+            ctx.stroke();
+            ctx.fillText(v >= 10000 ? `${v / 10000}만` : v.toLocaleString(), pad.left - 6, y(v));
+        }
+
+        const slot = plotW / chartBuckets.length;
+        const barW = Math.max(3, Math.min(34, slot * 0.6));
+        const labelEvery = chartBuckets.length > 12 ? Math.ceil(chartBuckets.length / (width < 500 ? 6 : 10)) : 1;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        chartBuckets.forEach((bucket, index) => {
+            const x = pad.left + slot * index + slot / 2;
+            if (bucket.value) {
+                let base = 0;
+                ["carbs", "protein", "fat"].forEach(key => {
+                    const kcal = bucket.value[key] * (key === "fat" ? 9 : 4);
+                    ctx.fillStyle = MACRO_COLORS[key];
+                    ctx.fillRect(x - barW / 2, y(base + kcal), barW, y(base) - y(base + kcal));
+                    base += kcal;
+                });
+            }
+            if (bucket.target) {  // 년: 막대마다 그 달의 목표
+                ctx.strokeStyle = "#20b978";
+                ctx.setLineDash([4, 3]);
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(x - barW / 2 - 6, y(bucket.target));
+                ctx.lineTo(x + barW / 2 + 6, y(bucket.target));
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+            if (index % labelEvery === 0 || chartBuckets.length <= 12) {
+                // 칸이 좁으면 요일 없이 짧게 표시
+                const label = bucket.shortLabel && ctx.measureText(bucket.label).width > slot - 4 ? bucket.shortLabel : bucket.label;
+                ctx.fillStyle = "#8a8590";
+                ctx.fillText(label, x, height - pad.bottom + 8);
+            }
+        });
+
+        if (targetCalories && !yearly) {
+            ctx.strokeStyle = "#20b978";
+            ctx.setLineDash([5, 4]);
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(pad.left, y(targetCalories));
+            ctx.lineTo(width - pad.right, y(targetCalories));
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    }
+
+    // 일 보기: 탄·단·지가 섭취 열량에서 차지하는 비율 (도넛) + 권장 비율과 비교
+    let ratioSummary = null;
+    function drawRatio() {
+        const canvas = document.getElementById("ratioChart");
+        const size = canvas.clientWidth;
+        const ratio = window.devicePixelRatio || 1;
+        canvas.width = size * ratio;
+        canvas.height = size * ratio;
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        ctx.clearRect(0, 0, size, size);
+
+        // 열량 비율: 탄수화물(당류 포함)·단백질·지방. 당류는 탄수화물 안에 괄호로 표시합니다.
+        const s = ratioSummary;
+        const kcal = s ? { carbs: s.carbs * 4, protein: s.protein * 4, fat: s.fat * 9, sugar: s.sugar * 4 } : null;
+        const totalKcal = kcal ? kcal.carbs + kcal.protein + kcal.fat : 0;
+        const pct = key => totalKcal > 0 ? kcal[key] / totalKcal * 100 : 0;
+        const has = totalKcal > 0;
+
+        const center = size / 2;
+        const radius = size / 2 - 4;
+        const thickness = 30;
+        ctx.lineWidth = thickness;
+        if (!has) {
+            ctx.strokeStyle = "#eeecf0";
+            ctx.beginPath();
+            ctx.arc(center, center, radius - thickness / 2, 0, Math.PI * 2);
+            ctx.stroke();
+        } else {
+            let startAngle = -Math.PI / 2;
+            RATIO_PARTS.forEach(part => {
+                const angle = pct(part.key) / 100 * Math.PI * 2;
+                ctx.strokeStyle = part.color;
+                ctx.beginPath();
+                ctx.arc(center, center, radius - thickness / 2, startAngle, startAngle + angle);
+                ctx.stroke();
+                startAngle += angle;
+            });
+        }
+        ctx.fillStyle = "#17151b";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = "700 22px 'Malgun Gothic', sans-serif";
+        ctx.fillText(has ? `${s.currentCalories.toLocaleString()}` : "기록 없음", center, center - (has ? 8 : 0));
+        if (has) {
+            ctx.fillStyle = "#85818a";
+            ctx.font = "13px 'Malgun Gothic', sans-serif";
+            ctx.fillText(period === "day" ? "kcal 섭취" : "kcal 총 섭취", center, center + 16);
+        }
+
+        // 범례: 조각마다 비율·g, 권장 비율과 비교. 탄수화물 줄에 당류 비율·g 을 괄호로 함께 표시
+        const judge = (value, key) => {
+            const n = nutri.NUTRIENTS[key];
+            return value < n.minPct ? "low" : value > n.maxPct ? "high" : "ok";
+        };
+        const sugarPct = totalKcal > 0 ? kcal.sugar / totalKcal * 100 : 0;
+        const rows = [
+            { part: RATIO_PARTS[0], value: pct("carbs"), grams: s ? s.carbs : 0,
+              extra: has ? ` (당류 ${Math.round(sugarPct)}%)` : "",
+              note: `권장 ${nutri.pctText("carbs")} · 당류 ${has ? round1(s.sugar).toLocaleString() : "--"}g (${nutri.pctText("sugar")}, ${judge(sugarPct, "sugar") === "ok" ? "적정" : "높음"})`,
+              state: judge(pct("carbs"), "carbs") },
+            { part: RATIO_PARTS[1], value: pct("protein"), grams: s ? s.protein : 0, extra: "",
+              note: `권장 ${nutri.pctText("protein")}`, state: judge(pct("protein"), "protein") },
+            { part: RATIO_PARTS[2], value: pct("fat"), grams: s ? s.fat : 0, extra: "",
+              note: `권장 ${nutri.pctText("fat")}`, state: judge(pct("fat"), "fat") }
+        ];
+        const legend = document.getElementById("ratioLegend");
+        legend.replaceChildren(...rows.map(row => {
+            const li = document.createElement("li");
+            const dot = document.createElement("span");
+            dot.className = "dot";
+            dot.style.background = row.part.color;
+            const name = document.createElement("span");
+            name.className = "name";
+            name.textContent = row.part.label;
+            const value = document.createElement("span");
+            value.className = "pct";
+            value.textContent = has ? `${Math.round(row.value)}%` : "--%";
+            if (row.extra) {
+                const extra = document.createElement("small");
+                extra.className = "pct-extra";
+                extra.textContent = row.extra;
+                value.appendChild(extra);
+            }
+            const sub = document.createElement("span");
+            sub.className = "sub";
+            sub.textContent = `${has ? round1(row.grams).toLocaleString() : "--"}g · ${row.note}`;
+            if (has) {
+                const badge = document.createElement("b");
+                badge.className = row.state;
+                badge.textContent = { low: "낮음", ok: "적정", high: "높음" }[row.state];
+                sub.appendChild(badge);
+            }
+            li.append(dot, name, value, sub);
+            return li;
+        }));
+        const note = document.createElement("li");
+        note.className = "ratio-note";
+        note.textContent = "식이섬유·나트륨·비타민 등은 열량이 없거나 열량 비율로 보지 않는 영양소라 아래 영양소 목록에서 확인할 수 있습니다.";
+        legend.appendChild(note);
+    }
+
+    async function load() {
+        const seq = ++loadSeq;
+        const range = getRange();
+        const [start, end] = range.map(toDateString);
+        document.querySelectorAll(".period-tab").forEach(tab => tab.setAttribute("aria-selected", String(tab.dataset.period === period)));
+        document.getElementById("periodLabel").textContent = rangeLabel(range);
+        document.getElementById("nextPeriod").disabled = end >= today;
+        document.getElementById("backLink").href = `dashboard.html?date=${encodeURIComponent(period === "day" ? anchor : (end < today ? end : today))}`;
+        history.replaceState(null, "", `?date=${anchor}&period=${period}`);
+
+        let byDate;
         try {
-            summary = await window.FoodAdvisorData.getDailyNutrition(date);
+            byDate = await appData.getPeriodNutrition(start, end);
         } catch (error) {
             api.handleError(error, "영양 정보를 불러오지 못했습니다.");
             return;
         }
+        if (seq !== loadSeq) return;  // 그 사이 다른 기간을 골랐다면 이 응답은 버립니다.
 
-        document.getElementById("nutrientList").replaceChildren(...ITEMS.map(item => buildItem(item, summary)));
+        const multi = period !== "day";
+        // 오늘은 아직 끝나지 않은 날이라 다른 기록이 있으면 합계에서 뺍니다. (그래프에는 표시)
+        const excludeToday = multi && byDate[today] && Object.keys(byDate).length > 1;
+        const days = Object.entries(byDate).filter(([date]) => !(excludeToday && date === today)).map(([, row]) => row);
+        const sum = total(days);
+        // 기간 목표 = 하루 목표 × 기록한 날 수 → 적정 범위(g)도 같은 배수로 늘어납니다.
+        const periodTarget = targetCalories * Math.max(days.length, 1);
+        const summary = { ...sum, targetCalories: periodTarget, currentCalories: Math.round(sum.calories),
+                          dayCount: Math.max(days.length, 1), recorded: days.length > 0 };
+        const dayText = `기록한 ${days.length}일${excludeToday ? ", 오늘 제외" : ""}`;
+
+        document.getElementById("listTitle").textContent = multi
+            ? `기간 총 섭취량 (${dayText} · 적정 범위 = 하루 기준 × ${days.length}일)`
+            : "섭취량";
+        document.getElementById("nutrientList").replaceChildren(...ITEMS.map(item => buildItem(item, summary, multi ? days : [])));
+
+        const chartCard = document.getElementById("chartCard");
+        chartCard.hidden = false;
+        // 원 그래프: 일=그날, 주·월·년=기간 총량 (아래 영양소 목록과 같은 기준)
+        document.getElementById("ratioTitle").textContent = multi
+            ? `기간 총 영양소 비율 (${dayText} · 섭취 열량 기준)`
+            : "하루 영양소 비율 (섭취 열량 기준)";
+        ratioSummary = days.length ? summary : null;
+        drawRatio();
+
+        document.getElementById("barView").hidden = !multi;
+        if (multi) {
+            document.getElementById("chartTitle").textContent = period === "year"
+                ? "월별 탄·단·지 총 섭취 (kcal)"
+                : "날짜별 탄·단·지 섭취 (kcal)";
+            document.getElementById("targetLegend").textContent = period === "year"
+                ? `목표 칼로리 (하루 ${targetCalories.toLocaleString()} kcal × 그 달 기록한 날)`
+                : `하루 목표 칼로리 ${targetCalories.toLocaleString()} kcal`;
+            chartBuckets = buildBuckets(range, byDate);
+            drawChart();
+        }
 
         const summaryText = document.getElementById("summaryText");
-        if (summary.currentCalories <= 0) {
-            summaryText.textContent = "이 날짜에 기록한 식단이 없습니다. 대시보드에서 식단을 기록하면 섭취량이 표시됩니다.";
+        if (days.length === 0) {
+            summaryText.textContent = multi
+                ? "이 기간에 기록한 식단이 없습니다. 대시보드에서 식단을 기록하면 섭취량이 표시됩니다."
+                : "이 날짜에 기록한 식단이 없습니다. 대시보드에서 식단을 기록하면 섭취량이 표시됩니다.";
             return;
         }
-        const offRange = ["carbs", "protein", "fat", "sugar"]
-            .map(key => ({ key, state: nutri.status(key, summary[key], summary.targetCalories) }))
+        const offRange = ITEMS
+            .map(item => ({ item, state: nutri.microStatus(summary[item.key], itemRange(item, summary)) }))
             .filter(entry => entry.state && entry.state !== "ok")
-            .map(entry => `${nutri.NUTRIENTS[entry.key].label} ${STATE_TEXT[entry.state]}`);
-        summaryText.textContent = `이 날 섭취 ${summary.currentCalories} kcal / 목표 ${summary.targetCalories} kcal. `
-            + (offRange.length ? `적정 범위를 벗어난 영양소: ${offRange.join(", ")}` : "기록된 영양소가 모두 적정 범위입니다.");
+            .map(entry => `${entry.item.name} ${STATE_TEXT[entry.state]}`);
+        const head = multi
+            ? `${days.length}일 기록${excludeToday ? "(오늘 제외)" : ""} · 총 섭취 ${summary.currentCalories.toLocaleString()} kcal / 목표 ${periodTarget.toLocaleString()} kcal (하루 ${targetCalories.toLocaleString()} kcal × ${days.length}일). `
+            : `이 날 섭취 ${summary.currentCalories.toLocaleString()} kcal / 목표 ${targetCalories.toLocaleString()} kcal. `;
+        summaryText.textContent = head + (offRange.length
+            ? `적정 범위를 벗어난 영양소${multi ? "(기간 총량 기준)" : ""}: ${offRange.join(", ")}`
+            : "기록된 영양소가 모두 적정 범위입니다.");
+    }
+
+    document.querySelectorAll(".period-tab").forEach(tab => tab.addEventListener("click", () => {
+        if (tab.dataset.period === period) return;
+        period = tab.dataset.period;
+        closePicker();
+        load();
+    }));
+    document.getElementById("prevPeriod").addEventListener("click", () => { closePicker(); shift(-1); });
+    document.getElementById("nextPeriod").addEventListener("click", () => { closePicker(); shift(1); });
+    window.addEventListener("resize", () => {
+        drawRatio();
+        if (period !== "day") drawChart();
+    });
+
+    // ---------- 날짜 선택 팝업: 일=달력, 주=한 주씩 한 줄, 월=12개월, 년=12년 ----------
+    const picker = document.getElementById("picker");
+    const labelButton = document.getElementById("periodLabel");
+    const recordCache = {};  // '시작_끝' -> Set(기록한 날짜)
+    let cursor;              // 일·주: 보여줄 달의 1일, 월: 연도, 년: 12년 묶음의 첫 해
+
+    const thisYear = new Date().getFullYear();
+    const thisMonth = new Date().getMonth();
+
+    function openPicker() {
+        const d = fromDateString(anchor);
+        cursor = period === "year" ? d.getFullYear() - (d.getFullYear() % 12)
+            : period === "month" ? d.getFullYear()
+            : new Date(d.getFullYear(), d.getMonth(), 1);
+        renderPicker();
+        picker.hidden = false;
+        labelButton.setAttribute("aria-expanded", "true");
+    }
+
+    function closePicker() {
+        picker.hidden = true;
+        labelButton.setAttribute("aria-expanded", "false");
+    }
+
+    function choose(date) {
+        anchor = date;
+        closePicker();
+        load();
+    }
+
+    function moveCursor(direction) {
+        if (period === "day" || period === "week") cursor = new Date(cursor.getFullYear(), cursor.getMonth() + direction, 1);
+        else if (period === "month") cursor += direction;
+        else cursor += direction * 12;
+        renderPicker();
+    }
+
+    // 기록한 날짜 표시용 (달 단위로 한 번만 불러옴)
+    async function recordDates(first, last) {
+        const key = `${toDateString(first)}_${toDateString(last)}`;
+        if (!recordCache[key]) {
+            try {
+                recordCache[key] = new Set(Object.keys(await appData.getPeriodNutrition(toDateString(first), toDateString(last))));
+            } catch (error) {
+                recordCache[key] = new Set();
+            }
+        }
+        return recordCache[key];
+    }
+
+    function renderPicker() {
+        const head = document.createElement("div");
+        head.className = "picker-head";
+        const prev = document.createElement("button");
+        prev.type = "button";
+        prev.textContent = "‹";
+        const next = document.createElement("button");
+        next.type = "button";
+        next.textContent = "›";
+        const title = document.createElement("span");
+        prev.addEventListener("click", () => moveCursor(-1));
+        next.addEventListener("click", () => moveCursor(1));
+        head.append(prev, title, next);
+
+        let body;
+        if (period === "day" || period === "week") {
+            const year = cursor.getFullYear();
+            const month = cursor.getMonth();
+            title.textContent = `${year}년 ${month + 1}월`;
+            prev.setAttribute("aria-label", "이전 달");
+            next.setAttribute("aria-label", "다음 달");
+            next.disabled = year > thisYear || (year === thisYear && month >= thisMonth);
+
+            // 달력은 월요일 시작 (대시보드·주 보기와 같음)
+            const first = new Date(year, month, 1);
+            const gridStart = new Date(first);
+            gridStart.setDate(1 - (first.getDay() + 6) % 7);
+            const lastDay = new Date(year, month + 1, 0);
+            const weeks = Math.ceil(((first.getDay() + 6) % 7 + lastDay.getDate()) / 7);
+            const [selStart, selEnd] = getRange().map(toDateString);
+
+            const dow = document.createElement("div");
+            dow.className = "cal-grid";
+            ["월", "화", "수", "목", "금", "토", "일"].forEach(text => {
+                const cell = document.createElement("span");
+                cell.className = "cal-dow";
+                cell.textContent = text;
+                dow.appendChild(cell);
+            });
+            const rows = document.createElement("div");
+            rows.className = period === "day" ? "cal-grid" : "cal-weeks";
+            const cells = [];
+            for (let w = 0; w < weeks; w++) {
+                const weekStart = new Date(gridStart);
+                weekStart.setDate(gridStart.getDate() + w * 7);
+                const weekStartText = toDateString(weekStart);
+                let row = rows;
+                if (period === "week") {
+                    row = document.createElement("button");
+                    row.type = "button";
+                    row.className = "cal-week";
+                    row.disabled = weekStartText > today;
+                    row.classList.toggle("selected", weekStartText === selStart);
+                    const weekEnd = new Date(weekStart);
+                    weekEnd.setDate(weekStart.getDate() + 6);
+                    row.setAttribute("aria-label", `${weekStart.getMonth() + 1}월 ${weekStart.getDate()}일 ~ ${weekEnd.getMonth() + 1}월 ${weekEnd.getDate()}일`);
+                    row.addEventListener("click", () => choose(weekStartText));
+                    rows.appendChild(row);
+                }
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(weekStart);
+                    d.setDate(weekStart.getDate() + i);
+                    const text = toDateString(d);
+                    const cell = document.createElement(period === "day" ? "button" : "span");
+                    cell.textContent = d.getDate();
+                    cell.dataset.date = text;
+                    if (d.getMonth() !== month) cell.classList.add("outside");
+                    if (period === "day") {
+                        cell.type = "button";
+                        cell.className += " cal-day";
+                        cell.disabled = text > today;
+                        cell.classList.toggle("selected", text === selStart);
+                        cell.setAttribute("aria-label", `${d.getMonth() + 1}월 ${d.getDate()}일`);
+                        cell.addEventListener("click", () => choose(text));
+                    }
+                    row.appendChild(cell);
+                    cells.push(cell);
+                }
+            }
+            body = document.createElement("div");
+            const note = document.createElement("p");
+            note.className = "picker-note";
+            note.textContent = period === "day" ? "초록 점: 식단을 기록한 날" : "한 줄을 누르면 그 주(월~일)를 선택합니다 · 초록 점: 기록한 날";
+            body.append(dow, rows, note);
+
+            const lastShown = new Date(gridStart);
+            lastShown.setDate(gridStart.getDate() + weeks * 7 - 1);
+            recordDates(gridStart, lastShown).then(dates => {
+                cells.forEach(cell => cell.classList.toggle("has-record", dates.has(cell.dataset.date)));
+            });
+        } else {
+            body = document.createElement("div");
+            body.className = "box-grid";
+            const selected = fromDateString(anchor);
+            if (period === "month") {
+                title.textContent = `${cursor}년`;
+                prev.setAttribute("aria-label", "이전 해");
+                next.setAttribute("aria-label", "다음 해");
+                next.disabled = cursor >= thisYear;
+                for (let m = 0; m < 12; m++) {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.textContent = `${m + 1}월`;
+                    button.disabled = cursor > thisYear || (cursor === thisYear && m > thisMonth);
+                    button.classList.toggle("selected", cursor === selected.getFullYear() && m === selected.getMonth());
+                    button.addEventListener("click", () => choose(toDateString(new Date(cursor, m, 1))));
+                    body.appendChild(button);
+                }
+            } else {
+                title.textContent = `${cursor}년 ~ ${cursor + 11}년`;
+                prev.setAttribute("aria-label", "이전 12년");
+                next.setAttribute("aria-label", "다음 12년");
+                next.disabled = cursor + 11 >= thisYear;
+                for (let y = cursor; y < cursor + 12; y++) {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.textContent = `${y}년`;
+                    button.disabled = y > thisYear;
+                    button.classList.toggle("selected", y === selected.getFullYear());
+                    button.addEventListener("click", () => choose(`${y}-01-01`));
+                    body.appendChild(button);
+                }
+            }
+        }
+        picker.replaceChildren(head, body);
+    }
+
+    labelButton.addEventListener("click", () => (picker.hidden ? openPicker() : closePicker()));
+    // 팝업 안 클릭은 바깥 클릭으로 보지 않음 (‹ › 를 누르면 내용이 다시 그려져 클릭한 버튼이 문서에서 빠지기 때문)
+    picker.addEventListener("click", event => event.stopPropagation());
+    document.addEventListener("click", event => {
+        if (!picker.hidden && event.target !== labelButton) closePicker();
+    });
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && !picker.hidden) {
+            closePicker();
+            labelButton.focus();
+        }
+    });
+
+    (async () => {
+        const session = await api.requireLogin();
+        if (!session) return;
+        profile = session.user || null;
+        try {
+            // 목표 칼로리는 현재 사용자 기준으로 모든 기간에 같이 적용합니다.
+            targetCalories = (await appData.getDailyNutrition(today)).targetCalories;
+        } catch (error) {
+            api.handleError(error, "영양 정보를 불러오지 못했습니다.");
+            return;
+        }
+        load();
     })();
 })();
 </script>
